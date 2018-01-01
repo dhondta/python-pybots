@@ -1,4 +1,5 @@
 [![pypi](https://img.shields.io/pypi/v/pybots.svg)](https://pypi.python.org/pypi/pybots/)
+[![readthedocs](https://readthedocs.org/projects/pybots/badge/?version=latest)](http://pybots.readthedocs.io/en/latest/?badge=latest)
 [![python](https://img.shields.io/pypi/pyversions/pybots.svg)](https://pypi.python.org/pypi/pybots/)
 [![license](https://img.shields.io/pypi/l/pybots.svg)](https://pypi.python.org/pypi/pybots/)
 
@@ -6,24 +7,7 @@
 
 This library aims to quickly write client bots for communicating with remote hosts in various ways.
 
-It currently features:
-
-- General-purpose bots:
-
-  * Socket communication
-  
-- Specific-purpose bots:
-
-  * Netcat-like
-  * HTTP
-  * JSON
-  * IRC
-  * EPassport (based on [`pypassport`](https://pypi.python.org/pypi/pypassport))
-
-- CTF-related bots:
-
-  * RingZer0
-  * Root-Me
+It currently features: Socket communication, Netcat-like, HTTP, JSON, IRC, EPassport, RingZer0, Root-Me
   
 
 ## Installation
@@ -35,19 +19,12 @@ sudo pip install pybots
 
 ## Usage
 
-Each bot class is implemented as a context manager and has a basically configured logger attached. It can thus be instantiated in a clear and straightforward way. Here is an example:
+Each bot class is implemented as a context manager and has a logger attached. It can thus be instantiated in a clear and straightforward way. Here is an example:
 
 ```
-from pybots.netcat import Netcat
+from pybots import Netcat
 
-class MyBot(Netcat):
-    def precompute(self):
-        self.lookup_table = ...
-
-    def preamble(self):
-        self.read_until('>')
-
-with MyBot("remote_host", 1234) as bot:
+with Netcat("remote_host", 1234) as bot:
     bot.write("Hello!")
     data = bot.read_until("hash: ")
     hash = data.split("hash: ")[-1]
@@ -57,34 +34,17 @@ with MyBot("remote_host", 1234) as bot:
 Note that, if a bot is used behind a proxy, it will use system's proxy settings. This can be bypassed by using `no_proxy=True` while instantiating the bot.
 
 ```
-with MyBot("LAN_host", 1234, no_proxy=True) as bot:
+with Netcat("LAN_host", 1234, no_proxy=True) as bot:
     # ...
 ```
 
 
 ## CTF Examples
 
-- Hacking Lab :
-
-  * [Hacky Easter 2017 - Challenge 22](doc/examples/hacky-easter-2017-22.md)
-  * [Hacky Easter 2017 - Challenge 24](doc/examples/hacky-easter-2017-24.md)
-  * [Hackvent 2017 - Day 06](doc/examples/hackvent-2017-6.md)
-  * [Hackvent 2017 - Day 10](doc/examples/hackvent-2017-10.md)
- 
-- RingZer0 :
-
-  * [Coding Challenges - Challenge 13](doc/examples/ringzer0-13.md)
-  * [Coding Challenges - Challenge 17](doc/examples/ringzer0-17.md)
-
-- Root-Me :
-
-  * [Programming - Go back to college](doc/examples/rootme-programming-1.md)
-  * [Programming - Uncompress me](doc/examples/rootme-programming-4.md)
-
-
-## Bot Classes Hierarchy
-
-<img src="doc/bots.png" width="80%"/>
+* [Hacky Easter 2017 (22 & 24)](doc/examples/hacky-easter-2017.md)
+* [Hackvent 2017 (Day 06 & 10)](doc/examples/hackvent-2017.md)
+* [RingZer0 / Coding (13 & 17)](doc/examples/ringzer0.md)
+* [Root-Me / Programming](doc/examples/rootme.md)
 
 
 ## Contribution

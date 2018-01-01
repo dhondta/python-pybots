@@ -1,4 +1,4 @@
-## <img src="hacky-easter-2017-22/challenge.jpg" width="20%"/> [Game, Set and Hash](https://hackyeaster.hacking-lab.com/hackyeaster/challenge22.html)
+## <img src="hacky-easter-2017-22/challenge.jpg" alt="" width="20%"/> [Game, Set and Hash](https://hackyeaster.hacking-lab.com/hackyeaster/challenge22.html)
 
 *Can you beat the tennis master?*
 
@@ -177,16 +177,14 @@ with TennisSuperMaster("hackyeaster.hacking-lab.com", 8888) as nc:
 
 **Sample trace**: [`trace.txt`](hacky-easter-2017/hacky-easter-2017-22/trace.txt)
 
-**Egg**:  <img src="hacky-easter-2017-22/egg.png" width="10%">
-
 
 -----
 
-## <img src="hacky-easter-2017-24/challenge.jpg" width="20%"/> [Your Passport, please](https://hackyeaster.hacking-lab.com/hackyeaster/challenge24.html)
+## <img src="hacky-easter-2017-24/challenge.jpg" alt="" width="20%"/> [Your Passport, please](https://hackyeaster.hacking-lab.com/hackyeaster/challenge24.html)
 
 *After another exhausting Easter, Thumper decides to travel abroad for recreation. As a real h4x0r, he of course is using his own, homemade e-passport:*
 
-<img src="hacky-easter-2017-24/hacky_epass.png" width="50%"/>
+<img src="hacky-easter-2017-24/hacky_epass.png" alt="" width="50%"/>
 
 *Write a client which connects to the virtual terminal, and fetch the portrait photo stored on Thumper's passport! The virtual terminal is running on:*
 
@@ -380,7 +378,7 @@ class RemoteVirtualTerminal(Reader):
 
 There now remains to instantiate the reader using the dedicated EPassport bot implemented in the `pybots` library with MRZ's relavant information (that is, the second line, with the *Document Number*, the *Date of Birth* and the *Date of Expiracy*, required for the BAC).
 
-<img src="hacky-easter-2017-24/hacky_epass_highlighted.png" width="40%"/>
+<img src="hacky-easter-2017-24/hacky_epass_highlighted.png" alt="" width="40%"/>
 
 <font size="3"><b>2.4 Solving the challenge with `pybots`</b></font>
 
@@ -425,6 +423,3 @@ with EPassport('hackyeaster.hacking-lab.com', 7777, verbose=True) as p:
     20:49:32 [DEBUG] <-- 8781E101D0F17D2E3F7835BAB9F999AED6C84... [9000]
     20:49:32 [DEBUG] --> 0C B0 30 CC 0D [9701688E08F73FED88C49A5CBF] 00
     20:49:32 [DEBUG] <-- 8771012E7234DF8E7C46F46DBA03786BC7DFE... [9000]
-
-
-**Egg**:  <img src="hacky-easter-2017-24/egg.jpg" width="20%">
