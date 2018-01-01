@@ -13,7 +13,7 @@ setup(
   url = "https://github.com/dhondta/pybots",
   keywords = ["Bot", "client", "socket", "netcat", "http", "json", "epassport", "irc", "ringzer0", "rootme"],
   classifiers = [
-    'Intended Audience :: Challengers, Developers',
+    'Intended Audience :: Developers',
     'Programming Language :: Python :: 2',
     'Programming Language :: Python :: 2.7',
     'Programming Language :: Python :: 3',
