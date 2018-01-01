@@ -1,0 +1,11 @@
+Metadata-Version: 1.0
+Name: pybots
+Version: 1.0.0
+Summary: Library for quickly creating client bots.
+Home-page: https://github.com/dhondta/pybots
+Author: Alexandre D'Hondt
+Author-email: alexandre.dhondt@gmail.com
+License: AGPLv3
+Description: A library for quickly creating client bots for communicating with remote hosts.
+Keywords: Bot, client, socket, netcat, http, json, epassport, irc, ringzer0, rootme
+Platform: Linux
