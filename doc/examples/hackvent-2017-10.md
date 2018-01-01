@@ -1,0 +1,135 @@
+# Day 10: Just play the game
+
+###### Haven't you ever been bored at school?
+
+<div class="metadata-table"></div>
+
+**Category** | **Keywords** | **Tools** | **Reference**
+--- | --- | --- | ---
+Programming | Remote, tic-tac-toe, game | `pybots` | [Hackvent 2017](https://hackvent.hacking-lab.com/challenge.php?day=10)
+
+*Santa is in trouble. He's elves are busy playing TicTacToe. Beat them and help Sata to save christmas!*
+
+```
+nc challenges.hackvent.hacking-lab.com 1037
+```
+
+## 1. Analysis
+
+By execute NetCat, one can play a simple TicTacToe game that indicates, upon winning, that 100 games must be won to get the flag.
+
+The goal is thus to find the winning sequences and to program a bot so that it can solve the challenge in an automated way.
+
+## 2. Solution
+
+By trial-and-error, one can determine the following sequences, formatted as nested lists of the type :
+
+```
+[
+    local bot play,
+    dictionary with:
+        key: remote bot play
+        value: nested list with [local bot play, ...]
+]
+```
+
+
+```python
+moves = [1, {
+    2: [7, {
+        3: 4,
+        0: [5, {
+            3: 9,
+            0: 3,
+        }],
+    }],
+    4: [3, {
+        0: [5, {
+            3: 9,
+            0: 7,
+        }],
+    }],
+    5: [9, {
+        2: [8, {
+            3: 7,
+            7: [3, {
+                4: 6,
+                6: 4,
+            }] ,
+        }],
+        3: [7, {
+            8: 4,
+            4: 8,
+            }],
+        0: 8,
+    }],
+}]
+```
+
+The following NetCat bot then solves the challenge by using the patterns found in the traces got by trial-and-error.
+
+
+```python
+from pybots.netcat import Netcat
+
+FLAG = re.compile(r'HV17(\-[a-z0-9]{4}){5}', re.I)
+
+class Hackvent2017_Day10(Netcat):
+    first_play = True
+    game_count = 0
+    patterns = {
+        'first': "Press enter to start the game",
+        'new': "Press enter to start again",
+        'play': "Field:",
+        'won': "Congratulations you won! 100/100",
+    }
+    max_games = 200
+    won = False
+    
+    def _bot_play(self):
+        transform = lambda l: map(lambda x: x.strip(),
+                                  filter(lambda x: x != '',
+                                         ''.join(l).split("|")))
+        self.trace = filter(lambda x: x.startswith("|") and x.endswith("|"),
+                            map(lambda x: x.strip(), self.trace.split('\n')))
+        self.trace = [self.trace[i:i+3] for i in range(0, len(self.trace), 3)]
+        if len(self.trace) > 1:
+            l = [None if j[0] == j[1] else i for i, j in \
+                 enumerate(zip(*map(transform, self.trace)))]
+            return filter(lambda x: x is not None, l)[0] + 1
+    
+    def play(self, l):
+        self.write(str(l[0]))
+        self.trace = self.read_until(self.patterns['play'])
+        try:
+            index = self._bot_play()
+            next_move = l[1][index]
+            if isinstance(next_move, list):
+                self.play(next_move)
+            else:
+                self.write(str(next_move))
+        except KeyError:
+            next_move = l[1][0]
+            if isinstance(next_move, list):
+                self.play(next_move)
+            else:
+                self.write(str(next_move))
+        
+    def win(self):
+        data = self.read_until(self.patterns['first'] \
+                    if self.first_play  else self.patterns['new'])
+        self.first_play = False
+        self.write("")
+        self.read_until(self.patterns['play'])
+        self.play(moves)
+        self.game_count += 1
+        if self.patterns['won'] in data:
+            self.won = True
+            print(FLAG.search(data).group())
+
+with Hackvent2017_Day10("challenges.hackvent.hacking-lab.com", 1037) as nc:
+    while not nc.won and nc.game_count < nc.max_games:
+        nc.win()
+```
+
+    HV17-y0ue-kn0w-7h4t-g4me-sure

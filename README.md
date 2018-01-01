@@ -66,8 +66,11 @@ with MyBot("LAN_host", 1234, no_proxy=True) as bot:
 
 - Hacking Lab :
 
+  * [Hacky Easter 2017 - Challenge 22](doc/examples/hacky-easter-2017-22.md)
   * [Hacky Easter 2017 - Challenge 24](doc/examples/hacky-easter-2017-24.md)
-  
+  * [Hackvent 2017 - Day 06](doc/examples/hackvent-2017-6.md)
+  * [Hackvent 2017 - Day 10](doc/examples/hackvent-2017-10.md)
+ 
 - RingZer0 :
 
   * [Coding Challenges - Challenge 13](doc/examples/ringzer0-13.md)
