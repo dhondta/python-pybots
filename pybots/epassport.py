@@ -14,6 +14,7 @@ __all__ = ["EPassport", "RemoteVirtualTerminal"]
 
 
 import re
+import sys
 
 from .netcat import Netcat
 
@@ -21,9 +22,10 @@ try:
     from pypassport.apdu import CommandAPDU, ResponseAPDU
     from pypassport.epassport import EPassport as EPP
     from pypassport.reader import Reader
+    pypassport_installed = True
 except ImportError:
-    print("Cannot find pypassport")
-    sys.exit(1)
+    pypassport_installed = False
+    Reader = object
 
 
 def check_MRZ(method):
@@ -162,6 +164,14 @@ class EPassport(Netcat):
           passport.set_MRZ("...").get_photo()
           
     """
+    def __init__(self, *args, **kwargs):
+        super(EPassport, self).__init__(*args, **kwargs)
+        if not pypassport_installed:
+            self.logger.critical("Cannot find pypassport !")
+            self.logger.warn("Please install it manually (does not work with"
+                             " Python 3)")
+            sys.exit(1)
+
     def _terminal(self):
         """
         This instantiates the remote terminal to be used in self.set_MRZ(mrz).

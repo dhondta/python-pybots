@@ -1,12 +1,49 @@
-# Day 10: Just play the game
+## [Santa's journey](https://hackvent.hacking-lab.com?day=6)
 
-###### Haven't you ever been bored at school?
+*Follow Santa Claus as he makes his journey around the world.*
 
-<div class="metadata-table"></div>
+http://challenges.hackvent.hacking-lab.com:4200/
 
-**Category** | **Keywords** | **Tools** | **Reference**
---- | --- | --- | ---
-Programming | Remote, tic-tac-toe, game | `pybots` | [Hackvent 2017](https://hackvent.hacking-lab.com/challenge.php?day=10)
+<font size="4"><b>1. Analysis</b></font>
+
+Visiting the link provides a QRCode that can be easilly decoded with an online tool, providing the name of a country.
+
+Refreshing the link provides another QRCode which corresponds to another country, and so forth.
+
+<font size="4"><b>2. Solution</b></font>
+
+Let's code a bot that will request QRCodes and decode them until it matches a valid flag.
+
+
+```python
+from qrtools import QR
+from pybots.http import HTTPBot
+
+class Hackvent2017_Day06(HTTPBot):
+    qr = QR()
+    tmp_file = "/tmp/qrcode.png"
+    
+    def next(self):
+        self.get()
+        with open(self.tmp_file, 'wb') as f:
+            for chunk in self.response:
+                f.write(chunk)
+        self.qr.decode(self.tmp_file)
+        self.data = self.qr.data
+        return self
+
+with Hackvent2017_Day06("http://challenges.hackvent.hacking-lab.com:4200/") as bot:
+    while not bot.next().data.startswith("HV17-"):
+        continue
+    print(bot.data)
+```
+
+    HV17-eCFw-J4xX-buy3-8pzG-kd3M
+
+
+-----
+
+## [Just play the game](https://hackvent.hacking-lab.com/challenge.php?day=10)
 
 *Santa is in trouble. He's elves are busy playing TicTacToe. Beat them and help Sata to save christmas!*
 
@@ -14,15 +51,15 @@ Programming | Remote, tic-tac-toe, game | `pybots` | [Hackvent 2017](https://hac
 nc challenges.hackvent.hacking-lab.com 1037
 ```
 
-## 1. Analysis
+<font size="4"><b>1. Analysis</b></font>
 
 By execute NetCat, one can play a simple TicTacToe game that indicates, upon winning, that 100 games must be won to get the flag.
 
 The goal is thus to find the winning sequences and to program a bot so that it can solve the challenge in an automated way.
 
-## 2. Solution
+<font size="4"><b>2. Solution</b></font>
 
-By trial-and-error, one can determine the following sequences, formatted as nested lists of the type :
+By trial-and-error, one can determine the following sequences, formatted as nested lists of the type:
 
 ```
 [

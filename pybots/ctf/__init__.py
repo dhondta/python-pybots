@@ -5,5 +5,5 @@ This module provides some bot implementations for automatically managing the
 
 """
 
-from ringzero import *
-from rootme import *
+from .ringzero import *
+from .rootme import *

@@ -1,24 +1,188 @@
-# Your Passport, please
+## <img src="hacky-easter-2017-22/challenge.jpg" width="20%"/> [Game, Set and Hash](https://hackyeaster.hacking-lab.com/hackyeaster/challenge22.html)
 
-<div class="metadata-table"></div>
+*Can you beat the tennis master?*
 
-<table>
-<tr>
-<td rowspan="2" width="20%"><img src="hacky-easter-2017-24/challenge.jpg"/></td>
-<th height="20px"><b>Category</b></th>
-<th><b>Keywords</b></th>
-<th><b>Tools</b></th>
-<th><b>Reference</b></th>
-</tr>
-<tr>
-<td>Programming</td>
-<td>EPassport, Doc9303, ISO7816, MRZ, BAC, MRTD</td>
-<td>
-<code>pybots</code>, <code>pypassport</code>
-</td>
-<td><a href="https://hackyeaster.hacking-lab.com/hackyeaster/challenge24.html">Hacky Easter 2017</a></td>
-</tr>
-</table>
+```
+hackyeaster.hacking-lab.com:8888
+```
+
+<font size="4"><b>Short Solution</b></font>
+
+```python
+from pybots.netcat import Netcat
+
+class TennisSuperMaster(Netcat):
+    def precompute(self):
+        self.lookup = LookupTable("/home/morfal/.dict/realhuman_phill.txt",
+                                  algorithm="sha256",
+                                  dict_filter=lambda x: x.islower() and x.isalnum())
+        
+with TennisSuperMaster("hackyeaster.hacking-lab.com", 8888) as nc:
+    nc.read_until("?")
+    nc.write("y")
+    nc.read()
+    message, answer = "Not started", " :-/"
+    print("Playing...")
+    while True:
+        message = nc.read()
+        if "You lose!" in message or "You win!" in message:
+            print(message)
+            break
+        data, plain = message.split("-" * 22)[-1].strip(), ""
+        if re.match(r'^[a-f0-9]{64}$', data):
+            plain = nc.lookup.get(data)
+        nc.write(plain)
+        nc.read()
+```
+
+
+<font size="4"><b>Solution Explained</b></font>
+
+<font size="4"><b>1. Analysis</b></font>
+
+First let's connect with Netcat and check what it is about.
+
+```session
+$ nc hackyeaster.hacking-lab.com 8888
+Ready for the game?
+y
+Let's go!
+623210167553939c87ed8c5f2bfe0b3e0684e12c3a3dd2513613c4e67263b5a1
+test
+Wrong! Point for me.
+----------------------
+Player > 0 0
+Master   0 15
+----------------------
+e11d8cb94b54e0a2fd0e780f93dd51837fd39bf0c9b86f21e760d02a8550ddf7
+Timeout. You loose!
+```
+
+This "tennis" game seems to work by sending a hash and the correct corresponding value must be returned to get points.
+
+**Important Note**: The game holds a timeout of around 10 seconds, which means that performing a request on a hash craking website or cracking each hash with John The Ripper would not allow to win the game.
+
+<font size="4"><b>2. Solution</b></font>
+
+<font size="3"><b>2.1 Finding the right wordlist</b></font>
+
+Let's then first get some hashes and try to crack them with [Crackstation.net](https://crackstation.net/):
+
+```
+3beb460e56ea841b9eb9fd8a297fa680562e9a1d33df7540479c2ed037ab4883    sha256  tobias
+2fe70f8fab887c96dd0abb620572088ea2a5435ef9fe82d635b553af88e55896    sha256  gabriela
+b0e18c0332f39c44531d5bc1e09a47936e07a284ecaf4ef3ef92aa1fd4af9876    sha256  jordan1
+19a517a5258e9b02ddce1a03a44b9d76251cc331aaa41c1b1e12bffc8a7fc32f    sha256  myspace1
+74dd730b5c36c1cb4fdbb4bce1764c57f260190f94ba52d877308332f1dfe363    sha256  turtle
+59945da25d2521045b4bc84db7d5fd44b2c5511fe7cc247a8ce5a79bcd74a1c2    sha256  football1
+4748d4c802a775e8db9a23ec58f0986cacdc5d2d3356d22c490a7d22331ff133    sha256  walter
+e647708a52060743eb1dc963732cfedc1ea1db3a1785da3fb9c50dd3954fd708    sha256  barcelona
+10426253a2fcb6db8c40fd0376c95b791bae0973258facd7421e6d9be87e8dc6    sha256  fatassa121690
+6d26902e4a604f52162563a463a0f7c077f73535d5e3a1464444534b07c16745    sha256  badjao19
+```
+
+Interestingly all of the given hashes could be cracked. This may mean that using a wordlist of [Crackstation.net](https://crackstation.net/) could be a good choice. Let's choose the [*Smaller Wordlist (Human Passwords Only)*](https://crackstation.net/files/crackstation-human-only.txt.gz) that will be filtered for smaller memory use with a Netcat bot.
+
+
+<font size="3"><b>2.2 Automating the game with a Netcat bot</b></font>
+
+Now that we know which wordlist to use, we can prepare a bot for automatically communicating with the server. This will precompute the lookup table and then open a connection with the server in order to win the game.
+
+From the previous observations while trying by hand, one can point out that:
+- **Wordlist filter**: lowercase, alphanumeric
+- **Preambule**: recv("?") -> send("y") -> recv()
+- **Round**: recv("...[hash]") -> lookup(hash) -> send(plaintext) -> recv([answer, score])
+- **End condition**: string "`You lose!`", thus surely also "`You win!`"
+
+
+```python
+class LookupTable(object):
+    """
+    Lookup table class for password cracking.
+
+    :param dictionary: the dictionary file to be loaded
+    :param algorithm: the hash algorithm to be used
+    :param ratio: ratio of value to be hashed in the lookup table (by default,
+                    every value is considered but, i.e. with a big wordlist, it
+                    can be better to use a ratio of 2/3/4/5/... in order to
+                    limit the memory load)
+    """
+    def __init__(self, dictionary, algorithm="md5", ratio=1, dict_filter=None,
+                 verbose=True):
+        assert os.path.isfile(dictionary)
+        assert algorithm in ["md5", "sha1", "sha256"]
+        assert isinstance(ratio, int) and ratio > 0
+        algorithm = eval(algorithm)
+        self.__lookup = {}
+        if verbose:
+            print("Making the lookup table ; this may take a while...")
+        with open(dictionary) as f:
+            for i, l in enumerate(f):
+                if i % ratio == 0:
+                    l = l.strip()
+                    if hasattr(dict_filter, '__call__') and dict_filter(l):
+                        self.__lookup[algorithm(l)] = l
+        if verbose:
+            print("Lookup table ready!")
+
+    def get(self, h):
+        """
+        Cracking public method
+
+        :param h: input hash
+        :return: corresponding value
+        """
+        try:
+            return self.__lookup[h]
+        except KeyError:
+            return ""
+```
+
+```python
+from pybots.netcat import Netcat
+
+class TennisSuperMaster(Netcat):
+    def precompute(self):
+        self.lookup = LookupTable("/home/morfal/.dict/realhuman_phill.txt",
+                                  algorithm="sha256",
+                                  dict_filter=lambda x: x.islower() and x.isalnum())
+        
+with TennisSuperMaster("hackyeaster.hacking-lab.com", 8888) as nc:
+    nc.read_until("?")
+    nc.write("y")
+    nc.read()
+    message, answer = "Not started", " :-/"
+    print("Playing...")
+    while True:
+        message = nc.read()
+        if "You lose!" in message or "You win!" in message:
+            print(message)
+            break
+        data, plain = message.split("-" * 22)[-1].strip(), ""
+        if re.match(r'^[a-f0-9]{64}$', data):
+            plain = nc.lookup.get(data)
+        nc.write(plain)
+        nc.read()
+```
+
+    Making the lookup table ; this may take a while...
+    Lookup table ready!
+    Playing...
+    ----------------------
+    Player > 6 6 6 
+    Master   0 0 0 
+    ----------------------
+    You win! Solution is: !stan-the_marth0n$m4n
+
+
+**Sample trace**: [`trace.txt`](hacky-easter-2017/hacky-easter-2017-22/trace.txt)
+
+**Egg**:  <img src="hacky-easter-2017-22/egg.png" width="10%">
+
+
+-----
+
+## <img src="hacky-easter-2017-24/challenge.jpg" width="20%"/> [Your Passport, please](https://hackyeaster.hacking-lab.com/hackyeaster/challenge24.html)
 
 *After another exhausting Easter, Thumper decides to travel abroad for recreation. As a real h4x0r, he of course is using his own, homemade e-passport:*
 
@@ -32,9 +196,9 @@ hackyeaster.hacking-lab.com:7777
 
 *As a starting point for your client, the following eclipse project is provided:*
 
-**File**: [`epassclient.zip`](hacky-easter-2017-24/epassclient.zip)
+**File**: [`epassclient.zip`](hacky-easter-2017/hacky-easter-2017-24/epassclient.zip)
 
-# Short Solution
+<font size="4"><b>Short Solution</b></font>
 
 ```python
 from pybots.epassport import EPassport
@@ -43,9 +207,9 @@ with EPassport('hackyeaster.hacking-lab.com', 7777) as p:
     p.set_MRZ("P012345673HLA7707076M21010150000007<<<<<<<96").get_photo("hacky-easter-2017-24/egg.jpg")
 ```
 
-# Solution Explained
+<font size="4"><b>Solution Explained</b></font>
 
-## 1. Analysis
+<font size="4"><b>1. Analysis</b></font>
 
 First, by opening the provided project archive, one can figure out that the source code is located at `epassclient/src/ch/he17/epassclient/` and structured as follows:
 - `JMRTDMain.java`: the virtual terminal server application
@@ -75,9 +239,9 @@ In this structure, one can see that the portrait photo is located at the Data Gr
 - MRTD: Machine Readable Travel Document
 - MRZ: Machine Readable Zone
 
-## 2. Solution
+<font size="4"><b>2. Solution</b></font>
 
-### 2.1 Creating a communication bot
+<font size="3"><b>2.1 Creating a communication bot</b></font>
 
 First, let's define a bot for communicating with the remote virtual terminal.
 
@@ -96,7 +260,7 @@ with Netcat('hackyeaster.hacking-lab.com', 7777) as nc:
 
 The terminal asks for APDU's, as it was expected because of the protocol required to read the epassport.
 
-### 2.2 Handling the exchange protocol
+<font size="3"><b>2.2 Handling the exchange protocol</b></font>
 
 So, the question is now to figure out which APDU's are required. First, using [the standard (Doc 9303 Specification - Part 10)](hacky-easter-2017-24/ePassport-doc9303_part10_en.pdf), let's inspect the structure of an APDU:
 
@@ -149,7 +313,7 @@ Testing this input gives `9000` as a reponse, which shows that it works as this 
 
 In order to simplify working with the standard, let's try to work with a Python library that already implements it. For this purpose, one can find [`pypassport-2.0`](https://github.com/andrew867/epassportviewer/tree/master/pypassport-2.0/), which is part of the [`epassportviewer` project](https://github.com/andrew867/epassportviewer).
 
-### 2.3 Using `pypassport-2.0`
+<font size="3"><b>2.3 Using `pypassport-2.0`</b></font>
 
 After manual install, one can find help in the `pypassport.epassport` module that provides an interesting example.
 
@@ -218,7 +382,7 @@ There now remains to instantiate the reader using the dedicated EPassport bot im
 
 <img src="hacky-easter-2017-24/hacky_epass_highlighted.png" width="40%"/>
 
-### 2.4 Solving the challenge with `pybots`
+<font size="3"><b>2.4 Solving the challenge with `pybots`</b></font>
 
 ```python
 from pybots.epassport import EPassport
@@ -247,121 +411,14 @@ with EPassport('hackyeaster.hacking-lab.com', 7777, verbose=True) as p:
     20:49:30 [INFO] Get encoded face from DG2
     20:49:30 [DEBUG] --> 0C A4 02 0C 15 [8709014EC2A66E1EC4B6EC8E08C32FB3DF944BA521] 00
 
-
     Passport reader terminal. Card presented... send your apdus as hex-strings terminated by newline
-
 
     20:49:30 [DEBUG] <-- 990290008E083616DFFCE923C223 [9000]
     20:49:30 [DEBUG] --> 0C B0 00 00 0D [9701048E088B8BABCF9D23EA51] 00
     20:49:30 [DEBUG] <-- 870901D2CDEE703212A0C0990290008E08923... [9000]
     20:49:30 [DEBUG] --> 0C B0 00 04 0D [9701DF8E0830AFA9A3F8309722] 00
     20:49:30 [DEBUG] <-- 8781E1017E3391D06B2A8A52E206B8A62A099... [9000]
-    20:49:30 [DEBUG] --> 0C B0 00 E3 0D [9701DF8E0858825BFED96A885A] 00
-    20:49:30 [DEBUG] <-- 8781E1018C848EA4E9AC1EF0D449EED0F3C11... [9000]
-    20:49:30 [DEBUG] --> 0C B0 01 C2 0D [9701DF8E087146E85BC73B8EE2] 00
-    20:49:30 [DEBUG] <-- 8781E101F6AD3B789FDAC76DFB39AA3CF4682... [9000]
-    20:49:30 [DEBUG] --> 0C B0 02 A1 0D [9701DF8E08656AB658D6C9D394] 00
-    20:49:30 [DEBUG] <-- 8781E101E6C3C3244FDCC520884CB57202109... [9000]
-    20:49:30 [DEBUG] --> 0C B0 03 80 0D [9701DF8E08960E1A2DACEFF898] 00
-    20:49:30 [DEBUG] <-- 8781E101AB016C62B04CB81A51E3F7C91E5AD... [9000]
-    20:49:30 [DEBUG] --> 0C B0 04 5F 0D [9701DF8E087EA8AC0C485CCDCF] 00
-    20:49:30 [DEBUG] <-- 8781E1015F26B8E8C9366E138ED98A74E316F... [9000]
-    20:49:30 [DEBUG] --> 0C B0 05 3E 0D [9701DF8E0839DA6446819F2F36] 00
-    20:49:30 [DEBUG] <-- 8781E1014ACC0293D1920EDDA2BF280D1DA02... [9000]
-    20:49:30 [DEBUG] --> 0C B0 06 1D 0D [9701DF8E08AAE2619BD3EB7DA5] 00
-    20:49:30 [DEBUG] <-- 8781E1016EB55413807441D875E5FAF6DBB1E... [9000]
-    20:49:30 [DEBUG] --> 0C B0 06 FC 0D [9701DF8E081575F8B0D45D8E85] 00
-    20:49:30 [DEBUG] <-- 8781E1011FC7345B7881F02D2DA282114C61E... [9000]
-    20:49:30 [DEBUG] --> 0C B0 07 DB 0D [9701DF8E0829FC3E8A9DF804BE] 00
-    20:49:30 [DEBUG] <-- 8781E10129E42BFEF88895517F483ED374283... [9000]
-    20:49:30 [DEBUG] --> 0C B0 08 BA 0D [9701DF8E08990D7A038B6AFA09] 00
-    20:49:30 [DEBUG] <-- 8781E101A2EF234E7D6FD4516ECF9BCABFDE7... [9000]
-    20:49:30 [DEBUG] --> 0C B0 09 99 0D [9701DF8E0860459B974515C684] 00
-    20:49:30 [DEBUG] <-- 8781E10179F8642CB1083FE92F9F73F233A3F... [9000]
-    20:49:30 [DEBUG] --> 0C B0 0A 78 0D [9701DF8E0802184AA6992901D9] 00
-    20:49:30 [DEBUG] <-- 8781E101A1E221D17ADC07FAF7FE1671F70C8... [9000]
-    20:49:30 [DEBUG] --> 0C B0 0B 57 0D [9701DF8E086C4BE49F7A1D3FDB] 00
-    20:49:30 [DEBUG] <-- 8781E101C7CBCD85323DA3F8EFE93AD9308A8... [9000]
-    20:49:30 [DEBUG] --> 0C B0 0C 36 0D [9701DF8E08250AE3D59ADA66E8] 00
-    20:49:30 [DEBUG] <-- 8781E101826A5F4D55D4B1798A94AF890BC4C... [9000]
-    20:49:30 [DEBUG] --> 0C B0 0D 15 0D [9701DF8E08E574EF5461D4F95B] 00
-    20:49:30 [DEBUG] <-- 8781E1016A6AEB9B9CB68D6544AF6A9D9CFFC... [9000]
-    20:49:31 [DEBUG] --> 0C B0 0D F4 0D [9701DF8E08B7040297DFAE8C56] 00
-    20:49:31 [DEBUG] <-- 8781E1014C0F32FB11C0BF276AF63B6522C1C... [9000]
-    20:49:31 [DEBUG] --> 0C B0 0E D3 0D [9701DF8E0891FBC5DCDAD33244] 00
-    20:49:31 [DEBUG] <-- 8781E101CBC7FE7A8E64DD3F96D5540FC3907... [9000]
-    20:49:31 [DEBUG] --> 0C B0 0F B2 0D [9701DF8E08D0D5D0D00C3D5213] 00
-    20:49:31 [DEBUG] <-- 8781E101CFCBC6F3C8DE4D34C4F097B9E7BEC... [9000]
-    20:49:31 [DEBUG] --> 0C B0 10 91 0D [9701DF8E081ED0EC9A6CF3C1B6] 00
-    20:49:31 [DEBUG] <-- 8781E1012D5620BFE59DE215B858565CC6BCF... [9000]
-    20:49:31 [DEBUG] --> 0C B0 11 70 0D [9701DF8E0812F8867DEB305CF6] 00
-    20:49:31 [DEBUG] <-- 8781E101CDC4566863EE114B161B59CBDE8D8... [9000]
-    20:49:31 [DEBUG] --> 0C B0 12 4F 0D [9701DF8E08A43D719871AC0A3C] 00
-    20:49:31 [DEBUG] <-- 8781E101979C2E84795A0F062E54392978484... [9000]
-    20:49:31 [DEBUG] --> 0C B0 13 2E 0D [9701DF8E08AEBD700BD506E296] 00
-    20:49:31 [DEBUG] <-- 8781E1010583332AD58C8DEAA6D74D70A71BF... [9000]
-    20:49:31 [DEBUG] --> 0C B0 14 0D 0D [9701DF8E084D8825BCEDB95803] 00
-    20:49:31 [DEBUG] <-- 8781E101753655E6B12E819ECB1EAAD81687F... [9000]
-    20:49:31 [DEBUG] --> 0C B0 14 EC 0D [9701DF8E08357362D9A83399B5] 00
-    20:49:31 [DEBUG] <-- 8781E1017EE65F4B7BB94A557C2B426DEBD39... [9000]
-    20:49:31 [DEBUG] --> 0C B0 15 CB 0D [9701DF8E08C4092051F65D1B7C] 00
-    20:49:31 [DEBUG] <-- 8781E1017AA8C2FC61AF59D434F49A8E5EF69... [9000]
-    20:49:31 [DEBUG] --> 0C B0 16 AA 0D [9701DF8E0808712DC02D69D477] 00
-    20:49:31 [DEBUG] <-- 8781E10147684710F1053EA0B34A26D21691F... [9000]
-    20:49:31 [DEBUG] --> 0C B0 17 89 0D [9701DF8E08DC1E00151482578B] 00
-    20:49:31 [DEBUG] <-- 8781E101746521AA81998BDBBBB680384FF04... [9000]
-    20:49:31 [DEBUG] --> 0C B0 18 68 0D [9701DF8E0876B06AF74E58CD24] 00
-    20:49:31 [DEBUG] <-- 8781E1014A2E679FC4897A6F747D386F6E93F... [9000]
-    20:49:31 [DEBUG] --> 0C B0 19 47 0D [9701DF8E08BEF0025E917025D7] 00
-    20:49:31 [DEBUG] <-- 8781E10189535CC6315FCD1FE2AA480DE21E2... [9000]
-    20:49:31 [DEBUG] --> 0C B0 1A 26 0D [9701DF8E08E4FF1F1365D63C77] 00
-    20:49:31 [DEBUG] <-- 8781E101A70CFD532BDC2915EB16953BEB792... [9000]
-    20:49:31 [DEBUG] --> 0C B0 1B 05 0D [9701DF8E082737959663B75491] 00
-    20:49:31 [DEBUG] <-- 8781E1010E18857F1BD2C367FA7062D5AAD75... [9000]
-    20:49:31 [DEBUG] --> 0C B0 1B E4 0D [9701DF8E08C9D1B62C4539EE93] 00
-    20:49:31 [DEBUG] <-- 8781E101878C056B736BA3A8BFAE3BA54CA91... [9000]
-    20:49:31 [DEBUG] --> 0C B0 1C C3 0D [9701DF8E08DB8144DAFCF66BF5] 00
-    20:49:31 [DEBUG] <-- 8781E101FBFD140FD6E302C9122C8F1D4CDA3... [9000]
-    20:49:31 [DEBUG] --> 0C B0 1D A2 0D [9701DF8E08F688DBD691ED0E13] 00
-    20:49:31 [DEBUG] <-- 8781E1015AF2CD438FBFB3FCB42466C7DA987... [9000]
-    20:49:31 [DEBUG] --> 0C B0 1E 81 0D [9701DF8E08B44DD0B2C75F2148] 00
-    20:49:31 [DEBUG] <-- 8781E101A9D140CB3FCF2C1BF7E7A47D7BB79... [9000]
-    20:49:31 [DEBUG] --> 0C B0 1F 60 0D [9701DF8E08B970C5816408EC03] 00
-    20:49:32 [DEBUG] <-- 8781E1016DC5DF3647570E2C7195F3D4B8AD1... [9000]
-    20:49:32 [DEBUG] --> 0C B0 20 3F 0D [9701DF8E08EE733530CED3A66B] 00
-    20:49:32 [DEBUG] <-- 8781E10164A58FF212A8D7AC8AA538150283C... [9000]
-    20:49:32 [DEBUG] --> 0C B0 21 1E 0D [9701DF8E08F7B07F7C7C794722] 00
-    20:49:32 [DEBUG] <-- 8781E1015C99FF7F708CC01050908E28C342D... [9000]
-    20:49:32 [DEBUG] --> 0C B0 21 FD 0D [9701DF8E0850D947E1BB5ED5D2] 00
-    20:49:32 [DEBUG] <-- 8781E101CC5E1844DCA3D7AFD46686A33B50D... [9000]
-    20:49:32 [DEBUG] --> 0C B0 22 DC 0D [9701DF8E084159DDD2C52B7A43] 00
-    20:49:32 [DEBUG] <-- 8781E10103F10D908BA2524B87B14CFF9BF40... [9000]
-    20:49:32 [DEBUG] --> 0C B0 23 BB 0D [9701DF8E0846C117EEB5E701F5] 00
-    20:49:32 [DEBUG] <-- 8781E101AC51A00FDFD8168187AF4B49836CA... [9000]
-    20:49:32 [DEBUG] --> 0C B0 24 9A 0D [9701DF8E0819DF234EF3A02B54] 00
-    20:49:32 [DEBUG] <-- 8781E10156EAD7B805A6D6B6104F4ADD9BA02... [9000]
-    20:49:32 [DEBUG] --> 0C B0 25 79 0D [9701DF8E086414A09074CEE4D3] 00
-    20:49:32 [DEBUG] <-- 8781E101B076A6AAD6E0826714F5905025651... [9000]
-    20:49:32 [DEBUG] --> 0C B0 26 58 0D [9701DF8E08125BBDE0473338BA] 00
-    20:49:32 [DEBUG] <-- 8781E101C0E5B1FE1DCE08ECBCAB3AB216AEA... [9000]
-    20:49:32 [DEBUG] --> 0C B0 27 37 0D [9701DF8E08E72862D2CD43487B] 00
-    20:49:32 [DEBUG] <-- 8781E10126EB39519653A284F6577DC730520... [9000]
-    20:49:32 [DEBUG] --> 0C B0 28 16 0D [9701DF8E08AF46B5F61A390B62] 00
-    20:49:32 [DEBUG] <-- 8781E101AA2B610EF0998253DC30E3CE609FC... [9000]
-    20:49:32 [DEBUG] --> 0C B0 28 F5 0D [9701DF8E0817B152997410EB4A] 00
-    20:49:32 [DEBUG] <-- 8781E10182CEAC938E0ED95D2C4B8D32BE2FF... [9000]
-    20:49:32 [DEBUG] --> 0C B0 29 D4 0D [9701DF8E08E3806F64FD1A6033] 00
-    20:49:32 [DEBUG] <-- 8781E1013C751B660818574BDF87B1368CB93... [9000]
-    20:49:32 [DEBUG] --> 0C B0 2A B3 0D [9701DF8E0888634983AA6ECEF7] 00
-    20:49:32 [DEBUG] <-- 8781E1010CD61939748E83DB8E2C79D38098E... [9000]
-    20:49:32 [DEBUG] --> 0C B0 2B 92 0D [9701DF8E086958DEE7775791A8] 00
-    20:49:32 [DEBUG] <-- 8781E1010B3FDDA7596CBC5AB3DE91F6B7E23... [9000]
-    20:49:32 [DEBUG] --> 0C B0 2C 71 0D [9701DF8E08692D2993DD12143D] 00
-    20:49:32 [DEBUG] <-- 8781E101E3B5C36AEFADD4E1B19AFEB9799F2... [9000]
-    20:49:32 [DEBUG] --> 0C B0 2D 50 0D [9701DF8E083DF4BED6610236AE] 00
-    20:49:32 [DEBUG] <-- 8781E10123F843902AFE6A837FE03FC66B073... [9000]
-    20:49:32 [DEBUG] --> 0C B0 2E 2F 0D [9701DF8E087A7C2B9C7EC99861] 00
-    20:49:32 [DEBUG] <-- 8781E1017BA1F48371994CC7AD9A91ABB64B6... [9000]
+    [...]
     20:49:32 [DEBUG] --> 0C B0 2F 0E 0D [9701DF8E08ABEC4B23520EA036] 00
     20:49:32 [DEBUG] <-- 8781E101745279A1C3F735EE6D7AE218C41CA... [9000]
     20:49:32 [DEBUG] --> 0C B0 2F ED 0D [9701DF8E08569542EB4BD3E56A] 00
