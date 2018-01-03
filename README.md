@@ -1,7 +1,8 @@
-[![pypi](https://img.shields.io/pypi/v/pybots.svg)](https://pypi.python.org/pypi/pybots/)
-[![readthedocs](https://readthedocs.org/projects/pybots/badge/?version=latest)](http://pybots.readthedocs.io/en/latest/?badge=latest)
-[![python](https://img.shields.io/pypi/pyversions/pybots.svg)](https://pypi.python.org/pypi/pybots/)
-[![license](https://img.shields.io/pypi/l/pybots.svg)](https://pypi.python.org/pypi/pybots/)
+[![PyPi](https://img.shields.io/pypi/v/pybots.svg)](https://pypi.python.org/pypi/pybots/)
+[![Read The Docs](https://readthedocs.org/projects/pybots/badge/?version=latest)](http://pybots.readthedocs.io/en/latest/?badge=latest)
+[![Known Vulnerabilities](https://snyk.io/test/github/dhondta/pybots/badge.svg?targetFile=requirements.txt)](https://snyk.io/test/github/dhondta/pybots?targetFile=requirements.txt)
+[![Python Versions](https://img.shields.io/pypi/pyversions/pybots.svg)](https://pypi.python.org/pypi/pybots/)
+[![License](https://img.shields.io/pypi/l/pybots.svg)](https://pypi.python.org/pypi/pybots/)
 
 # PyBots
 
