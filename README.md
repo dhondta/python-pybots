@@ -22,7 +22,7 @@ sudo pip install pybots
 
 Each bot class is implemented as a context manager and has a logger attached. It can thus be instantiated in a clear and straightforward way. Here is an example:
 
-```
+```py
 from pybots import Netcat
 
 with Netcat("remote_host", 1234) as bot:
@@ -34,7 +34,7 @@ with Netcat("remote_host", 1234) as bot:
 
 Note that, if a bot is used behind a proxy, it will use system's proxy settings. This can be bypassed by using `no_proxy=True` while instantiating the bot.
 
-```
+```py
 with Netcat("LAN_host", 1234, no_proxy=True) as bot:
     # ...
 ```
