@@ -1,3 +1,4 @@
+from pip.req import parse_requirements
 from setuptools import setup
 
 
@@ -22,5 +23,6 @@ setup(
     'Programming Language :: Python :: 3.5',
     'Programming Language :: Python :: 3.6',
   ],
+  install_requires=[str(r.req) for r in parse_requirements("requirements.txt")],
   python_requires = '>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, <4',
 )
