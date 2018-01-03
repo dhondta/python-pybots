@@ -5,6 +5,7 @@ Features are categorized according to:
 - General-purpose bots:
 
     * Socket communication
+    * Web communication
   
   
 - Specific-purpose bots:

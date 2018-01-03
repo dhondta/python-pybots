@@ -7,7 +7,7 @@ The idea is to make creating client bots as easy as this:
 ```
 from pybots import SampleBot
 
-with SampleBot(...) as bot:
+with SampleBot(ip_address, port, ...) as bot:
     # do some computation
 ```
 

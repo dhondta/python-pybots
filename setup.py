@@ -4,7 +4,7 @@ from setuptools import setup
 setup(
   name = "pybots",
   packages = ["pybots", "pybots.base", "pybots.ctf"],
-  version = "1.0.2",
+  version = "1.0.3",
   license = "AGPLv3",
   description = "A library for quickly creating client bots for communicating "
                 "with remote hosts.",

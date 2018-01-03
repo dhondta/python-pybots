@@ -1,4 +1,4 @@
-## [Santa's journey](https://hackvent.hacking-lab.com?day=6)
+## [Day 6 – Santa's journey](https://hackvent.hacking-lab.com?day=6)
 
 *Follow Santa Claus as he makes his journey around the world.*
 
@@ -43,7 +43,7 @@ with Hackvent2017_Day06("http://challenges.hackvent.hacking-lab.com:4200/") as b
 
 -----
 
-## [Just play the game](https://hackvent.hacking-lab.com/challenge.php?day=10)
+## [Day 10 – Just play the game](https://hackvent.hacking-lab.com/challenge.php?day=10)
 
 *Santa is in trouble. He's elves are busy playing TicTacToe. Beat them and help Sata to save christmas!*
 

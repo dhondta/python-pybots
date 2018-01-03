@@ -15,3 +15,4 @@ pages:
 extra:
   mailto: alexandre.dhondt@gmail.com
 theme: readthedocs
+use_directory_urls: false

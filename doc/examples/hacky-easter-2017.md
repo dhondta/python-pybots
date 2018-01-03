@@ -1,4 +1,4 @@
-## <img src="hacky-easter-2017-22/challenge.jpg" alt="" width="20%"/> [Game, Set and Hash](https://hackyeaster.hacking-lab.com/hackyeaster/challenge22.html)
+## <img src="https://sigterm.ch/wp-content/uploads/2017/04/challenge_22-300x188.jpg" alt="" width="20%"/> [22 – Game, Set and Hash](https://hackyeaster.hacking-lab.com/hackyeaster/challenge22.html)
 
 *Can you beat the tennis master?*
 
@@ -175,16 +175,13 @@ with TennisSuperMaster("hackyeaster.hacking-lab.com", 8888) as nc:
     You win! Solution is: !stan-the_marth0n$m4n
 
 
-**Sample trace**: [`trace.txt`](hacky-easter-2017/hacky-easter-2017-22/trace.txt)
-
-
 -----
 
-## <img src="hacky-easter-2017-24/challenge.jpg" alt="" width="20%"/> [Your Passport, please](https://hackyeaster.hacking-lab.com/hackyeaster/challenge24.html)
+## <img src="https://sigterm.ch/wp-content/uploads/2017/04/challenge_24-300x188.jpg" alt="" width="20%"/> [24 – Your Passport, please](https://hackyeaster.hacking-lab.com/hackyeaster/challenge24.html)
 
 *After another exhausting Easter, Thumper decides to travel abroad for recreation. As a real h4x0r, he of course is using his own, homemade e-passport:*
 
-<img src="hacky-easter-2017-24/hacky_epass.png" alt="" width="50%"/>
+<img src="https://sigterm.ch/wp-content/uploads/2017/04/hacky_epass-300x208.png"/>
 
 *Write a client which connects to the virtual terminal, and fetch the portrait photo stored on Thumper's passport! The virtual terminal is running on:*
 
@@ -194,7 +191,7 @@ hackyeaster.hacking-lab.com:7777
 
 *As a starting point for your client, the following eclipse project is provided:*
 
-**File**: [`epassclient.zip`](hacky-easter-2017/hacky-easter-2017-24/epassclient.zip)
+**File**: [`epassclient.zip`](https://sigterm.ch/stuff/hackyeaster17/24_epassclient.zip)
 
 <font size="4"><b>Short Solution</b></font>
 
@@ -219,7 +216,7 @@ As the complete protocol is missing in `JMRTDMain.java`, one needs to find a way
 
 According to the Doc9303 specification, the Logical Data Structre (LDS) is defined as follows:
 
-![](hacky-easter-2017-24/epassport-lds.png)
+<img src="https://i.stack.imgur.com/LZZAp.png"/>
 
 In this structure, one can see that the portrait photo is located at the Data Group 2 (DG2), that is, *Encoded Face*. On this photo, there should be the classical QR Code required to win the challenge.
 
@@ -260,7 +257,7 @@ The terminal asks for APDU's, as it was expected because of the protocol require
 
 <font size="3"><b>2.2 Handling the exchange protocol</b></font>
 
-So, the question is now to figure out which APDU's are required. First, using [the standard (Doc 9303 Specification - Part 10)](hacky-easter-2017-24/ePassport-doc9303_part10_en.pdf), let's inspect the structure of an APDU:
+So, the question is now to figure out which APDU's are required. First, using [the standard (Doc 9303 Specification - Part 10)](https://www.icao.int/publications/Documents/9303_p10_cons_en.pdf), let's inspect the structure of an APDU:
 
 - Command
 
@@ -287,7 +284,7 @@ So, the question is now to figure out which APDU's are required. First, using [t
 
 There now remains to find how to use the APDU's, that is, the protocol.
 
-For this purpose, one can rely on [this technical guideline](hacky-easter-2017-24/ePassport-doc9303_sec-mechanisms-for-mrtd.pdf) from which the following steps can be deduced:
+For this purpose, one can rely on [this technical guideline](https://www.bsi.bund.de/SharedDocs/Downloads/EN/BSI/Publications/TechGuidelines/TR03110/BSI_TR-03110_Part-1_V2-2.pdf?__blob=publicationFile) from which the following steps can be deduced:
 
 1. Select Application
 2. Perform BAC (based on MRZ)
@@ -378,15 +375,13 @@ class RemoteVirtualTerminal(Reader):
 
 There now remains to instantiate the reader using the dedicated EPassport bot implemented in the `pybots` library with MRZ's relavant information (that is, the second line, with the *Document Number*, the *Date of Birth* and the *Date of Expiracy*, required for the BAC).
 
-<img src="hacky-easter-2017-24/hacky_epass_highlighted.png" alt="" width="40%"/>
-
 <font size="3"><b>2.4 Solving the challenge with `pybots`</b></font>
 
 ```python
 from pybots.epassport import EPassport
 
 with EPassport('hackyeaster.hacking-lab.com', 7777, verbose=True) as p:
-    p.set_MRZ("P012345673HLA7707076M21010150000007<<<<<<<96").get_photo("hacky-easter-2017-24/egg.jpg")
+    p.set_MRZ("P012345673HLA7707076M21010150000007<<<<<<<96").get_photo("photo.jpg")
 ```
 
     20:49:29 [DEBUG] Initialization done.

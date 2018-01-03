@@ -39,7 +39,7 @@ Each module is documented. Python's built-in `help` function can thus be used to
 
 ## General-purpose bots
 
-### `SocketBot`
+<font size="4"><b>`SocketBot`</b></font>
 
 This generic bot is mostly inspired from this [Gist](https://gist.github.com/leonjza/f35a7252babdf77c8421). It also handles system's proxy settings using an implementation inspired from this [recipe](http://code.activestate.com/recipes/577643-transparent-http-tunnel-for-        python-sockets-to-be-u/).
 
@@ -49,16 +49,16 @@ It can be instantiated using the following arguments:
 --- | --- | ---
 `host` |  | Hostname or IP address
 `port` |  | Port number
-`disp` | `False` | Display all exchanged messages or not
-`verbose` | `False` | Verbose mode or not
-`prefix` | `False` | Prefix messages for display or not
+`disp` | `False` | Display all exchanged messages
+`verbose` | `False` | Verbose mode
+`prefix` | `False` | Prefix messages for display (i.e. *[SRC]* for the server, *[BOT]* for the bot)
 `no_proxy` | `False` | Force ignoring system proxy settings
 
 When a SocketBot is instantiated, it only registers the input arguments as attributes and creates an empty buffer for collecting the received data. In order to initiate a communication, the `connect` method must be used. This way, the associated socket can be reconnected or connections to other remote hosts can be made with the same bot.
 
 For communicating, the bot has four methods:
 
-- `write`: for writing to the socket
+- `write`: for writing to the socket (using, by default, "\n" as the EOL character)
 - `read`: for reading on the socket a given length of bytes
 - `read_until`: for reading blocks until a given pattern is reached
 - `send_receive`: for combining `write` then `read_until`
@@ -68,6 +68,32 @@ Each time a read method is used, the buffer is consumed and the method returns t
 An example of use of the SocketBot class is the Netcat bot (see next section).
 
 
+<font size="4"><b>`WebBot`</b></font>
+
+This generic bot aims to handle an HTTP session using predefined headers and relies on the `requests` library. It holds a `request` attribute with the `requests.Request` instance and a `response` attribute with the `requests.Response` one. It has also a method for setting a cookie. At instantiation, HTTP methods are dynamically bound 
+
+
 ## Specific-purpose bots
 
-### `Netcat`
+<font size="4"><b>`Netcat`</b></font>
+
+This bot implements a Netcat-like bot that handles a single connection with a remote host, by default executing a preamble that reads from the server up to the first newline and displays the received data.
+
+Here is an example:
+
+```py
+with Netcat(ip_address, port) as nc:
+    nc.write("Hello !")
+```
+
+Another example, redefining the preamble, writing with a different EOL character:
+
+```py
+class MyNetcat(Netcat):
+    def preamble(self):
+        self.read_until(">")
+
+with MyNetcat(ip_address, port) as nc:
+    nc.write("dir", eol="\r\n")
+```
+

@@ -1,4 +1,4 @@
-## [Hash me if you can](https://ringzer0team.com/challenges/13)
+## [13 – Hash me if you can](https://ringzer0team.com/challenges/13)
 
 ```python
 import hashlib
@@ -21,7 +21,7 @@ with RingZer0Bot(13, cookie="your_session_cookie") as bot:
 -----
 
 
-## [Read me if you can](https://ringzer0team.com/challenges/17)
+## [17 – Read me if you can](https://ringzer0team.com/challenges/17)
 
 ```python
 import pytesseract
