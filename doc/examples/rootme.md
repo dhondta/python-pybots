@@ -10,7 +10,7 @@ from pybots.ctf.rootme import RootMeIRCBot
 with RootMeIRCBot(1, "your_pseudo") as bot:
     # INPUTS: the message from RootMe's IRC bot is in bot.inputs['message']
     # << write your logic here for computing the response >>
-    bot.answer = ...  # assign the computed result as bot's answer to RootMe's IRC bot
+    bot.answer = ...  # assign computed result as answer to RootMe IRC bot
 ```
 
     12:34:56 [INFO] *flag*
@@ -29,7 +29,7 @@ from pybots.ctf.rootme import RootMeIRCBot
 with RootMeIRCBot(4, "your_pseudo") as bot:
     # INPUTS: the message from RootMe's IRC bot is in bot.inputs['message']
     # << write your logic here for computing the response >>
-    bot.answer = ...  # assign the computed result as bot's answer to RootMe's IRC bot
+    bot.answer = ...  # assign computed result as answer to RootMe IRC bot
 ```
 
     12:34:56 [INFO] *flag*

@@ -98,7 +98,8 @@ The following steps show how to create the `IRCBot` class:
 
         ::python
         class IRCBot(SocketBot):
-            def __init__(self, host, port=6667, channel=None, nickname="ircbot", fullname="IRC Bot", *args, **kwargs):
+            def __init__(self, host, port=6667, channel=None, nickname="ircbot",
+                         fullname="IRC Bot", *args, **kwargs):
                 super(IRCBot, self).__init__(host, port, *args, **kwargs)
                 self.channel = channel
                 self.nickname = nickname
@@ -108,7 +109,8 @@ The following steps show how to create the `IRCBot` class:
 
         ::python
         class IRCBot(SocketBot):
-            def __init__(self, host, port=6667, channel=None, nickname="ircbot", fullname="IRC Bot", *args, **kwargs):
+            def __init__(self, host, port=6667, channel=None, nickname="ircbot",
+                         fullname="IRC Bot", *args, **kwargs):
                 ...
                 self.connect()
 
@@ -116,7 +118,8 @@ The following steps show how to create the `IRCBot` class:
 
         ::python
         class IRCBot(SocketBot):
-            def __init__(self, host, port=6667, channel=None, nickname="ircbot", fullname="IRC Bot", *args, **kwargs):
+            def __init__(self, host, port=6667, channel=None, nickname="ircbot",
+                         fullname="IRC Bot", *args, **kwargs):
                 ...
                 self.write("NICK {}".format(nickname))
                 self.write("USER {} * * :{}".format(nickname, fullname))
@@ -126,7 +129,8 @@ The following steps show how to create the `IRCBot` class:
 
         ::python
         class IRCBot(SocketBot):
-            def __init__(self, host, port=6667, channel=None, nickname="ircbot", fullname="IRC Bot", *args, **kwargs):
+            def __init__(self, host, port=6667, channel=None, nickname="ircbot",
+                         fullname="IRC Bot", *args, **kwargs):
                 ...
                 self.join(channel)
 
@@ -178,7 +182,8 @@ The following steps show how to create the `RootMeIRCBot` class:
         ::python
         class RootMeIRCBot(IRCBot):
             def __init__(self, cid, username, *args, **kwargs):
-                super(RootMeIRCBot, self).__init__("irc.root-me.org", channel="#root-me_challenge", nickname=username, *args, **kwargs)
+                super(RootMeIRCBot, self).__init__("irc.root-me.org",
+                    channel="#root-me_challenge", nickname=username, *args, **kwargs)
                 self.answer = None
                 self.cid = int(cid)
 
@@ -189,7 +194,8 @@ The following steps show how to create the `RootMeIRCBot` class:
             ...
                 def postamble(self):
                     self.msg("candy", "!ep{} -rep {}".format(self.cid, self.answer))
-                    self.read_until("You dit it! You can validate the challenge with the password")
+                    self.read_until("You dit it! You can validate the challenge"
+                                    " with the password")
                     self.flag = self.buffer.strip()
                     self.logger.info(self.flag)
 

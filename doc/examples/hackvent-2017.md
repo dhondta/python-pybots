@@ -32,7 +32,8 @@ class Hackvent2017_Day06(HTTPBot):
         self.data = self.qr.data
         return self
 
-with Hackvent2017_Day06("http://challenges.hackvent.hacking-lab.com:4200/") as bot:
+url = "http://challenges.hackvent.hacking-lab.com:4200/"
+with Hackvent2017_Day06(url) as bot:
     while not bot.next().data.startswith("HV17-"):
         continue
     print(bot.data)

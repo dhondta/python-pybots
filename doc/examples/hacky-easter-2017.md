@@ -14,8 +14,7 @@ from pybots.netcat import Netcat
 class TennisSuperMaster(Netcat):
     def precompute(self):
         self.lookup = LookupTable("/home/morfal/.dict/realhuman_phill.txt",
-                                  algorithm="sha256",
-                                  dict_filter=lambda x: x.islower() and x.isalnum())
+            "sha256", dict_filter=lambda x: x.islower() and x.isalnum())
         
 with TennisSuperMaster("hackyeaster.hacking-lab.com", 8888) as nc:
     nc.read_until("?")
@@ -102,13 +101,13 @@ class LookupTable(object):
 
     :param dictionary: the dictionary file to be loaded
     :param algorithm: the hash algorithm to be used
-    :param ratio: ratio of value to be hashed in the lookup table (by default,
-                    every value is considered but, i.e. with a big wordlist, it
-                    can be better to use a ratio of 2/3/4/5/... in order to
-                    limit the memory load)
+    :param ratio: ratio of value to be hashed in the lookup table (by
+                    default, every value is considered but, i.e. with a
+                    big wordlist, it can be better to use a ratio of
+                    2/3/4/5/... in order to limit the memory load)
     """
-    def __init__(self, dictionary, algorithm="md5", ratio=1, dict_filter=None,
-                 verbose=True):
+    def __init__(self, dictionary, algorithm="md5", ratio=1,
+                 dict_filter=None, verbose=True):
         assert os.path.isfile(dictionary)
         assert algorithm in ["md5", "sha1", "sha256"]
         assert isinstance(ratio, int) and ratio > 0
@@ -144,8 +143,7 @@ from pybots.netcat import Netcat
 class TennisSuperMaster(Netcat):
     def precompute(self):
         self.lookup = LookupTable("/home/morfal/.dict/realhuman_phill.txt",
-                                  algorithm="sha256",
-                                  dict_filter=lambda x: x.islower() and x.isalnum())
+            "sha256", dict_filter=lambda x: x.islower() and x.isalnum())
         
 with TennisSuperMaster("hackyeaster.hacking-lab.com", 8888) as nc:
     nc.read_until("?")
@@ -199,7 +197,8 @@ hackyeaster.hacking-lab.com:7777
 from pybots.epassport import EPassport
 
 with EPassport('hackyeaster.hacking-lab.com', 7777) as p:
-    p.set_MRZ("P012345673HLA7707076M21010150000007<<<<<<<96").get_photo("hacky-easter-2017-24/egg.jpg")
+    p.set_MRZ("P012345673HLA7707076M21010150000007<<<<<<<96")
+    p.get_photo("photo.jpg")
 ```
 
 <font size="4"><b>Solution Explained</b></font>
@@ -246,10 +245,12 @@ from pybots.netcat import Netcat
 
 with Netcat('hackyeaster.hacking-lab.com', 7777) as nc:
     print(nc.read_until('\n', disp=True))
-    # do nothing yet ; just retrieve what the server tells while starting the communication
+    # do nothing yet ; just retrieve what the server tells while starting
+    #  the communication
 ```
 
-    Passport reader terminal. Card presented... send your apdus as hex-strings terminated by newline
+    Passport reader terminal. Card presented... send your apdus as hex-strings
+     terminated by newline
 
 
 
@@ -319,20 +320,21 @@ import pypassport.epassport
 ```
 
 ```
-     |  >>> from pypassport.epassport import EPassport, mrz
-     |  >>> from pypassport.reader import pcscAutoDetect
-     |  >>> from pypassport.openssl import OpenSSLException
-     |  >>> detect = pcscAutoDetect()
-     |  >>> detect
-     |  (<pypassport.reader.pcscReader object at 0x00CA46F0>, 1, 'OMNIKEY CardMan 5x21-CL 0', 'GENERIC')
-     |  >>> reader = detect[0]
-     |  >>> mrz = mrz.MRZ('EHxxxxxx<0BELxxxxxx8Mxxxxxx7<<<<<<<<<<<<<<04')
-     |  >>> mrz.checkMRZ()
-     |  True
-     |  >>> p = EPassport(mrz, reader)
-     |  Select Passport Application
-     |  >>> p["DG1"]
-     |  Reading DG1
+>>> from pypassport.epassport import EPassport, mrz
+>>> from pypassport.reader import pcscAutoDetect
+>>> from pypassport.openssl import OpenSSLException
+>>> detect = pcscAutoDetect()
+>>> detect
+(<pypassport.reader.pcscReader object at 0x00CA46F0>, 1,
+ 'OMNIKEY CardMan 5x21-CL 0', 'GENERIC')
+>>> reader = detect[0]
+>>> mrz = mrz.MRZ('EHxxxxxx<0BELxxxxxx8Mxxxxxx7<<<<<<<<<<<<<<04')
+>>> mrz.checkMRZ()
+True
+>>> p = EPassport(mrz, reader)
+Select Passport Application
+>>> p["DG1"]
+Reading DG1
 ```
 
 In order to use this library, one needs to create a reader that handles the challenge-related virtual terminal. This will allow use to read DG2 without caring for implementing the aforementioned steps.
@@ -364,13 +366,13 @@ class RemoteVirtualTerminal(Reader):
     def transmit(self, apdu):
         print("--{}".format(str(apdu)))
         self.__write(apdu)
-        response = self.__bot.read_until('\n').rstrip()
-        response, code = response[:-4], response[-4:]
-        shortened = (response[:37] + '...') if len(response) > 40 else response
+        resp = self.__bot.read_until('\n').rstrip()
+        resp, code = resp[:-4], resp[-4:]
+        shortened = (resp[:37] + '...') if len(resp) > 40 else resp
         intcode = [int('0x{}'.format(h), 16) for h in re.findall('..', code)]
         print("<-- {} ({})".format("{} [{}]".format(shortened, code).strip(),
                                  ["Error", "OK"][code == "9000"]))
-        return ResponseAPDU(response.decode('hex'), *intcode)
+        return ResponseAPDU(resp.decode('hex'), *intcode)
 ```
 
 There now remains to instantiate the reader using the dedicated EPassport bot implemented in the `pybots` library with MRZ's relavant information (that is, the second line, with the *Document Number*, the *Date of Birth* and the *Date of Expiracy*, required for the BAC).
@@ -381,7 +383,8 @@ There now remains to instantiate the reader using the dedicated EPassport bot im
 from pybots.epassport import EPassport
 
 with EPassport('hackyeaster.hacking-lab.com', 7777, verbose=True) as p:
-    p.set_MRZ("P012345673HLA7707076M21010150000007<<<<<<<96").get_photo("photo.jpg")
+    p.set_MRZ("P012345673HLA7707076M21010150000007<<<<<<<96")
+    p.get_photo("photo.jpg")
 ```
 
     20:49:29 [DEBUG] Initialization done.
@@ -399,12 +402,15 @@ with EPassport('hackyeaster.hacking-lab.com', 7777, verbose=True) as p:
     20:49:30 [INFO] Basic Access Control
     20:49:30 [DEBUG] --> 00 84 00 00  [] 08
     20:49:30 [DEBUG] <-- 6C5544797A91115D [9000]
-    20:49:30 [DEBUG] --> 00 82 00 00 28 [61EFAA9CD7DC1339180F94C0122289D424650E69CFF61A7DCA77B8AD4E84E463D659B8E3EC71B4B3] 28
+    20:49:30 [DEBUG] --> 00 82 00 00 28 [61EFAA9CD7DC1339180F94C0122289D424650E69
+    CFF61A7DCA77B8AD4E84E463D659B8E3EC71B4B3] 28
     20:49:30 [DEBUG] <-- B54E73D9D815F466A4310CE62496E1BA595EB... [9000]
     20:49:30 [INFO] Get encoded face from DG2
-    20:49:30 [DEBUG] --> 0C A4 02 0C 15 [8709014EC2A66E1EC4B6EC8E08C32FB3DF944BA521] 00
+    20:49:30 [DEBUG] --> 0C A4 02 0C 15 [8709014EC2A66E1EC4B6EC8E08C32FB3DF944BA5
+    21] 00
 
-    Passport reader terminal. Card presented... send your apdus as hex-strings terminated by newline
+    Passport reader terminal. Card presented... send your apdus as hex-strings
+     terminated by newline
 
     20:49:30 [DEBUG] <-- 990290008E083616DFFCE923C223 [9000]
     20:49:30 [DEBUG] --> 0C B0 00 00 0D [9701048E088B8BABCF9D23EA51] 00
