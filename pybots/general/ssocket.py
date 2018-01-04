@@ -288,7 +288,7 @@ class SocketBot(Template):
         return data
 
     @staticmethod
-    def close(self, exit=True):
+    def close(exit=True):
         """
         Close the opened socket and shutdown the bot if specified.
         """
