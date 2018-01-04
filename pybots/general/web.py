@@ -55,13 +55,13 @@ class WebBot(Template):
                'DNT': "1", 'Upgrade-Insecure-Requests': "1"}
 
     def __init__(self, url, verbose=False, no_proxy=False):
-        super(HTTPBot, self).__init__(verbose, no_proxy)
+        super(WebBot, self).__init__(verbose, no_proxy)
         self.logger.debug("Creating a session...")
         self.session = requests.Session()
         self.url = url.rstrip("/")
         self.logger.debug("Binding HTTP methods...")
         for m in SUPPORTED_HTTP_METHODS:
-            setattr(HTTPBot, m, MethodType(HTTPBot.template(m), self))
+            setattr(WebBot, m, MethodType(WebBot.template(m), self))
 
     def __print_request(self):
         """
@@ -147,7 +147,7 @@ class WebBot(Template):
     @staticmethod
     def template(method):
         """
-        Template method for binding HTTP request methods to the HTTPBot.
+        Template method for binding HTTP request methods to the WebBot.
 
         :param method: HTTP method to be bound
         """
