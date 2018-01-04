@@ -49,8 +49,7 @@ class RingZer0Bot(HTTPBot):
     @try_or_die("No CSRF token found", extra_info="response")
     def __get_csrf(self):
         """
-        Decorated private method that retrieves the CSRF token from the main
-         page.
+        Retrieve the CSRF token from the page.
 
         :post: self.csrf populated
         """
@@ -67,8 +66,7 @@ class RingZer0Bot(HTTPBot):
     @try_or_die("No flag found", extra_info="response")
     def __get_flag(self):
         """
-        Decorated private method that retrieves the flag to be submitted from
-         the challenge page.
+        Retrieves the flag to be submitted from the challenge page.
 
         :post: self.flag populated
         """
@@ -81,8 +79,7 @@ class RingZer0Bot(HTTPBot):
     @try_or_die("No info found", extra_info="response")
     def __get_info(self):
         """
-        Decorated private method that retrieves the flag to be submitted from
-         the challenge page.
+        Retrieve the flag to be submitted from the challenge page.
 
         :post: self.flag populated
         """
@@ -101,10 +98,10 @@ class RingZer0Bot(HTTPBot):
     @try_or_die("No message found", extra_info="response")
     def __get_inputs(self):
         """
-        Decorated private method that retrieves the inputs to be processed
-         from the main page contained in the <div class="message"> tags.
+        Retrieve the inputs to be processed from the main page contained in
+         the <div class="message"> tags.
 
-        :post: self.message populated
+        :post: self.inputs populated
         """
         self.inputs = {}
         for br in self.soup.find_all("br"):
@@ -148,16 +145,21 @@ class RingZer0Bot(HTTPBot):
     @try_or_die("Submission failed", extra_info="response")
     def __get_points(self):
         """
-        Decorated private method that retrieves the checksum to be checked
-         against when the message has been processed. (optional)
-
-        :post: self.checksum populated
+        Get the notification with the total of earned points or an alert.
         """
+        p = None
         try:
             p = self.soup.find('div', {"class" : "alert-success"}).text
         except AttributeError:
+            pass
+        try:
             p = self.soup.find('div', {"class" : "alert-danger"}).text
-        self.logger.info(p)
+        except AttributeError:
+            pass
+        if p:
+            self.logger.info(p)
+        else:
+            self.logger.debug("No feedback notification found !")
 
     def postamble(self):
         """
@@ -199,10 +201,3 @@ class RingZer0Bot(HTTPBot):
         self._set_cookie("PHPSESSID={}".format(self.cookie))
         # get the challenge page and retrieve CSRF token and message
         self.get().__get_info().__get_csrf().__get_inputs()
-
-    def precompute(self):
-        """
-        Template public method for precomputing things that could be useful
-         for handling the challenge message.
-        """
-        pass
