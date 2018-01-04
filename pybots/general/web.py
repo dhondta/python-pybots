@@ -10,7 +10,7 @@ Each specific bot inherits from a generic Bot class holding the base
 __author__ = "Alexandre D'Hondt"
 __version__ = "1.5"
 __copyright__ = "AGPLv3 (http://www.gnu.org/licenses/agpl.html)"
-__all__ = ["HTTPBot", "JSONBot"]
+__all__ = ["WebBot"]
 
 
 import copy

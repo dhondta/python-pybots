@@ -12,7 +12,7 @@ setup(
     "pybots.general",
     "pybots.specific",
   ],
-  version = "1.1.1",
+  version = "1.1.2",
   license = "AGPLv3",
   description = "A library for quickly creating client bots for communicating "
                 "with remote hosts.",
