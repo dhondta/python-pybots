@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-"""Bot clients for websites.
+"""Bot client for Web communication.
 
 Each specific bot inherits from a generic Bot class holding the base
  mechanism and logging for managing Web interactions with the handled sites.
@@ -8,26 +8,23 @@ Each specific bot inherits from a generic Bot class holding the base
 """
 
 __author__ = "Alexandre D'Hondt"
-__version__ = "1.4"
+__version__ = "1.5"
 __copyright__ = "AGPLv3 (http://www.gnu.org/licenses/agpl.html)"
 __all__ = ["HTTPBot", "JSONBot"]
 
 
-import bs4
 import copy
-import json
 import logging
 import os
 import requests
 import urllib3
 from types import MethodType
-
 try:  # Python3
     from urllib.request import urlretrieve
 except ImportError:  # Python2
     from urllib import urlretrieve
 
-from .base.template import Template
+from pybots.base.template import Template
 
 # disable annoying requests warnings
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -37,6 +34,9 @@ from urllib3.exceptions import InsecureRequestWarning
 urllib3.disable_warnings(InsecureRequestWarning)
 
 
+SUPPORTED_HTTP_METHODS = ["delete", "get", "head", "options", "post", "put"]
+
+
 class WebBot(Template):
     """
     Bot template class holding the base machinery for building a Web bot.
@@ -44,14 +44,6 @@ class WebBot(Template):
     :param url:      base URL to the challenge site
     :param verbose:  debug level
     :param no_proxy: force ignoring the proxy
-
-    Example usage:
-
-      from pybots.http import HTTPBot
-
-      with HTTPBot('http://127.0.0.1:8080') as bot:
-          print(bot.get("/json-api").json)
-          
     """
     headers = {'User-Agent': "Mozilla/5.0 (X11; Ubuntu; Linux x86_64;"
                              " rv:50.0) Gecko/20100101 Firefox/50.0",
@@ -64,9 +56,11 @@ class WebBot(Template):
 
     def __init__(self, url, verbose=False, no_proxy=False):
         super(HTTPBot, self).__init__(verbose, no_proxy)
+        self.logger.debug("Creating a session...")
         self.session = requests.Session()
         self.url = url.rstrip("/")
-        for m in ["delete", "get", "head", "options", "post", "put"]:
+        self.logger.debug("Binding HTTP methods...")
+        for m in SUPPORTED_HTTP_METHODS:
             setattr(HTTPBot, m, MethodType(HTTPBot.template(m), self))
 
     def __print_request(self):
@@ -91,12 +85,19 @@ class WebBot(Template):
             '\n'.join('    {}: {}'.format(k, v) \
                 for k, v in sorted(self.response.headers.items()))))
 
+    def _parse(self):
+        """
+        Template method for parsing the response.
+        """
+        pass
+
     def _set_cookie(self, cookie):
         """
         Simple method to add the cookie to the HTTP headers.
 
         :param cookie: content of the cookie
         """
+        self.logger.debug("Setting the cookie...")
         self.headers.update({'Cookie': cookie})
         return self
 
@@ -110,6 +111,7 @@ class WebBot(Template):
         :param addheaders: additional HTTP headers (dictionary)
         :post:             self.response, self.soup populated
         """
+        self.logger.debug("Requesting with method {}...".format(method))
         url = self.url + reqpath
         headers = copy.deepcopy(self.headers)
         headers.update(addheaders or {})
@@ -134,6 +136,12 @@ class WebBot(Template):
 
     @staticmethod
     def retrieve(self, resource, filename):
+        """
+        Simple static method for downloading a resource.
+
+        :param method: HTTP method to be bound
+        """
+        self.logger.debug("Downloading resource...")
         urlretrieve(resource, filename)
 
     @staticmethod
@@ -152,53 +160,3 @@ class WebBot(Template):
                 return self.request(reqpath, method.upper(), data, addheaders)
         f.__doc__ = doc.format(method.upper())
         return f
-
-
-class HTTPBot(WebBot):
-    """
-    HTTPBot class holding the machinery for building an HTTP client.
-
-    :param url:      base URL to the challenge site
-    :param verbose:  debug level
-    :param no_proxy: force ignoring the proxy
-
-    Example usage:
-
-      from pybots.web import HTTPBot
-
-      with HTTPBot('http://127.0.0.1:8080') as bot:
-          print(bot.get("/page.html").response.text)
-          
-    """
-    def _parse(self):
-        """
-        Parse the requested Web page.
-        """
-        self.soup = bs4.BeautifulSoup(self.response.text, 'html.parser')
-
-
-class JSONBot(WebBot):
-    """
-    JSONBot class holding the machinery for building a JSON client.
-
-    :param url:     base URL to the challenge site
-    :param verbose: debug level
-    :param no_proxy: force ignoring the proxy
-
-    Example usage:
-
-      from pybots.web import JSONBot
-
-      with JSONBot('http://127.0.0.1:8080') as bot:
-          print(bot.get("/json").response)
-          
-    """
-    def __init__(self, url, verbose=False, no_proxy=False):
-        super(JSONBot, self).__init__(url, verbose, no_proxy)
-        self.headers.update({'Content-Type': "application/json"})
-
-    def _parse(self):
-        """
-        Parse the requested JSON.
-        """
-        self.json = json.loads(self.response.text)

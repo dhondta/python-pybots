@@ -2,10 +2,17 @@ from pip.req import parse_requirements
 from setuptools import setup
 
 
+requirements = parse_requirements("requirements.txt", session=False)
 setup(
   name = "pybots",
-  packages = ["pybots", "pybots.base", "pybots.ctf"],
-  version = "1.0.3",
+  packages = [
+    "pybots",
+    "pybots.application",
+    "pybots.base",
+    "pybots.general",
+    "pybots.specific",
+  ],
+  version = "1.1.0",
   license = "AGPLv3",
   description = "A library for quickly creating client bots for communicating "
                 "with remote hosts.",
@@ -23,6 +30,6 @@ setup(
     'Programming Language :: Python :: 3.5',
     'Programming Language :: Python :: 3.6',
   ],
-  install_requires=[str(r.req) for r in parse_requirements("requirements.txt")],
+  install_requires=[str(r.req) for r in requirements],
   python_requires = '>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, <4',
 )

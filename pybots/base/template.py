@@ -8,7 +8,7 @@ Each specific bot inherits from the generic class "Template" holding the base
 """
 
 __author__ = "Alexandre D'Hondt"
-__version__ = "1.1"
+__version__ = "1.2"
 __copyright__ = "AGPLv3 (http://www.gnu.org/licenses/agpl.html)"
 __all__ = ["Template"]
 
@@ -57,12 +57,13 @@ class Template(object):
             kdict = kenv.split('_')[0].lower()
             if kenv not in self._proxies and kenv in os.environ.keys():
                 self._proxies.update({kdict: os.environ[kenv]})
-        self.logger.debug("Initialization done.")
+        self.logger.debug("Base initialization done.")
 
     def __enter__(self):
         """
         Context manager enter method, executing after __init__.
         """
+        self.logger.debug("Entering context...")
         self._preamble()
         return self
 
@@ -74,9 +75,28 @@ class Template(object):
         :param value:     value of exception
         :param traceback: traceback of exception
         """
+        self.logger.debug("Exiting context...")
+        self._postamble()
         if hasattr(self, "close"):
+            self.logger.debug("Closing bot connection...")
             self.close()
+        self._postcompute()
+        self.logger.debug("Shutting down...")
         Template.shutdown()
+
+    @try_or_die("Something failed during postamble.", extra_info=True)
+    def _postamble(self):
+        if hasattr(self, "postamble"):
+            self.logger.debug("Executing postamble...")
+            self.postamble()
+            self.logger.debug("Postamble done.")
+
+    @try_and_warn("Something failed during postcomputation.", extra_info=False)
+    def _postcompute(self):
+        if hasattr(self, "postcompute"):
+            self.logger.debug("Postcomputing...")
+            self.postcompute()
+            self.logger.debug("Postcomputation done.")
 
     @try_or_die("Something failed during preamble.", extra_info=True)
     def _preamble(self):
@@ -102,6 +122,7 @@ class Template(object):
         logging.basicConfig(format=log_fmt, datefmt=date_fmt,
                             level=[logging.INFO, logging.DEBUG][self.verbose])
         self.logger = logging.getLogger()
+        self.logger.debug("Configuring logging...")
         if colored_logs_present:
             coloredlogs.DEFAULT_LOG_FORMAT = log_fmt
             coloredlogs.DEFAULT_DATE_FORMAT = date_fmt

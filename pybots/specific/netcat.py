@@ -19,7 +19,7 @@ __copyright__ = "AGPLv3 (http://www.gnu.org/licenses/agpl.html)"
 __all__ = ["Netcat"]
 
 
-from .ssocket import SocketBot
+from pybots.general.ssocket import SocketBot
 
 
 class Netcat(SocketBot):

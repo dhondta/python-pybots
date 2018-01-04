@@ -10,12 +10,12 @@ If necessary, data can be precomputed in a precompute() method in order to have
 """
 
 __author__ = "Alexandre D'Hondt"
-__version__ = "1.0"
+__version__ = "1.1"
 __copyright__ = "AGPLv3 (http://www.gnu.org/licenses/agpl.html)"
 __all__ = ["IRCBot"]
 
 
-from .ssocket import SocketBot
+from pybots.general.ssocket import SocketBot
 
 
 class IRCBot(SocketBot):
@@ -34,15 +34,10 @@ class IRCBot(SocketBot):
 
     Example usage:
 
-      from pybots.irc import IRCBot
+      from pybots import IRCBot
 
-      class MyIRCBot(IRCBot):
-          def preamble(self):
-              self.msg("helloserv", "Hello!")
-
-      with MyIRCBot('127.0.0.1', channel="#test-channel", disp=True) as bot:
+      with IRCBot('127.0.0.1', channel="#test-channel") as bot:
           bot.msg("world", "Hello !")
-          bot.read_until("Hello")
     """
     def __init__(self, host, port=6667, channel=None, nickname="ircbot",
                  fullname="IRC Bot", *args, **kwargs):
@@ -50,15 +45,12 @@ class IRCBot(SocketBot):
         self.channel = channel
         self.nickname = nickname
         self.fullname = fullname
-        # after that, initialize the connection
         self.connect()
-        # handle preamble
         self.write("NICK {}".format(nickname))
         self.write("USER {} * * :{}".format(nickname, fullname))
-        self._preamble()
-        if channel is not None:
-            self.write("JOIN {}".format(channel))
-    
+        self.msg("nickserv", "iNOOPE")
+        self.join(channel)
+
     def close(self, exit=True):
         """
         Close the IRC session.
@@ -66,17 +58,26 @@ class IRCBot(SocketBot):
         self.write("QUIT :End of session")
         super(IRCBot, self).close(exit)
 
+    def join(self, channel=None):
+        """
+        Join an IRC channel (if any provided).
+        """
+        if channel is not None:
+            self.logger.debug("Joining channel {}...".format(channel))
+            self.channel = channel
+            self.write("JOIN {}".format(channel))
+            self.logger.debug("Handling PING if any...")
+            self.buffer = self.read()
+            if "PING " in self._hello:
+                pong = self.buffer.split("PING ")[1].strip()
+                self.write("PING {}".format(pong), eol="\r\n")  
+                self.buffer = self.read()
+
     def msg(self, dest, msg):
         """
         Method for sending private messages.
         """
         self.write("PRIVMSG {} :{}".format(dest, msg), eol="\r\n")
-
-    def preamble(self):
-        """
-        Default preamble to be processed during a session.
-        """
-        pass
 
     def read(self, length=1024, disp=None):
         """
@@ -88,5 +89,5 @@ class IRCBot(SocketBot):
         data = super(IRCBot, self).read(length, disp)
         if "ERROR" in data:
             self.logger.error(data.strip())
-            self.close()
+            SocketBot.close()
         return data

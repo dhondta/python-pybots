@@ -8,7 +8,7 @@
 """
 
 __author__ = "Alexandre D'Hondt"
-__version__ = "1.2"
+__version__ = "1.3"
 __copyright__ = "AGPLv3 (http://www.gnu.org/licenses/agpl.html)"
 __all__ = ["RingZer0Bot"]
 
@@ -18,7 +18,7 @@ import os
 import re
 
 from pybots.base.decorators import *
-from pybots.web import HTTPBot
+from pybots.specific.http import HTTPBot
 
 
 DOM = "ringzer0team.com"
@@ -42,39 +42,8 @@ class RingZer0Bot(HTTPBot):
     """
     def __init__(self, cid, verbose=False, cookie=None):
         super(RingZer0Bot, self).__init__("{}{}".format(URL, cid), verbose)
-        self.cid = cid
-        # set the cookie
-        if cookie is None:
-            try:
-                with open(CFN, 'r+') as f:
-                    cookie = f.read().strip()
-            except IOError:
-                self.logger.error("No cookie !")
-                HTTPBot.shutdown(code=0)
-        if not CKI.match(cookie):
-            self.logger.error("Invalid cookie !")
-            HTTPBot.shutdown(code=0)
-        self._set_cookie("PHPSESSID={}".format(cookie))
-        # get the challenge page and retrieve CSRF token and message
-        self.get().__get_info().__get_csrf().__get_inputs()
         self.answer = None
-
-    def __exit__(self, *args, **kwargs):
-        if self.answer is not None:
-            self.get("/{}".format(self.answer))
-        else:
-            self.logger.error("No answer attribute ; please set it in your "
-                              "computation.")
-            HTTPBot.shutdown(code=0)
-        self.__get_flag()
-        # then submit the flag to complete the challenge
-        self.post(data={'flag': self.flag, 'id': self.cid, 'csrf': self.csrf,
-                        'check': True}, addheaders={'Referer': self.url})
-        self.__get_csrf()
-        self.post(data={'flag': self.flag, 'id': self.cid, 'csrf': self.csrf,
-                        'check': True}, addheaders={'Referer': self.url})
-        self.__get_points()
-        super(RingZer0Bot, self).__exit__(*args, **kwargs)
+        self.cid = cid
 
     @try_or_die("No CSRF token found", extra_info="response")
     def __get_csrf(self):
@@ -188,6 +157,47 @@ class RingZer0Bot(HTTPBot):
         except AttributeError:
             p = self.soup.find('div', {"class" : "alert-danger"}).text
         self.logger.info(p)
+
+    def postamble(self):
+        """
+        Custom postamble for submitting the flag and earning the points.
+        """
+        if self.answer is not None:
+            self.get("/{}".format(self.answer))
+        else:
+            self.logger.error("No answer attribute ; please set it in your "
+                              "computation.")
+            HTTPBot.shutdown(code=0)
+        self.__get_flag()
+        # then submit the flag (twice, regetting the CSRF token between both
+        #  requests) to complete the challenge
+        data = {'flag': self.flag, 'id': self.cid, 'csrf': self.csrf,
+                'check': True}
+        addheaders = {'Referer': self.url}
+        self.post(data=data, addheaders=addheaders)
+        self.__get_csrf()
+        self.post(data=data, addheaders=addheaders)
+        self.__get_points()
+
+    def preamble(self):
+        """
+        Custom preamble for setting the related cookie and getting the
+         challenge information.
+        """
+        # set the cookie
+        if cookie is None:
+            try:
+                with open(CFN, 'r+') as f:
+                    cookie = f.read().strip()
+            except IOError:
+                self.logger.error("No cookie !")
+                HTTPBot.shutdown(code=0)
+        if not CKI.match(cookie):
+            self.logger.error("Invalid cookie !")
+            HTTPBot.shutdown(code=0)
+        self._set_cookie("PHPSESSID={}".format(cookie))
+        # get the challenge page and retrieve CSRF token and message
+        self.get().__get_info().__get_csrf().__get_inputs()
 
     def precompute(self):
         """

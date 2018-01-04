@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-"""Bot client for socket sessions.
+"""Bot client for socket communication.
 
 This generic bot allows to manage a socket session by using simple read/write
  methods.
@@ -8,7 +8,7 @@ This generic bot allows to manage a socket session by using simple read/write
 """
 
 __author__ = "Alexandre D'Hondt"
-__version__ = "1.2"
+__version__ = "1.3"
 __copyright__ = "AGPLv3 (http://www.gnu.org/licenses/agpl.html)"
 __all__ = ["SocketBot"]
 
@@ -22,7 +22,7 @@ import socket
 import sys
 from six import string_types
 
-from .base.template import Template
+from pybots.base.template import Template
 
 
 def addr_family(host):
@@ -53,6 +53,7 @@ class ProxySocket(object):
     :param pport:  proxy port number
     """
     def __init__(self, socket, phost, pport): 
+        self.logger.debug("Setting up a ProxySocket...")
         SocketBot.socket = socket
         self.phost = phost
         self.pport = pport
@@ -69,6 +70,7 @@ class ProxySocket(object):
 
         :param address: (host, port) pair
         """
+        self.logger.debug("Connecting through the proxy...")
         # Store the real remote adress
         self.host, self.port = address
         # try to connect to the proxy
@@ -83,8 +85,7 @@ class ProxySocket(object):
                 if SocketBot.socket:
                     SocketBot.socket.close()
                 SocketBot.socket = None
-        if SocketBot.socket is None:
-            raise e
+                raise e
         # create a tunnel connection to the target host/port
         SocketBot.socket.send("CONNECT {0}:{1} HTTP/1.1\r\nHost: {0}:{1}\r\n\r"
                               "\n".format(self.host, self.port));
@@ -162,18 +163,6 @@ class SocketBot(Template):
         elif hasattr(socket, "socket_orig"):
             socket.socket = socket.socket_orig
             delattr(socket, "socket_orig")
-    
-    def close(self, exit=True):
-        """
-        Close the opened socket and shutdown the bot if specified.
-        """
-        try:
-            SocketBot.socket.close()
-            SocketBot.socket = None
-        except:
-            pass
-        if exit:
-            Template.shutdown()
 
     def connect(self, host=None, port=None, timeout=0, blocking=True):
         """
@@ -184,6 +173,7 @@ class SocketBot(Template):
         :param timeout:  socket timeout
         :param blocking: set blocking socket
         """
+        self.logger.debug("Connecting to the remote host...")
         restart = False
         if host is not None:
             self.host, restart = host, True
@@ -191,7 +181,7 @@ class SocketBot(Template):
             self.port, restart = port, True
         if self.host and self.port:
             if restart:
-                self.close(exit=False)
+                SocketBot.close(False)
             # try to connect to the remote host
             i = socket.getaddrinfo(self.host, self.port, 0, 0, socket.SOL_TCP)
             for family, stype, proto, _, addr in i:
@@ -201,7 +191,7 @@ class SocketBot(Template):
                     break
                 except socket.error as e:
                     if SocketBot.socket:
-                        SocketBot.socket.close()
+                        SocketBot.close()
                     SocketBot.socket = None
             if SocketBot.socket is None:
                 SocketBot.logger.error("Socket could not be established")
@@ -221,14 +211,15 @@ class SocketBot(Template):
         :param length: length of data to be read
         :param disp:   display the received data
         """
+        self.logger.debug("Reading block of {}B...".format(length))
         data = ""
         try:
             data = SocketBot.socket.recv(length)
         except socket.error as e:
             self.logger.exception(str(e))
-            self.close()
+            SocketBot.close()
         except:
-            self.close()
+            SocketBot.close()
         if (self.disp if disp is None else disp) and len(data.strip()) > 0:
             print(self.__prefix_data(data, 'r'))
         return data
@@ -244,6 +235,7 @@ class SocketBot(Template):
                         - compiled regex object (re.compile(...))
         :param disp:    display the received data
         """
+        self.logger.debug("Reading until the one of the given patterns...")
         if isinstance(pattern, string_types):
             pattern = [pattern]
         if isinstance(pattern, list):
@@ -257,6 +249,7 @@ class SocketBot(Template):
         else:
             self.logger.error("Incorrect pattern")
             return
+        self.logger.debug("Read until pattern '{}'".format(pattern))
         pos = self.buffer.find(pattern)
         data = self.buffer[:pos + len(pattern)]
         self.buffer = self.buffer[pos + len(pattern):]
@@ -282,6 +275,7 @@ class SocketBot(Template):
         :param eol:  end of line characters
         :param disp: display the sent data
         """
+        self.logger.debug("Writing to the socket...")
         try:
             SocketBot.socket.send(data + eol)
         except socket.error as e:
@@ -292,6 +286,19 @@ class SocketBot(Template):
         if (self.disp if disp is None else disp):
             print(self.__prefix_data(data, 'w'))
         return data
+
+    @staticmethod
+    def close(self, exit=True):
+        """
+        Close the opened socket and shutdown the bot if specified.
+        """
+        try:
+            SocketBot.socket.close()
+            SocketBot.socket = None
+        except:
+            pass
+        if exit:
+            Template.shutdown()
 
 
 # Note: signal already bound with Template.shutdown ; however, the socket must

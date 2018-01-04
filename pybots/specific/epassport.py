@@ -8,16 +8,13 @@ This bot allows to communicate with an EPassport remote virtual terminal for
 """
 
 __author__ = "Alexandre D'Hondt"
-__version__ = "1.0"
+__version__ = "1.1"
 __copyright__ = "AGPLv3 (http://www.gnu.org/licenses/agpl.html)"
-__all__ = ["EPassport", "RemoteVirtualTerminal"]
+__all__ = ["EPassport"]
 
 
 import re
 import sys
-
-from .netcat import Netcat
-
 try:
     from pypassport.apdu import CommandAPDU, ResponseAPDU
     from pypassport.epassport import EPassport as EPP
@@ -26,6 +23,8 @@ try:
 except ImportError:
     pypassport_installed = False
     Reader = object
+
+from .netcat import Netcat
 
 
 def check_MRZ(method):
@@ -175,7 +174,7 @@ class EPassport(Netcat):
     def _terminal(self):
         """
         This instantiates the remote terminal to be used in self.set_MRZ(mrz).
-         This can be overriden to handle terminal differently.
+         This can be overriden to handle another terminal class.
         """
         return RemoteVirtualTerminal(self)
 
