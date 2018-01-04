@@ -68,7 +68,7 @@ class IRCBot(SocketBot):
             self.write("JOIN {}".format(channel))
             self.logger.debug("Handling PING if any...")
             self.buffer = self.read()
-            if "PING " in self._hello:
+            if "PING " in self.buffer:
                 pong = self.buffer.split("PING ")[1].strip()
                 self.write("PING {}".format(pong), eol="\r\n")  
                 self.buffer = self.read()
