@@ -68,16 +68,16 @@ This "tennis" game seems to work by sending a hash and the correct corresponding
 Let's then first get some hashes and try to crack them with [Crackstation.net](https://crackstation.net/):
 
 ```
-3beb460e56ea841b9eb9fd8a297fa680562e9a1d33df7540479c2ed037ab4883    sha256  tobias
-2fe70f8fab887c96dd0abb620572088ea2a5435ef9fe82d635b553af88e55896    sha256  gabriela
-b0e18c0332f39c44531d5bc1e09a47936e07a284ecaf4ef3ef92aa1fd4af9876    sha256  jordan1
-19a517a5258e9b02ddce1a03a44b9d76251cc331aaa41c1b1e12bffc8a7fc32f    sha256  myspace1
-74dd730b5c36c1cb4fdbb4bce1764c57f260190f94ba52d877308332f1dfe363    sha256  turtle
-59945da25d2521045b4bc84db7d5fd44b2c5511fe7cc247a8ce5a79bcd74a1c2    sha256  football1
-4748d4c802a775e8db9a23ec58f0986cacdc5d2d3356d22c490a7d22331ff133    sha256  walter
-e647708a52060743eb1dc963732cfedc1ea1db3a1785da3fb9c50dd3954fd708    sha256  barcelona
-10426253a2fcb6db8c40fd0376c95b791bae0973258facd7421e6d9be87e8dc6    sha256  fatassa121690
-6d26902e4a604f52162563a463a0f7c077f73535d5e3a1464444534b07c16745    sha256  badjao19
+3beb460e56ea841b9eb9fd8a297fa680562e9a1d33df7540479c2ed037ab4883  tobias
+2fe70f8fab887c96dd0abb620572088ea2a5435ef9fe82d635b553af88e55896  gabriela
+b0e18c0332f39c44531d5bc1e09a47936e07a284ecaf4ef3ef92aa1fd4af9876  jordan1
+19a517a5258e9b02ddce1a03a44b9d76251cc331aaa41c1b1e12bffc8a7fc32f  myspace1
+74dd730b5c36c1cb4fdbb4bce1764c57f260190f94ba52d877308332f1dfe363  turtle
+59945da25d2521045b4bc84db7d5fd44b2c5511fe7cc247a8ce5a79bcd74a1c2  football1
+4748d4c802a775e8db9a23ec58f0986cacdc5d2d3356d22c490a7d22331ff133  walter
+e647708a52060743eb1dc963732cfedc1ea1db3a1785da3fb9c50dd3954fd708  barcelona
+10426253a2fcb6db8c40fd0376c95b791bae0973258facd7421e6d9be87e8dc6  fatassa121690
+6d26902e4a604f52162563a463a0f7c077f73535d5e3a1464444534b07c16745  badjao19
 ```
 
 Interestingly all of the given hashes could be cracked. This may mean that using a wordlist of [Crackstation.net](https://crackstation.net/) could be a good choice. Let's choose the [*Smaller Wordlist (Human Passwords Only)*](https://crackstation.net/files/crackstation-human-only.txt.gz) that will be filtered for smaller memory use with a Netcat bot.
