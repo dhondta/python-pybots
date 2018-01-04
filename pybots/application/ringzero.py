@@ -44,6 +44,7 @@ class RingZer0Bot(HTTPBot):
         super(RingZer0Bot, self).__init__("{}{}".format(URL, cid), verbose)
         self.answer = None
         self.cid = cid
+        self.cookie = cookie
 
     @try_or_die("No CSRF token found", extra_info="response")
     def __get_csrf(self):
@@ -185,17 +186,17 @@ class RingZer0Bot(HTTPBot):
          challenge information.
         """
         # set the cookie
-        if cookie is None:
+        if self.cookie is None:
             try:
                 with open(CFN, 'r+') as f:
-                    cookie = f.read().strip()
+                    self.cookie = f.read().strip()
             except IOError:
                 self.logger.error("No cookie !")
                 HTTPBot.shutdown(code=0)
-        if not CKI.match(cookie):
+        if not CKI.match(self.cookie):
             self.logger.error("Invalid cookie !")
             HTTPBot.shutdown(code=0)
-        self._set_cookie("PHPSESSID={}".format(cookie))
+        self._set_cookie("PHPSESSID={}".format(self.cookie))
         # get the challenge page and retrieve CSRF token and message
         self.get().__get_info().__get_csrf().__get_inputs()
 

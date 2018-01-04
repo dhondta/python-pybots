@@ -1,6 +1,6 @@
-Metadata-Version: 2.6
+Metadata-Version: 2.7
 Name: pybots
-Version: 1.1.6
+Version: 1.1.7
 Summary: Library for quickly creating client bots.
 Home-page: https://github.com/dhondta/pybots
 Author: Alexandre D'Hondt
