@@ -1,3 +1,6 @@
+**Disclaimer**: The following examples are simple challenges from Root-Me shown for the purpose of illustrating the use of `pybots`. As this website holds permanent challenges, the full solutions and resulting flags are not given.
+
+
 ## [Go back to college](https://www.root-me.org/en/Challenges/Programming/Go-back-to-college-147)
 
 ```python

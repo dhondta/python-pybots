@@ -1,3 +1,6 @@
+**Disclaimer**: The following examples are simple challenges from RingZer0 shown for the purpose of illustrating the use of `pybots`. As this website holds permanent challenges, the full solutions and resulting flags are not given.
+
+
 ## [13 – Hash me if you can](https://ringzer0team.com/challenges/13)
 
 ```python

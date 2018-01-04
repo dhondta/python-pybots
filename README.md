@@ -8,7 +8,7 @@
 
 This library aims to quickly write client bots for communicating with remote hosts in various ways.
 
-It currently features: Socket communication, Netcat-like, HTTP, JSON, IRC, EPassport, RingZer0, Root-Me
+It currently features the following bots: Socket & Web (generic), Netcat, HTTP, JSON, IRC, EPassport, RingZer0, Root-Me
   
 
 ## Installation
