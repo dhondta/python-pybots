@@ -26,10 +26,8 @@ Each bot class is implemented as a context manager and has a logger attached. It
 from pybots import Netcat
 
 with Netcat("remote_host", 1234) as bot:
-    bot.write("Hello!")
-    data = bot.read_until("hash: ")
-    hash = data.split("hash: ")[-1]
-    bot.write(bot.lookup_table[hash])
+    data = bot.send_receive("Hello!")
+    # do something with data
 ```
 
 Note that, if a bot is used behind a proxy, it will use system's proxy settings. This can be bypassed by using `no_proxy=True` while instantiating the bot.
