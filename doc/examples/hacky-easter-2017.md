@@ -388,10 +388,6 @@ with EPassport('hackyeaster.hacking-lab.com', 7777, verbose=True) as p:
 ```
 
     20:49:29 [DEBUG] Initialization done.
-    20:49:29 [DEBUG] Precomputing...
-    20:49:29 [DEBUG] Precomputation done.
-    20:49:29 [DEBUG] Processing preamble...
-    20:49:29 [DEBUG] Preamble done.
     20:49:29 [INFO] Select eMRTD Application
     20:49:29 [DEBUG] --> 00 A4 04 0C 07 [A0000002471001] 
     20:49:30 [DEBUG] <-- [9000]
