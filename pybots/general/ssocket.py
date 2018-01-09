@@ -231,7 +231,7 @@ class SocketBot(Template):
         :param pattern: input pattern until which the data must be read
                         3 types are allowed:
                         - string
-                        - list of string
+                        - list of strings
                         - compiled regex object (re.compile(...))
         :param disp:    display the received data
         """
@@ -254,6 +254,19 @@ class SocketBot(Template):
         data = self.buffer[:pos + len(pattern)]
         self.buffer = self.buffer[pos + len(pattern):]
         return data
+  
+    def receive(self, *a, **kw):
+        """
+        Alias for read and read_until.
+        """
+        return [self.read_until, self.read][isinstance(a[0], int) \
+            if len(a) > 0 else 'pattern' not in kw.keys()](*a, **kw)
+
+    def send(self, *a, **kw):
+        """
+        Alias for write.
+        """
+        return self.write(*a, **kw)
  
     def send_receive(self, data='', pattern='\n', eol='\n', disp=None):
         """

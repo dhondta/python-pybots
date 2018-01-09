@@ -60,11 +60,13 @@ It can be instantiated using the following arguments:
 
 When a SocketBot is instantiated, it only registers the input arguments as attributes and creates an empty buffer for collecting the received data. In order to initiate a communication, the `connect` method must be used. This way, the associated socket can be reconnected or connections to other remote hosts can be made with the same bot.
 
-For communicating, the bot has four methods:
+For communicating, the bot has six methods:
 
 - `write`: for writing to the socket (using, by default, "\n" as the EOL character)
+- `send`: alias for `write`
 - `read`: for reading on the socket a given length of bytes
 - `read_until`: for reading blocks until a given pattern is reached
+- `receive`: alias for `read` and `read_until`
 - `send_receive`: for combining `write` then `read_until`
 
 Each time a read/write method is used, it returns the collected data.
