@@ -13,7 +13,7 @@ from pybots.netcat import Netcat
 
 class TennisSuperMaster(Netcat):
     def precompute(self):
-        self.lookup = LookupTable("/home/morfal/.dict/realhuman_phill.txt",
+        self.lookup = LookupTable("realhuman_phill.txt",
             "sha256", dict_filter=lambda x: x.islower() and x.isalnum())
         
 with TennisSuperMaster("hackyeaster.hacking-lab.com", 8888) as nc:
@@ -142,7 +142,7 @@ from pybots.netcat import Netcat
 
 class TennisSuperMaster(Netcat):
     def precompute(self):
-        self.lookup = LookupTable("/home/morfal/.dict/realhuman_phill.txt",
+        self.lookup = LookupTable("realhuman_phill.txt",
             "sha256", dict_filter=lambda x: x.islower() and x.isalnum())
         
 with TennisSuperMaster("hackyeaster.hacking-lab.com", 8888) as nc:
