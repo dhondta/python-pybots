@@ -5,7 +5,7 @@
 
 ```python
 import math
-from pybots.ctf.rootme import RootMeIRCBot
+from pybots import RootMeIRCBot
 
 with RootMeIRCBot(1, "your_pseudo") as bot:
     # INPUTS: the message from RootMe's IRC bot is in bot.inputs['message']
@@ -24,7 +24,7 @@ with RootMeIRCBot(1, "your_pseudo") as bot:
 ```python
 import base64
 import zlib
-from pybots.ctf.rootme import RootMeIRCBot
+from pybots import RootMeIRCBot
 
 with RootMeIRCBot(4, "your_pseudo") as bot:
     # INPUTS: the message from RootMe's IRC bot is in bot.inputs['message']
