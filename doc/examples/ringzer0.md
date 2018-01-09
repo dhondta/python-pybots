@@ -5,7 +5,7 @@
 
 ```python
 import hashlib
-from pybots.ctf.ringzero import RingZer0Bot
+from pybots import RingZer0Bot
 
 with RingZer0Bot(13, cookie="your_session_cookie") as bot:
     # INPUTS: the message from the Web page is in bot.inputs['MESSAGE']
@@ -30,7 +30,7 @@ sha512 algorithm
 ```python
 import pytesseract
 from PIL import Image
-from pybots.ctf.ringzero import RingZer0Bot
+from pybots import RingZer0Bot
 
 with RingZer0Bot(17, cookie="your_session_cookie") as bot:
     # INPUTS: the image from the Web page is in bot.inputs['IMAGE']
