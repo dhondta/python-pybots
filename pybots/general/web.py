@@ -23,6 +23,10 @@ try:  # Python3
     from urllib.request import urlretrieve
 except ImportError:  # Python2
     from urllib import urlretrieve
+try:  # Python3
+    from urllib.parse import urljoin, urlparse
+except ImportError:  # Python2
+    from urlparse import urljoin, urlparse
 
 from pybots.base.template import Template
 
@@ -56,9 +60,13 @@ class WebBot(Template):
 
     def __init__(self, url, verbose=False, no_proxy=False):
         super(WebBot, self).__init__(verbose, no_proxy)
+        parsed = urlparse(url)
+        if parsed.scheme == '' or parsed.netloc == '':
+            self.logger.error("Bad URL")
+            self.shutdown()
+        self.url = url + "/" if parsed.path == '' else url
         self.logger.debug("Creating a session...")
         self.session = requests.Session()
-        self.url = url.rstrip("/")
         self.logger.debug("Binding HTTP methods...")
         for m in SUPPORTED_HTTP_METHODS:
             setattr(WebBot, m, MethodType(WebBot.template(m), self))
@@ -112,7 +120,7 @@ class WebBot(Template):
         :post:             self.response, self.soup populated
         """
         self.logger.debug("Requesting with method {}...".format(method))
-        url = self.url + reqpath
+        url = urljoin(self.url, reqpath)
         headers = copy.deepcopy(self.headers)
         headers.update(addheaders or {})
         if not hasattr(requests, method.lower()):
@@ -134,15 +142,21 @@ class WebBot(Template):
         self._parse()
         return self
 
-    @staticmethod
-    def retrieve(self, resource, filename):
+    def retrieve(self, resource, filename=None):
         """
-        Simple static method for downloading a resource.
+        Simple method for downloading a resource.
 
-        :param method: HTTP method to be bound
+        :param resource: resource to be downloaded
+        :param filename: destination filename
         """
+        parsed = urlparse(resource)
+        if filename is None:
+            filename = os.path.basename(parsed.path) or "undefined"
+        if parsed.netloc == '':
+            resource = urljoin(self.url, resource)
         self.logger.debug("Downloading resource...")
         urlretrieve(resource, filename)
+        self.logger.debug("> Saved to '{}'".format(filename))
 
     @staticmethod
     def template(method):

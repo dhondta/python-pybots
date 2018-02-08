@@ -134,7 +134,7 @@ class RingZer0Bot(HTTPBot):
                     else:
                         _, ext = os.path.splitext(src)
                         msg = ".image" + ext
-                        HTTPBot.retrieve(src, msg)
+                        self.retrieve(src, msg)
                     self.inputs[tag] = msg
                 else:
                     self.logger.warn("Message block found but nothing parsed")
