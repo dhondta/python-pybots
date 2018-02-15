@@ -14,14 +14,13 @@ __all__ = ["SocketBot"]
 
 
 import inspect
-import logging
 import os
 import re
-import signal
 import socket
 import sys
 from six import string_types
 
+from pybots.base.decorators import *
 from pybots.base.template import Template
 
 
@@ -48,60 +47,56 @@ class ProxySocket(object):
      http://code.activestate.com/recipes/577643-transparent-http-tunnel-for-
         python-sockets-to-be-u/
 
-    :param socket: socket object
+    :param sock:   socket instance
     :param phost:  proxy hostname or IP address
     :param pport:  proxy port number
     """
-    def __init__(self, socket, phost, pport): 
-        self.logger.debug("Setting up a ProxySocket...")
-        SocketBot.socket = socket
+    def __init__(self, bot, sock, phost, pport):
+        self.bot = bot
+        self.bot.logger.debug("Setting up a ProxySocket...")
+        self.socket = sock
         self.phost = phost
         self.pport = pport
-        # bind every method of socket to self (except the constructor)
+        self.bot.logger.debug("Proxy: {}:{}".format(phost, pport))
+        # bind every method of socket to self (except __init__ and connect,
+        #  which are handled)
         bind = lambda i, f, n: setattr(i, n, f.__get__(i, i.__class__))
-        for m, _ in inspect.getmembers(socket, predicate=inspect.ismethod):
-            if m != "__init__":
-                f = lambda s, *a, **kw: getattr(SocketBot.socket, m)(*a, **kw)
+        for m, _ in inspect.getmembers(sock, predicate=inspect.ismethod):
+            if m not in ["__init__", "connect"]:
+                f = lambda s, *a, **kw: getattr(sock, m)(*a, **kw)
                 bind(self, f, m)
 
-    def connect(self, address):
+    def connect(self, *args):
         """
         Create a tunnel through the proxy server.
-
-        :param address: (host, port) pair
         """
-        self.logger.debug("Connecting through the proxy...")
-        # Store the real remote adress
-        self.host, self.port = address
+        self.bot.logger.debug("Connecting through the proxy...")
         # try to connect to the proxy
         pinfo = socket.getaddrinfo(self.phost, self.pport, 0, 0, socket.SOL_TCP)
         for family, stype, proto, _, addr in pinfo:
             try:
                 # replace the socket by a connection to the proxy
-                SocketBot.socket = s = socket.socket_orig(family, stype, proto)
+                self.bot.socket = s = socket.socket_orig(family, stype, proto)
                 s.connect(addr)
                 break
             except socket.error as e:
-                if SocketBot.socket:
-                    SocketBot.socket.close()
-                SocketBot.socket = None
+                self.bot.close()
                 raise e
         # create a tunnel connection to the target host/port
-        SocketBot.socket.send("CONNECT {0}:{1} HTTP/1.1\r\nHost: {0}:{1}\r\n\r"
-                              "\n".format(self.host, self.port));
+        self.socket.send("CONNECT {0}:{1} HTTP/1.1\r\nHost: {0}:{1}\r\n\r"
+                         "\n".format(self.bot.host, self.bot.port));
         # get and parse the response
-        resp = SocketBot.socket.recv(4096)
+        resp = self.socket.recv(4096)
         error, resp = resp.split("\n", 1)
         status_code = int(error.split()[1])
         if status_code != 200:
-            self.response = resp
             raise Exception("Proxy server returned error: {}".format(error))
 
     @staticmethod
-    def setup(phost, pport):
+    def setup(bot, phost, pport):
         def proxy_socket(*args, **kwargs):
             s = socket.socket_orig(*args, **kwargs)
-            return ProxySocket(s, phost, pport)
+            return ProxySocket(bot, s, phost, pport)
         socket.socket_orig = socket.socket
         socket.socket = proxy_socket
 
@@ -159,11 +154,22 @@ class SocketBot(Template):
         except KeyError:
             phost, pport = None, 0
         if phost is not None and pport in range(1, 2**16):
-            ProxySocket.setup(phost, pport)
-        elif hasattr(socket, "socket_orig"):
+            ProxySocket.setup(self, phost, pport)
+        elif hasattr(socket, "socket_orig"):  # reset original socket function
             socket.socket = socket.socket_orig
             delattr(socket, "socket_orig")
 
+    def close(self):
+        """
+        Close the eventually opened socket.
+        """
+        try:
+            self.socket.close()
+            self.socket = None
+        except:
+            pass
+
+    @try_or_die("Socket establishment failed", socket.error)
     def connect(self, host=None, port=None, timeout=0, blocking=True):
         """
         Create a socket and connect to the input host.
@@ -175,35 +181,29 @@ class SocketBot(Template):
         """
         self.logger.debug("Connecting to the remote host...")
         restart = False
-        if host is not None:
+        if host is not None:  # new host was input through connect()
             self.host, restart = host, True
-        if port is not None:
+        if port is not None:  # new port was input through connect()
             self.port, restart = port, True
         if self.host and self.port:
-            if restart:
-                SocketBot.close(False)
+            if restart:  # close and dispose the old socket
+                self.close()
             # try to connect to the remote host
             i = socket.getaddrinfo(self.host, self.port, 0, 0, socket.SOL_TCP)
             for family, stype, proto, _, addr in i:
-                try:
-                    SocketBot.socket = socket.socket(family, stype, proto)
-                    SocketBot.socket.connect(addr)
-                    break
-                except socket.error as e:
-                    if SocketBot.socket:
-                        SocketBot.close()
-                    SocketBot.socket = None
-            if SocketBot.socket is None:
-                SocketBot.logger.error("Socket could not be established")
-                SocketBot.logger.exception(str(e))
-                SocketBot.close()
+                self.socket = socket.socket(family, stype, proto)
+                self.socket.connect(addr)
+                break
+            if self.socket is None:
+                raise socket.error("Socket could not be established")
             # manage blocking and timeout
             if timeout > 0:
-                SocketBot.socket.settimeout(timeout)
-            SocketBot.socket.setblocking(blocking)
+                self.socket.settimeout(timeout)
+            self.socket.setblocking(blocking)
         else:
             self.logger.error("Missing parameter (host and/or port)")
 
+    @try_or_die("Read failed")
     def read(self, length=1024, disp=None):
         """
         Read a given length of bytes off the socket.
@@ -214,12 +214,12 @@ class SocketBot(Template):
         self.logger.debug("Reading block of {}B...".format(length))
         data = ""
         try:
-            data = SocketBot.socket.recv(length)
+            data = self.socket.recv(length)
         except socket.error as e:
             self.logger.exception(str(e))
-            SocketBot.close()
+            self.close()
         except:
-            SocketBot.close()
+            self.close()
         if (self.disp if disp is None else disp) and len(data.strip()) > 0:
             print(self.__prefix_data(data, 'r'))
         return data
@@ -235,7 +235,7 @@ class SocketBot(Template):
                         - compiled regex object (re.compile(...))
         :param disp:    display the received data
         """
-        self.logger.debug("Reading until the one of the given patterns...")
+        self.logger.debug("Reading until one of the given patterns...")
         if isinstance(pattern, string_types):
             pattern = [pattern]
         if isinstance(pattern, list):
@@ -249,7 +249,8 @@ class SocketBot(Template):
         else:
             self.logger.error("Incorrect pattern")
             return
-        self.logger.debug("Read until pattern '{}'".format(pattern))
+        p = pattern.encode('string-escape')
+        self.logger.debug("Read until pattern '{}'".format(p))
         pos = self.buffer.find(pattern)
         data = self.buffer[:pos + len(pattern)]
         self.buffer = self.buffer[pos + len(pattern):]
@@ -280,6 +281,7 @@ class SocketBot(Template):
         self.write(data, eol, disp)
         return self.read_until(pattern, disp)
 
+    @try_or_die("Write failed")
     def write(self, data='', eol='\n', disp=None):
         """
         Write input data to the socket.
@@ -290,7 +292,7 @@ class SocketBot(Template):
         """
         self.logger.debug("Writing to the socket...")
         try:
-            SocketBot.socket.send(data + eol)
+            self.socket.send(data + eol)
         except socket.error as e:
             self.logger.exception(str(e))
             self.close()
@@ -299,22 +301,3 @@ class SocketBot(Template):
         if (self.disp if disp is None else disp):
             print(self.__prefix_data(data, 'w'))
         return data
-
-    @staticmethod
-    def close(exit=True):
-        """
-        Close the opened socket and shutdown the bot if specified.
-        """
-        try:
-            SocketBot.socket.close()
-            SocketBot.socket = None
-        except:
-            pass
-        if exit:
-            Template.shutdown()
-
-
-# Note: signal already bound with Template.shutdown ; however, the socket must
-#        also be closed ;
-# rebind termination signal (Ctrl+C) to exit handler
-signal.signal(signal.SIGINT, SocketBot.close)
