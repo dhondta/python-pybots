@@ -151,16 +151,13 @@ class RingZer0Bot(HTTPBot):
         try:
             p = self.soup.find('div', {"class" : "alert-success"}).text
         except AttributeError:
-            pass
-        try:
             p = self.soup.find('div', {"class" : "alert-danger"}).text
-        except AttributeError:
-            pass
         if p:
             self.logger.info(p)
         else:
             self.logger.debug("No feedback notification found !")
 
+    @try_or_die("No 'answer' attribute set ; please define it")
     def postamble(self):
         """
         Custom postamble for submitting the flag and earning the points.
@@ -168,9 +165,7 @@ class RingZer0Bot(HTTPBot):
         if self.answer is not None:
             self.get("/{}".format(self.answer))
         else:
-            self.logger.error("No answer attribute ; please set it in your "
-                              "computation.")
-            HTTPBot.shutdown(code=0)
+            raise AttributeError
         self.__get_flag()
         # then submit the flag (twice, regetting the CSRF token between both
         #  requests) to complete the challenge
@@ -182,6 +177,7 @@ class RingZer0Bot(HTTPBot):
         self.post(data=data, addheaders=addheaders)
         self.__get_points()
 
+    @try_or_die("No valid cookie provided")
     def preamble(self):
         """
         Custom preamble for setting the related cookie and getting the
@@ -189,15 +185,10 @@ class RingZer0Bot(HTTPBot):
         """
         # set the cookie
         if self.cookie is None:
-            try:
-                with open(CFN, 'r+') as f:
-                    self.cookie = f.read().strip()
-            except IOError:
-                self.logger.error("No cookie !")
-                HTTPBot.shutdown(code=0)
+            with open(CFN, 'r+') as f:
+                self.cookie = f.read().strip()
         if not CKI.match(self.cookie):
-            self.logger.error("Invalid cookie !")
-            HTTPBot.shutdown(code=0)
+            raise Exception
         self._set_cookie("PHPSESSID={}".format(self.cookie))
         # get the challenge page and retrieve CSRF token and message
         self.get().__get_info().__get_csrf().__get_inputs()
