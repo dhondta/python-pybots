@@ -8,15 +8,15 @@ Each specific bot inherits from the generic class "Template" holding the base
 """
 
 __author__ = "Alexandre D'Hondt"
-__version__ = "1.2"
+__version__ = "1.3"
 __copyright__ = "AGPLv3 (http://www.gnu.org/licenses/agpl.html)"
 __all__ = ["Template"]
 
 
 import logging
 import os
-import signal
 import sys
+from io import StringIO
 
 try:  # Python3
     from urllib.request import getproxies
@@ -34,8 +34,24 @@ except ImportError:
 from .decorators import *
 
 
-LOG_FORMAT = '%(asctime)s [%(levelname)s] %(message)s'
+LOG_FORMAT = '%(asctime)s [%(levelname)s] %(name)s %(message)s'
 DATE_FORMAT = '%H:%M:%S'
+
+
+class IpyExit(SystemExit):
+    """Exit Exception for IPython.
+
+    Exception temporarily redirects stderr to buffer.
+
+    Source: https://stackoverflow.com/questions/44893461/problems-exiting-from-
+             python-using-ipython-spyder/48000399#48000399
+    """
+    def __init__(self):
+        sys.stderr = StringIO()
+
+    def __del__(self):
+        sys.stderr.close()
+        sys.stderr = sys.__stderr__  # restore from backup
 
 
 class Template(object):
@@ -45,10 +61,24 @@ class Template(object):
     :param verbose:  verbose mode
     :param no_proxy: force ignoring the proxy
     """
+    bots = {}
+    counters = {}
+
     def __init__(self, verbose=False, no_proxy=False):
+        self._exited = False
+        # keep track of bots
+        c = self.__class__.__name__
+        Template.bots.setdefault(c, {})
+        Template.counters.setdefault(c, 0)
+        Template.counters[c] += 1
+        Template.bots[c][self] = Template.counters[c]
+        self.name = "{}-{}".format(c, Template.counters[c])
         # configure logging
         self.verbose = verbose
         self.configure()
+        # configure post-execution workflow
+        self.force_postamble = False    # (if exception raised)
+        self.force_postcompute = False 
         # execute precomputation if any
         self._precompute()
         # check for proxy configuration
@@ -71,41 +101,57 @@ class Template(object):
         """
         Context manager exit method, for gracefully closing the bot.
 
-        :param type:      type of exception that caused the context to be exited
-        :param value:     value of exception
+        :param exc_type:  type of exception that caused the context to be exited
+        :param exc_value: value of exception
         :param traceback: traceback of exception
         """
+        if self._exited:  # this prevents from raising SystemExit
+            return
+        self.__no_error = exc_type is None
+        if exc_type is KeyboardInterrupt:
+            self.logger.warn("Bot execution interrupted.")
+            exc_type = None
         self.logger.debug("Exiting context...")
-        self._postamble()
+        if self.__no_error or self.force_postamble:
+            self._postamble()
         if hasattr(self, "close"):
-            self.logger.debug("Closing bot connection...")
+            self.logger.debug("Gracefully closing bot...")
             self.close()
-        self._postcompute()
-        self.logger.debug("Shutting down...")
-        Template.shutdown()
+        if self.__no_error or self.force_postcompute:
+            self._postcompute()
+        if exc_value is not None:
+            self.logger.exception(exc_value)
+        # if run from IPython, handle exit without killing the current kernel
+        try:
+            __IPYTHON__
+            quit(keep_kernel=True)
+        except NameError:
+            pass
+        self._exited = True
+        sys.exit(int(exc_type is not None))
 
-    @try_or_die("Something failed during postamble.", extra_info=True)
+    @try_or_die("Something failed during postamble.")
     def _postamble(self):
         if hasattr(self, "postamble"):
             self.logger.debug("Executing postamble...")
             self.postamble()
             self.logger.debug("Postamble done.")
 
-    @try_and_warn("Something failed during postcomputation.", extra_info=False)
+    @try_and_warn("Something failed during postcomputation.")
     def _postcompute(self):
         if hasattr(self, "postcompute"):
             self.logger.debug("Postcomputing...")
             self.postcompute()
             self.logger.debug("Postcomputation done.")
 
-    @try_or_die("Something failed during preamble.", extra_info=True)
+    @try_or_die("Something failed during preamble.")
     def _preamble(self):
         if hasattr(self, "preamble"):
             self.logger.debug("Executing preamble...")
             self.preamble()
             self.logger.debug("Preamble done.")
 
-    @try_and_warn("Something failed during precomputation.", extra_info=False)
+    @try_and_warn("Something failed during precomputation.")
     def _precompute(self):
         if hasattr(self, "precompute"):
             self.logger.debug("Precomputing...")
@@ -119,31 +165,15 @@ class Template(object):
         :param log_fmt:  log message format
         :param date_fmt: datetime format
         """
-        logging.basicConfig(format=log_fmt, datefmt=date_fmt,
-                            level=[logging.INFO, logging.DEBUG][self.verbose])
-        self.logger = logging.getLogger()
-        self.logger.debug("Configuring logging...")
+        self.logger = logging.getLogger(self.name)
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter(log_fmt, date_fmt)
+        handler.setFormatter(formatter)
+        self.logger.addHandler(handler)
+        self.logger.setLevel([logging.INFO, logging.DEBUG][self.verbose])
         if colored_logs_present:
             coloredlogs.DEFAULT_LOG_FORMAT = log_fmt
             coloredlogs.DEFAULT_DATE_FORMAT = date_fmt
-            coloredlogs.install([logging.INFO, logging.DEBUG][self.verbose])
-
-    @staticmethod
-    def shutdown(signum=None, frame=None, code=0):
-        """
-        Exit handler.
-
-        :param signal: signal number
-        :param frame:  stack frame
-        :param code:   exit code
-        """
-        logging.shutdown()
-        try:
-            __IPYTHON__
-            quit(keep_kernel=True)
-        except NameError:
-            sys.exit(code)
-
-
-# bind termination signal (Ctrl+C) to exit handler
-signal.signal(signal.SIGINT, Template.shutdown)
+            coloredlogs.install([logging.INFO, logging.DEBUG][self.verbose],
+                                logger=self.logger)
+        self.logger.debug("Logging configured.")
