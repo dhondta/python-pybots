@@ -8,7 +8,7 @@ Each specific bot inherits from a generic Bot class holding the base
 """
 
 __author__ = "Alexandre D'Hondt"
-__version__ = "1.5"
+__version__ = "1.6"
 __copyright__ = "AGPLv3 (http://www.gnu.org/licenses/agpl.html)"
 __all__ = ["WebBot"]
 
@@ -28,6 +28,7 @@ try:  # Python3
 except ImportError:  # Python2
     from urlparse import urljoin, urlparse
 
+from pybots.base.decorators import *
 from pybots.base.template import Template
 
 # disable annoying requests warnings
@@ -62,11 +63,12 @@ class WebBot(Template):
         super(WebBot, self).__init__(verbose, no_proxy)
         parsed = urlparse(url)
         if parsed.scheme == '' or parsed.netloc == '':
-            self.logger.error("Bad URL")
-            self.shutdown()
+            raise Exception("Bad URL")
         self.url = url + "/" if parsed.path == '' else url
         self.logger.debug("Creating a session...")
         self.session = requests.Session()
+        self.session.headers.update(self.headers)
+        self.session.proxies.update(self._proxies)
         self.logger.debug("Binding HTTP methods...")
         for m in SUPPORTED_HTTP_METHODS:
             setattr(WebBot, m, MethodType(WebBot.template(m), self))
@@ -109,6 +111,7 @@ class WebBot(Template):
         self.headers.update({'Cookie': cookie})
         return self
 
+    @try_or_die("Request failed")
     def request(self, reqpath="/", method="GET", data=None, addheaders=None):
         """
         Get a Web page.
@@ -121,27 +124,26 @@ class WebBot(Template):
         """
         self.logger.debug("Requesting with method {}...".format(method))
         url = urljoin(self.url, reqpath)
-        headers = copy.deepcopy(self.headers)
-        headers.update(addheaders or {})
-        if not hasattr(requests, method.lower()):
+        m = method.lower()
+        if not hasattr(requests, m):
             self.logger.error("Bad request")
-            self.shutdown(1)
-        self._request = requests.Request(method, url, data=data or {},
-                                         headers=headers).prepare()
+            raise AttributeError("requests has no method '{}'".format(m))
+        request = requests.Request(method, url, data=data or {},
+                                   headers=addheaders or {})
+        self._request = self.session.prepare_request(request)
         self.__print_request()
         try:
-            self.response = self.session.send(self._request,
-                                              proxies=self._proxies,
-                                              verify=False)
-        except requests.exceptions.ProxyError:
+            self.response = self.session.send(self._request)
+        except:
             self.response = self.session.send(self._request, verify=False)
         self.__print_response()
-        if self.response.status_code != 200:
-            self.logger.error("Request failed")
-            Bot.shutdown()
+        if 200 < self.response.status_code < 300:
+            raise Exception("{} - {}".format(self.response.status_code,
+                                             self.response.reason))
         self._parse()
         return self
 
+    @try_and_warn("Resource retrieval failed", trace=True)
     def retrieve(self, resource, filename=None):
         """
         Simple method for downloading a resource.
