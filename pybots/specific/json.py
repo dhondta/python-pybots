@@ -13,8 +13,9 @@ __copyright__ = "AGPLv3 (http://www.gnu.org/licenses/agpl.html)"
 __all__ = ["JSONBot"]
 
 
-import json
+import simplejson
 
+from pybots.base.decorators import try_and_pass
 from pybots.general.web import *
 
 
@@ -36,10 +37,11 @@ class JSONBot(WebBot):
     """
     def __init__(self, url, verbose=False, no_proxy=False):
         super(JSONBot, self).__init__(url, verbose, no_proxy)
-        self.headers.update({'Content-Type': "application/json"})
+        self.session.headers.update({'Content-Type': "application/json"})
 
+    @try_and_pass(simplejson.JSONDecodeError)
     def _parse(self):
         """
         Parse the requested JSON.
         """
-        self.json = json.loads(self.response.text)
+        self.json = simplejson.loads(self.response.text.strip())

@@ -96,7 +96,6 @@ class RemoteVirtualTerminal(Reader):
                 #  APDU format should be raw bytes
                 if code != "9000":
                     self.__in_fmt = 1
-                    print("wooops")
             except ValueError:
                 self.__in_fmt = 1
             self.__bot.logger.debug("Ingoing APDU format determined as {}"

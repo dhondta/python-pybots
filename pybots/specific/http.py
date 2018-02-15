@@ -16,6 +16,7 @@ __all__ = ["HTTPBot"]
 
 import bs4
 
+from pybots.base.decorators import try_and_pass
 from pybots.general.web import *
 
 
@@ -35,6 +36,7 @@ class HTTPBot(WebBot):
           print(bot.get("/page.html").response.text)
           
     """
+    @try_and_pass()
     def _parse(self):
         """
         Parse the requested Web page.

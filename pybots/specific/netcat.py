@@ -47,10 +47,8 @@ class Netcat(SocketBot):
           nc.write('set')
           nc.read_until('id:')
     """
-    def __init__(self, host, port, disp=False, verbose=False, prefix=False,
-                 no_proxy=False):
-        super(Netcat, self).__init__(host, port, disp, verbose, prefix,
-                                     no_proxy)
+    def __init__(self, *args, **kwargs):
+        super(Netcat, self).__init__(*args, **kwargs)
         self.connect()
 
     def preamble(self):
