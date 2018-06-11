@@ -59,7 +59,7 @@ class WebBot(Template):
                'Connection': "keep-alive",
                'DNT': "1", 'Upgrade-Insecure-Requests': "1"}
 
-    def __init__(self, url, verbose=False, no_proxy=False):
+    def __init__(self, url, auth=None, verbose=False, no_proxy=False):
         super(WebBot, self).__init__(verbose, no_proxy)
         parsed = urlparse(url)
         if parsed.scheme == '' or parsed.netloc == '':
@@ -67,6 +67,8 @@ class WebBot(Template):
         self.url = url + "/" if parsed.path == '' else url
         self.logger.debug("Creating a session...")
         self.session = requests.Session()
+        if auth:
+            self.session.auth = auth
         self.session.headers.update(self.headers)
         self.session.proxies.update(self._proxies)
         self.logger.debug("Binding HTTP methods...")
@@ -108,34 +110,37 @@ class WebBot(Template):
         :param cookie: content of the cookie
         """
         self.logger.debug("Setting the cookie...")
-        self.headers.update({'Cookie': cookie})
+        self.session.headers.update({'Cookie': cookie})
         return self
 
     @try_or_die("Request failed")
-    def request(self, reqpath="/", method="GET", data=None, addheaders=None):
+    def request(self, rqpath="/", method="GET", data=None, aheaders=None, **kw):
         """
         Get a Web page.
 
-        :param reqpath:    request path (to be added to self.url)
-        :param method:     HTTP method
-        :param data:       data to be sent (if applicable, i.e. for POST)
-        :param addheaders: additional HTTP headers (dictionary)
-        :post:             self.response, self.soup populated
+        :param rqpath:   request path (to be added to self.url)
+        :param method:   HTTP method
+        :param data:     data to be sent (if applicable, i.e. for POST)
+        :param aheaders: additional HTTP headers (dictionary)
+        :post:           self.response, self.soup populated
         """
         self.logger.debug("Requesting with method {}...".format(method))
-        url = urljoin(self.url, reqpath)
+        url = urljoin(self.url, rqpath)
         m = method.lower()
         if not hasattr(requests, m):
             self.logger.error("Bad request")
             raise AttributeError("requests has no method '{}'".format(m))
         request = requests.Request(method, url, data=data or {},
-                                   headers=addheaders or {})
+                                   headers=aheaders or {}, **kw)
         self._request = self.session.prepare_request(request)
         self.__print_request()
         try:
-            self.response = self.session.send(self._request)
+            self.response = self.session.send(self._request,
+                                              allow_redirects=True)
         except:
-            self.response = self.session.send(self._request, verify=False)
+            self.response = self.session.send(self._request,
+                                              allow_redirects=True,
+                                              verify=False)
         self.__print_response()
         if 200 < self.response.status_code < 300:
             raise Exception("{} - {}".format(self.response.status_code,
@@ -168,11 +173,15 @@ class WebBot(Template):
         :param method: HTTP method to be bound
         """
         doc = """ Alias for request(method="{0}"). """
-        if method in ["delete", "get", "head", "options"]:
-            def f(self, reqpath="/", addheaders=None):
-                return self.request(reqpath, method.upper(), None, addheaders)
+        if method == "get":
+            def f(self, rqpath="/", params=None, aheaders=None):
+                return self.request(rqpath, method.upper(), None, aheaders,
+                                    params=params)
+        if method in ["delete", "head", "options"]:
+            def f(self, rqpath="/", aheaders=None):
+                return self.request(rqpath, method.upper(), None, aheaders)
         elif method in ["post", "put"]:
-            def f(self, reqpath="/", data=None, addheaders=None):
-                return self.request(reqpath, method.upper(), data, addheaders)
+            def f(self, rqpath="/", data=None, aheaders=None, **k):
+                return self.request(rqpath, method.upper(), data, aheaders, **k)
         f.__doc__ = doc.format(method.upper())
         return f

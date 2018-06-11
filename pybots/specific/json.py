@@ -23,8 +23,9 @@ class JSONBot(WebBot):
     """
     JSONBot class holding the machinery for building a JSON client.
 
-    :param url:     base URL to the challenge site
-    :param verbose: debug level
+    :param url:      base URL to the challenge site
+    :param auth:     authentication credentials as a tuple
+    :param verbose:  debug level
     :param no_proxy: force ignoring the proxy
 
     Example usage:
@@ -35,8 +36,8 @@ class JSONBot(WebBot):
           print(bot.get("/json").json)
           
     """
-    def __init__(self, url, verbose=False, no_proxy=False):
-        super(JSONBot, self).__init__(url, verbose, no_proxy)
+    def __init__(self, *args, **kwargs):
+        super(JSONBot, self).__init__(*args, **kwargs)
         self.session.headers.update({'Content-Type': "application/json"})
 
     @try_and_pass(simplejson.JSONDecodeError)

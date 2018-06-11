@@ -25,6 +25,7 @@ class HTTPBot(WebBot):
     HTTPBot class holding the machinery for building an HTTP client.
 
     :param url:      base URL to the challenge site
+    :param auth:     authentication credentials as a tuple
     :param verbose:  debug level
     :param no_proxy: force ignoring the proxy
 

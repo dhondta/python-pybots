@@ -82,11 +82,14 @@ class Template(object):
         # execute precomputation if any
         self._precompute()
         # check for proxy configuration
-        self._proxies = getproxies() if not no_proxy else {}
-        for kenv in ['HTTP_PROXY', 'HTTPS_PROXY', 'FTP_PROXY']:
-            kdict = kenv.split('_')[0].lower()
-            if kenv not in self._proxies and kenv in os.environ.keys():
-                self._proxies.update({kdict: os.environ[kenv]})
+        if no_proxy:
+            self._proxies = {}
+        else:
+            self._proxies = getproxies()
+            for kenv in ['HTTP_PROXY', 'HTTPS_PROXY', 'FTP_PROXY']:
+                kdict = kenv.split('_')[0].lower()
+                if kenv not in self._proxies and kenv in os.environ.keys():
+                    self._proxies.update({kdict: os.environ[kenv]})
         self.logger.debug("Base initialization done.")
 
     def __enter__(self):

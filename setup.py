@@ -1,5 +1,8 @@
-from pip.req import parse_requirements
 from setuptools import setup
+try: # for pip >= 10
+    from pip._internal.req import parse_requirements
+except ImportError: # for pip <= 9.0.3
+    from pip.req import parse_requirements
 
 
 requirements = parse_requirements("requirements.txt", session=False)
@@ -12,7 +15,7 @@ setup(
     "pybots.general",
     "pybots.specific",
   ],
-  version = "1.2.3",
+  version = "1.2.4",
   license = "AGPLv3",
   description = "A library for quickly creating client bots for communicating "
                 "with remote hosts.",
