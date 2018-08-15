@@ -45,4 +45,5 @@ class JSONBot(WebBot):
         """
         Parse the requested JSON.
         """
+        self.json = None
         self.json = simplejson.loads(self.response.text.strip())
