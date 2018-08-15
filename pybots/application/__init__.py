@@ -1,9 +1,9 @@
-"""CTF-related bots.
+"""Application-specific bots.
 
-This package provides some bot implementations for managing the resolution of
- coding challenges in an automated way with some CTF websites.
+This package provides some bot implementations for communicating with various
+ applications.
 
 """
 
-from .ringzero import *
-from .rootme import *
+from .ctf import *
+from .security import *
