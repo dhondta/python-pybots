@@ -28,7 +28,8 @@ def try_or_die(message, exc=Exception, extra_info=""):
                 return method(self, *args, **kwargs)
             except exc:
                 self.logger.critical(message)
-                if hasattr(self, extra_info):
+                if hasattr(self, extra_info) and \
+                    len(self.extra_info) > 0:
                     self.logger.info(getattr(self, extra_info))
                 self.__exit__(*sys.exc_info())
         return wrapper
