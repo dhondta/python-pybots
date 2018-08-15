@@ -131,7 +131,6 @@ class Template(object):
         except NameError:
             pass
         self._exited = True
-        sys.exit(int(exc_type is not None))
 
     @try_or_die("Something failed during postamble.")
     def _postamble(self):
