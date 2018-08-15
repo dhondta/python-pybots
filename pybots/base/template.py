@@ -66,6 +66,7 @@ class Template(object):
 
     def __init__(self, verbose=False, no_proxy=False):
         self._exited = False
+        self.logger = None
         # keep track of bots
         c = self.__class__.__name__
         Template.bots.setdefault(c, {})
@@ -79,7 +80,7 @@ class Template(object):
         # configure post-execution workflow
         self.force_postamble = False    # (if exception raised)
         self.force_postcompute = False 
-        # execute precomputation if any
+        # execute precomputation if any, before the connection is opened
         self._precompute()
         # check for proxy configuration
         if no_proxy:
@@ -120,10 +121,12 @@ class Template(object):
         if hasattr(self, "close"):
             self.logger.debug("Gracefully closing bot...")
             self.close()
-        if self.__no_error or self.force_postcompute:
-            self._postcompute()
+        # show the exception before attempting postcomputation
         if exc_value is not None:
             self.logger.exception(exc_value)
+        # execute postcomputation if any, after the connection is closed
+        if self.__no_error or self.force_postcompute:
+            self._postcompute()
         # if run from IPython, handle exit without killing the current kernel
         try:
             __IPYTHON__
@@ -167,6 +170,7 @@ class Template(object):
         :param log_fmt:  log message format
         :param date_fmt: datetime format
         """
+        new_logger = ["re", ""][self.logger is None]
         self.logger = logging.getLogger(self.name)
         handler = logging.StreamHandler()
         formatter = logging.Formatter(log_fmt, date_fmt)
@@ -178,4 +182,4 @@ class Template(object):
             coloredlogs.DEFAULT_DATE_FORMAT = date_fmt
             coloredlogs.install([logging.INFO, logging.DEBUG][self.verbose],
                                 logger=self.logger)
-        self.logger.debug("Logging configured.")
+        self.logger.debug("Logging {}configured.".format(new_logger))
