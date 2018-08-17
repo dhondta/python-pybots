@@ -77,7 +77,7 @@ class WebBot(Template):
         # instantiating the bot with random_uagent will randomize the user agent
         #  once and use it at the session level
         if random_uagent:
-            self.session.headers.update({'User-Agent'; generate_user_agent()})
+            self.session.headers.update({'User-Agent': generate_user_agent()})
         self.session.proxies.update(self._proxies)
         self.logger.debug("Binding HTTP methods...")
         for m in SUPPORTED_HTTP_METHODS:

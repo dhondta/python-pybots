@@ -10,7 +10,7 @@ __copyright__ = "AGPLv3 (http://www.gnu.org/licenses/agpl.html)"
 __all__ = ["VirusTotalBot"]
 
 
-from pybots.specific.http import JSONBot
+from pybots.specific.json import JSONBot
 
 
 DOM = "https://virustotal.com"
