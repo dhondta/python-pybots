@@ -13,6 +13,25 @@ __all__ = ["try_or_die", "try_and_pass", "try_and_warn"]
 import sys
 
 
+def applicable_to(*bot_classes):
+    """
+    Class decorator for checking that a class is well inherited from any given
+     parent bot class. Used in checking mixins' compatibility.
+
+    :param bot_classes: list of compatible parent bot classes
+    """
+    def _applicable_to(cls):
+        class NewClass(cls):
+            def __init__(self, *args, **kwargs):
+                parents = [c.__name__ for c in self.__class__.__mro__]
+                assert any(bc in parents for bc in bot_classes), \
+                    "This class is not compatible with any given parent" \
+                    " classes ({})".format(", ".join(bot_classes))
+                super(NewClass, self).__init__(*args, **kwargs)
+        return NewClass
+    return _applicable_to
+
+
 def try_or_die(message, exc=Exception, extra_info=""):
     """
     Decorator handling a try-except block to log an error.
