@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 try: # for pip >= 10
     from pip._internal.req import parse_requirements
 except ImportError: # for pip <= 9.0.3
@@ -8,13 +8,7 @@ except ImportError: # for pip <= 9.0.3
 requirements = parse_requirements("requirements.txt", session=False)
 setup(
   name = "pybots",
-  packages = [
-    "pybots",
-    "pybots.application",
-    "pybots.base",
-    "pybots.general",
-    "pybots.specific",
-  ],
+  packages = find_packages(),
   version = "1.2.4",
   license = "AGPLv3",
   description = "A library for quickly creating client bots for communicating "
