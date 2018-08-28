@@ -7,8 +7,8 @@
 __author__ = "Alexandre D'Hondt"
 __version__ = "1.0"
 __copyright__ = "AGPLv3 (http://www.gnu.org/licenses/agpl.html)"
-__all__ = ["find_public_proxy", "get_my_ip",
-           "get_my_ip_sources", "get_public_http_proxies_sources"]
+__all__ = ["find_public_http_proxy", "find_public_http_proxies_list",
+           "get_my_ip", "get_my_ip_sources", "get_public_http_proxies_sources"]
 
 
 import json
@@ -61,7 +61,7 @@ def _filter_sources(sources_list, source=None):
     return sources
 
 
-def find_public_http_proxy(country=None, source=None, verbose=True):
+def find_public_http_proxy(country=None, source=None, verbose=False):
     """
     Selection function for getting the address of a public HTTP proxy.
 
@@ -70,13 +70,12 @@ def find_public_http_proxy(country=None, source=None, verbose=True):
     :param verbose: enable lookup bot's versbose mode
     :return:        public HTTP proxy address
     """
-    try:
-        return random.choice(find_public_http_proxies_list(source, verbose))
-    except:
-        return
+    l = find_public_http_proxies_list(country, source, verbose)
+    if len(l) > 0:
+        return random.choice(l)
 
 
-def find_public_http_proxies_list(country=None, source=None, verbose=True):
+def find_public_http_proxies_list(country=None, source=None, verbose=False):
     """
     Selection function for getting a list of public HTTP proxies list.
 
@@ -86,12 +85,12 @@ def find_public_http_proxies_list(country=None, source=None, verbose=True):
     :return:        list of public HTTP proxy addresses
     """
     for proxy_lst_cls in _filter_sources(PUB_PROXY_SOURCES, source):
-        p = eval(proxy_lst_cls)()
+        p = eval(proxy_lst_cls)(verbose=verbose)
         if p.enabled:
             return p.get(country=country)
 
 
-def get_my_ip(source=None, only_https=False, verbose=True):
+def get_my_ip(source=None, only_https=False, verbose=False):
     """
     Simple function for getting own public IP.
 
@@ -106,7 +105,7 @@ def get_my_ip(source=None, only_https=False, verbose=True):
             continue
         with bot_cls("{}://{}".format(url.scheme, url.netloc), verbose=verbose,
                      random_uagent=True) as bot:
-            bot.logger.info("Trying to get public IP with '{}'..."
+            bot.logger.debug("Trying to get public IP with '{}'..."
                              .format(url.netloc))
             if url.query != '':
                 bot.get("{}?{}".format(url.path, url.query))
@@ -116,13 +115,13 @@ def get_my_ip(source=None, only_https=False, verbose=True):
                 try:
                     return transform(bot).strip()
                 except:
-                    bot.logger.error("Bad response")
+                    bot.logger.debug("Bad response")
             elif verbose:
-                bot.logger.error("Request for own public IP failed")
+                bot.logger.debug("Request for own public IP failed")
 
 
 class PublicProxyList(object):
-    def __init__(self, test=True):
+    def __init__(self, test=True, verbose=False):
         """
         Check if the given URL is valid at initialization.
         """
@@ -131,9 +130,10 @@ class PublicProxyList(object):
         self.name = url.netloc.split('.')[-2].lower()
         self.base = "{}://{}".format(url.scheme, url.netloc)
         self.path = url.path
+        self.verbose = verbose
         if test:
-            with HTTPBot(self.base) as bot:
-                bot.get(self.path)
+            with HTTPBot(self.base, verbose=verbose) as bot:
+                bot.get()
                 self.enabled = bot.response.status_code == 200
 
     def get(self, *args, **kwargs):
@@ -155,7 +155,7 @@ class GatherProxy(PublicProxyList):
         """
         proxies = []
         # get the list from the Web page
-        with HTTPBot(self.base) as bot:
+        with HTTPBot(self.base, verbose=self.verbose) as bot:
             if country is None:
                 bot.get()
             else:
@@ -166,7 +166,8 @@ class GatherProxy(PublicProxyList):
         _ = soup.find_all('script')
         p = "gp.insertPrx("
         _ = filter(lambda x: p in x.text, _)
-        _ = map(lambda x: json.loads(x.split(p, 1)[1].split(")", 1)[0]), _)
+        _ = map(lambda x: json.loads(x.encode('utf-8').split(p, 1)[1]\
+                                                      .split(")", 1)[0]), _)
         _ = filter(lambda x: x['PROXY_TYPE'] == "Transparent", _)
         _ = filter(lambda x: x['PROXY_STATUS'] == "OK", _)
         # now collect proxy addresses and ports

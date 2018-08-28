@@ -61,14 +61,13 @@ class WebBot(Template):
                'Connection': "keep-alive",
                'DNT': "1", 'Upgrade-Insecure-Requests': "1"}
 
-    # TODO: handle public proxies ; see http://pgaref.com/blog/python-proxy/
     def __init__(self, url, auth=None, verbose=False, no_proxy=False,
                  random_uagent=False):
         super(WebBot, self).__init__(verbose, no_proxy)
-        parsed = urlparse(url)
-        if parsed.scheme == '' or parsed.netloc == '':
+        self._parsed = urlparse(url)
+        if self._parsed.scheme == '' or self._parsed.netloc == '':
             raise Exception("Bad URL")
-        self.url = url + "/" if parsed.path == '' else url
+        self.url = "{}://{}/".format(self._parsed.scheme, self._parsed.netloc)
         self.logger.debug("Creating a session...")
         self.session = requests.Session()
         if auth:
@@ -135,7 +134,7 @@ class WebBot(Template):
         assert type(data or {}) is dict
         assert type(aheaders or {}) is dict
         self.logger.debug("Requesting with method {}...".format(method))
-        url = urljoin(self.url, rqpath)
+        url = urljoin(self.url, rqpath.lstrip('/'))
         m = method.lower()
         if not hasattr(requests, m):
             self.logger.error("Bad request")

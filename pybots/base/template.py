@@ -111,10 +111,9 @@ class Template(object):
         """
         if self._exited:  # this prevents from raising SystemExit
             return
-        self.__no_error = exc_type is None
+        self.__no_error = exc_type in (None, KeyboardInterrupt)
         if exc_type is KeyboardInterrupt:
             self.logger.warn("Bot execution interrupted.")
-            exc_type = None
         self.logger.debug("Exiting context...")
         if self.__no_error or self.force_postamble:
             self._postamble()
@@ -122,7 +121,7 @@ class Template(object):
             self.logger.debug("Gracefully closing bot...")
             self.close()
         # show the exception before attempting postcomputation
-        if exc_value is not None:
+        if exc_type is not KeyboardInterrupt and exc_value is not None:
             self.logger.exception(exc_value)
         # execute postcomputation if any, after the connection is closed
         if self.__no_error or self.force_postcompute:
