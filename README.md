@@ -8,7 +8,11 @@
 
 This library aims to quickly write client bots for communicating with remote hosts in various ways.
 
-It currently features the following bots: Socket & Web (generic), Netcat, HTTP, JSON, IRC, EPassport, RingZer0, Root-Me
+It currently features the following bots:
+- Protocol-bound: TCPBot, HTTPBot, JSONBot, IRCBot, EPassport
+- Application-specific:
+  - CTF: RingZer0Bot, RootMeIRCBot, ZSISBot
+  - Security: ShodanBot, VirusTotalBot
   
 
 ## Installation
@@ -23,9 +27,9 @@ sudo pip install pybots
 Each bot class is implemented as a context manager and has a logger attached. It can thus be instantiated in a clear and straightforward way. Here is an example:
 
 ```py
-from pybots import Netcat
+from pybots import TCPBot
 
-with Netcat("remote_host", 1234) as bot:
+with TCPBot("remote_host", 1234) as bot:
     data = bot.send_receive("Hello!")
     # do something with data
 ```
@@ -33,7 +37,7 @@ with Netcat("remote_host", 1234) as bot:
 Note that, if a bot is used behind a proxy, it will use system's proxy settings. This can be bypassed by using `no_proxy=True` while instantiating the bot.
 
 ```py
-with Netcat("LAN_host", 1234, no_proxy=True) as bot:
+with TCPBot("LAN_host", 1234, no_proxy=True) as bot:
     # ...
 ```
 
