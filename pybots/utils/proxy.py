@@ -46,7 +46,7 @@ def __find_public_proxy(protocol="http", country=None, netloc=None,
                         verbose=False):
     """ Private function for calling the right public proxy finding method. """
     l = eval("find_public_{}_proxies_list(country, netloc, verbose)"
-             .format(protocol))
+             .format(protocol.lower()))
     if len(l) > 0:
         return random.choice(l)
 
@@ -55,7 +55,7 @@ def __find_public_proxies_list(protocol="http", country=None, netloc=None,
                                verbose=False):
     """ Private function for calling the right public proxy listing method. """
     for proxy_lst_cls in filter_sources("PUB_{}_PROXY_SOURCES"
-                                        .format(protocol.upper(), netloc):
+                                        .format(protocol.upper()), netloc):
         p = eval(proxy_lst_cls)(verbose=verbose)
         if p.enabled:
             return p.get(country=country)

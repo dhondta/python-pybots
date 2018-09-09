@@ -45,25 +45,25 @@ class ZSISBot(HTTPBot):
         self._set_cookie("PHPSESSID={}".format(cookie))
         self.answer = None
 
-    @try_or_die("No 'answer' attribute set ; please define it")
+    @try_or_die("Unexpected error")
     def postamble(self):
         """
         Custom postamble for submitting the answer and getting the flag.
         """
-        if self.answer is not None:
-            self.get(params={'answer': self.answer})
-        else:
-            raise AttributeError
+        self.flag = None
+        if self.answer is None:
+            self.flag = None
+            self.logger.error("No answer provided")
+            return
+        self.get(params={'answer': self.answer})
         self.logger.debug(self.response.text)
         if "Wrong answer!" in self.response.text:
             self.logger.error("The answer is incorrect")
-            self.flag = None
             return
         try:
             self.flag = FLAG.match(self.response.text).group(1)
             self.logger.info("Flag found: {}".format(self.flag))
         except AttributeError:
-            self.flag = None
             self.logger.error("Could not retrieve the flag")
 
     @try_or_die("Could not retrieve challenge information")
