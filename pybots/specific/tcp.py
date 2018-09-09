@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-"""Bot client for Netcat-like sessions.
+"""Bot client for TCP sessions.
 
-This bot allows to manage a Netcat-like session by using simple read/write
- methods.
+This bot allows to manage a TCP session by using simple read/write methods.
 
 A series of read/write operations or a complete session can be written in the
  preamble() method.
@@ -14,17 +13,17 @@ If necessary, data can be precomputed in a precompute() method in order to have
 """
 
 __author__ = "Alexandre D'Hondt"
-__version__ = "1.2"
+__version__ = "1.3"
 __copyright__ = "AGPLv3 (http://www.gnu.org/licenses/agpl.html)"
-__all__ = ["Netcat"]
+__all__ = ["Netcat", "TCPBot"]
 
 
 from pybots.general.ssocket import SocketBot
 
 
-class Netcat(SocketBot):
+class TCPBot(SocketBot):
     """
-    Netcat-like bot.
+    TCP session bot.
 
     :param host:     hostname or IP address
     :param port:     port number
@@ -35,20 +34,20 @@ class Netcat(SocketBot):
 
     Example usage:
 
-      from pybots.netcat import Netcat
+      from pybots.tcp import TCPBot
 
-      class MyNetcat(Netcat):
+      class MyTCPBot(TCPBot):
           def preamble(self):
               self.read_until('>')
               self.write('hello')
               self.read_until('>')
 
-      with MyNetcat('127.0.0.1', 53121) as nc:
-          nc.write('set')
-          nc.read_until('id:')
+      with MyTCPBot('127.0.0.1', 53121) as tcp:
+          tcp.write('set')
+          tcp.read_until('id:')
     """
     def __init__(self, *args, **kwargs):
-        super(Netcat, self).__init__(*args, **kwargs)
+        super(TCPBot, self).__init__(*args, **kwargs)
         self.connect()
 
     def preamble(self):
@@ -56,3 +55,10 @@ class Netcat(SocketBot):
         Default preamble to be processed during a session.
         """
         self.read_until('\n', disp=True)
+
+
+class Netcat(TCPBot):
+    """
+    Kept for backward-compatibility.
+    """
+    pass

@@ -7,3 +7,4 @@ This package provides some bot implementations for managing the resolution of
 
 from .ringzero import *
 from .rootme import *
+from .zsis import *

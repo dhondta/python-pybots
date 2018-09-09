@@ -24,6 +24,9 @@ from pybots.base.decorators import *
 from pybots.base.template import Template
 
 
+P3 = sys.version_info.major == 3
+
+
 def addr_family(host):
     """
     Return the right address family (IPv4/IPv6) of host.
@@ -121,7 +124,7 @@ class SocketBot(Template):
     def __init__(self, host, port, disp=False, verbose=False, prefix=False,
                  no_proxy=False):
         super(SocketBot, self).__init__(verbose, no_proxy)
-        self.__set_proxy()
+        self._set_proxy()
         self.buffer = ""
         self.disp = disp
         self.host = host
@@ -143,7 +146,7 @@ class SocketBot(Template):
                           .join(data.split('\n'))
         return data.strip()
 
-    def __set_proxy(self):
+    def _set_proxy(self):
         """
         Create specific socket object if a proxy is to be used.
         """
@@ -215,6 +218,8 @@ class SocketBot(Template):
         data = ""
         try:
             data = self.socket.recv(length)
+            if P3:
+                data = data.decode('utf-8')
         except socket.error as e:
             self.logger.exception(str(e))
             self.close()
@@ -224,7 +229,7 @@ class SocketBot(Template):
             print(self.__prefix_data(data, 'r'))
         return data
  
-    def read_until(self, pattern, disp=None):
+    def read_until(self, pattern, disp=None, limit=10):
         """
         Read data into the buffer up to a given data.
 
@@ -234,22 +239,38 @@ class SocketBot(Template):
                         - list of strings
                         - compiled regex object (re.compile(...))
         :param disp:    display the received data
+        :param limit:   maximum number of iterations in while loops
         """
         self.logger.debug("Reading until one of the given patterns...")
+        if P3 and isinstance(pattern, bytes):
+            pattern = pattern.decode('utf-8')
         if isinstance(pattern, string_types):
             pattern = [pattern]
+        i = 0
         if isinstance(pattern, list):
             while not any(p in self.buffer for p in pattern):
                 self.buffer += self.read(disp=disp)
+                i += 1
+                if i >= limit:
+                    self.logger.debug("No pattern found")
+                    return ""
             pattern = pattern[[p in self.buffer for p in pattern].index(True)]
         elif isinstance(pattern, type(re.compile(r''))):
             while not pattern.search(self.buffer):
                 self.buffer += self.read(disp=disp)
+                i += 1
+                if i >= limit:
+                    self.logger.debug("No regex match")
+                    return ""
             pattern = pattern.search(self.buffer).group()
         else:
+            print(pattern)
             self.logger.error("Incorrect pattern")
             return
-        p = pattern.encode('string-escape')
+        try:
+            p = pattern.encode('string-escape')
+        except LookupError:  # Python 3
+            p = pattern
         self.logger.debug("Read until pattern '{}'".format(p))
         pos = self.buffer.find(pattern)
         data = self.buffer[:pos + len(pattern)]
@@ -290,14 +311,26 @@ class SocketBot(Template):
         :param eol:  end of line characters
         :param disp: display the sent data
         """
-        self.logger.debug("Writing to the socket...")
+        if P3 and isinstance(data, bytes):
+            data = data.decode('utf-8')
+        self.logger.debug("Writing '{}' to the socket..."
+                          .format(data[:7] + "..." if len(data) > 10 else data))
+        _ = data
+        if P3 and not isinstance(data, bytes):
+            data = data.encode('utf-8')
+        if P3 and not isinstance(eol, bytes):
+            eol = eol.encode('utf-8')
         try:
             self.socket.send(data + eol)
         except socket.error as e:
-            self.logger.exception(str(e))
+            self.logger.exception(e)
             self.close()
-        except:
-            return
+        except AttributeError as e:  # occurs when self.socket closed
+            return ""
+        except Exception as e:       # for any other exception, display it
+            self.logger.exception(e)
+            self.logger.warn("Returned empty buffer")
+            return ""
         if (self.disp if disp is None else disp):
-            print(self.__prefix_data(data, 'w'))
-        return data
+            print(self.__prefix_data(_, 'w'))
+        return _

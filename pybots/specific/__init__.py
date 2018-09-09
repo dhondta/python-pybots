@@ -9,4 +9,4 @@ from .epassport import *
 from .http import *
 from .irc import *
 from .json import *
-from .netcat import *
+from .tcp import *

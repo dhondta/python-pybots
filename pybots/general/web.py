@@ -8,7 +8,7 @@ Each specific bot inherits from a generic Bot class holding the base
 """
 
 __author__ = "Alexandre D'Hondt"
-__version__ = "1.6"
+__version__ = "1.7"
 __copyright__ = "AGPLv3 (http://www.gnu.org/licenses/agpl.html)"
 __all__ = ["WebBot"]
 
@@ -65,19 +65,12 @@ class WebBot(Template):
                  random_uagent=False):
         super(WebBot, self).__init__(verbose, no_proxy)
         self._parsed = urlparse(url)
+        self.url = self._parsed.geturl()
         if self._parsed.scheme == '' or self._parsed.netloc == '':
             raise Exception("Bad URL")
-        self.url = "{}://{}/".format(self._parsed.scheme, self._parsed.netloc)
-        self.logger.debug("Creating a session...")
-        self.session = requests.Session()
-        if auth:
-            self.session.auth = auth
-        self.session.headers.update(self.headers)
-        # instantiating the bot with random_uagent will randomize the user agent
-        #  once and use it at the session level
-        if random_uagent:
-            self.session.headers.update({'User-Agent': generate_user_agent()})
-        self.session.proxies.update(self._proxies)
+        self.__auth = auth
+        self.__ruagent = random_uagent
+        self._set_session()
         self.logger.debug("Binding HTTP methods...")
         for m in SUPPORTED_HTTP_METHODS:
             setattr(self, m, MethodType(WebBot.template(m), self))
@@ -120,8 +113,26 @@ class WebBot(Template):
         self.session.headers.update({'Cookie': cookie})
         return self
 
+    def _set_session(self):
+        """
+        Set a new session with the proxy to be used.
+        """
+        if hasattr(self, "session"):
+            self.logger.debug("Resetting the session...")
+        else:
+            self.logger.debug("Creating a session...")
+        self.session = requests.Session()
+        if self.__auth:
+            self.session.auth = self.__auth
+        self.session.headers.update(self.headers)
+        # instantiating the bot with random_uagent will randomize the user agent
+        #  once per session
+        if self.__ruagent:
+            self.session.headers.update({'User-Agent': generate_user_agent()})
+        self.session.proxies.update(self._proxies)
+
     @try_or_die("Request failed")
-    def request(self, rqpath="/", method="GET", data=None, aheaders=None, **kw):
+    def request(self, rqpath=None, method="GET", data=None, aheaders=None, **kw):
         """
         Get a Web page.
 
@@ -134,7 +145,7 @@ class WebBot(Template):
         assert type(data or {}) is dict
         assert type(aheaders or {}) is dict
         self.logger.debug("Requesting with method {}...".format(method))
-        url = urljoin(self.url, rqpath.lstrip('/'))
+        url = urljoin(self.url, rqpath)
         m = method.lower()
         if not hasattr(requests, m):
             self.logger.error("Bad request")
@@ -192,14 +203,14 @@ class WebBot(Template):
         """
         doc = """ Alias for request(method="{0}"). """
         if method == "get":
-            def f(self, rqpath="/", params=None, aheaders=None, **k):
+            def f(self, rqpath=None, params=None, aheaders=None, **k):
                 return self.request(rqpath, method.upper(), None, aheaders,
                                     params=params, **k)
         if method in ["delete", "head", "options"]:
-            def f(self, rqpath="/", aheaders=None, **k):
+            def f(self, rqpath=None, aheaders=None, **k):
                 return self.request(rqpath, method.upper(), None, aheaders, **k)
         elif method in ["post", "put"]:
-            def f(self, rqpath="/", data=None, aheaders=None, **k):
+            def f(self, rqpath=None, data=None, aheaders=None, **k):
                 return self.request(rqpath, method.upper(), data, aheaders, **k)
         f.__doc__ = doc.format(method.upper())
         return f
