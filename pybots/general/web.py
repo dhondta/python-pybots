@@ -17,13 +17,10 @@ import copy
 import logging
 import os
 import requests
+import shutil
 import urllib3
 from types import MethodType
 from user_agent import generate_user_agent
-try:  # Python3
-    from urllib.request import urlretrieve
-except ImportError:  # Python2
-    from urllib import urlretrieve
 try:  # Python3
     from urllib.parse import urljoin, urlparse
 except ImportError:  # Python2
@@ -216,8 +213,16 @@ class WebBot(Template):
         if parsed.netloc == '':
             resource = urljoin(self.url, resource)
         self.logger.debug("Downloading resource...")
-        urlretrieve(resource, filename)
-        self.logger.debug("> Saved to '{}'".format(filename))
+        with WebBot(resource) as bot:
+            bot.get(resource, stream=True)
+            if bot.response.status_code == 200:
+                with open(filename, 'wb') as f:
+                    for chunk in bot.response:
+                        f.write(chunk)
+                bot.logger.debug("> Download successful")
+                self.logger.debug("> Saved to '{}'".format(filename))
+            else:
+                bot.logger.error("> Download failed")
 
     @staticmethod
     def template(method):

@@ -89,6 +89,21 @@ class RingZer0Bot(HTTPBot):
         self.logger.debug("CSRF token found: {}".format(self.csrf))
         return self
 
+    @try_or_die("Fatal error while parsing downloads", extra_info="response")
+    def __get_downloads(self):
+        """
+        Retrieve the downloads from the challenge page.
+        """
+        wrapper = self.soup.find('div', {"class" : "challenge-wrapper"})
+        downloads = []
+        for div in wrapper.find_all('div', {"class" : "download"}):
+            href = div.find('a').attrs['href']
+            self.retrieve(href)
+            downloads.append(href)
+        if len(downloads) > 0:
+            self.logger.info(" - Downloads: {}".format(", ".join(downloads)))
+        return self
+
     @try_or_die("No flag found", extra_info="response")
     def __get_flag(self):
         """
@@ -102,7 +117,7 @@ class RingZer0Bot(HTTPBot):
             self.flag = self.soup.find('div', {"class" : "flag"}).text
         self.logger.info("Flag found: {}".format(self.flag))
 
-    @try_or_die("No info found", extra_info="response")
+    @try_or_die("Fatal error while parsing information", extra_info="response")
     def __get_info(self):
         """
         Retrieve the flag to be submitted from the challenge page.
@@ -116,12 +131,13 @@ class RingZer0Bot(HTTPBot):
             self.logger.warn("Please login and/or write your CURRENT session"
                              " cookie in '{}' before.".format(CFN))
             HTTPBot.shutdown(code=0)
-        statement = self.soup.find('div', {"class" : "challenge-wrapper"}) \
-                             .find_all('strong')[0].text
-        self.logger.info(" - Statement: {}".format(statement))
+        statement = '\n'.join(s.text for s in self.soup \
+            .find('div', {"class" : "challenge-wrapper"}).find_all('strong'))
+        if len(statement) > 0:
+            self.logger.info(" - Statement: {}".format(statement))
         return self
 
-    @try_or_die("No message found", extra_info="response")
+    @try_or_die("Fatal error while parsing inputs", extra_info="response")
     def __get_inputs(self):
         """
         Retrieve the inputs to be processed from the main page contained in
@@ -133,6 +149,8 @@ class RingZer0Bot(HTTPBot):
         for br in self.soup.find_all("br"):
             br.replace_with("\n")
         for div in self.soup.find_all('div', {"class" : "message"}):
+            if div.attrs['class'] == "download":
+                print(div.find_all('a')[0].attrs['href'])
             msg = div.text
             # try to match "----- BEGIN|END ... -----" tags
             match = MSG.match(msg)
@@ -209,4 +227,4 @@ class RingZer0Bot(HTTPBot):
         Custom preamble for getting the challenge information.
         """
         # get the challenge page and retrieve CSRF token and message
-        self.get().__get_info().__get_csrf().__get_inputs()
+        self.get().__get_info().__get_downloads().__get_csrf().__get_inputs()
