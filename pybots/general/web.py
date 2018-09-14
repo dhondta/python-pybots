@@ -172,6 +172,11 @@ class WebBot(Template):
         if not hasattr(requests, m):
             self.logger.error("Bad request")
             raise AttributeError("requests has no method '{}'".format(m))
+        session_params = {'allow_redirects': True}
+        # handle request streaming (i.e. for downloads)
+        stream = kw.pop('stream', None)
+        if stream is not None:
+            session_params['stream'] = stream
         # handle user agent randomization ; this allows to randomize the user
         #  agent at the request level and not the session one
         if kw.pop('random_uagent', False):
@@ -186,11 +191,11 @@ class WebBot(Template):
         proxies = kw.pop('proxies', None)
         try:
             self.response = self.session.send(self._request,
-                allow_redirects=True, proxies=proxies or self.session.proxies)
+                proxies=proxies or self.session.proxies, **session_params)
         except:
             self.response = self.session.send(self._request,
-                allow_redirects=True, proxies=proxies or self.session.proxies,
-                verify=False)
+                proxies=proxies or self.session.proxies, verify=False,
+                **session_params)
         self.__print_response()
         # handle HTTP status code here
         if 200 < self.response.status_code < 300:
