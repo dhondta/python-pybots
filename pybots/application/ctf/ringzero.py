@@ -36,12 +36,30 @@ class RingZer0Bot(HTTPBot):
     RingZer0Bot class mechanizing the process of solving challenges to be
      scripted.
 
-    :param cid:     challenge ID number
-    :param cookie:  current session cookie
-    :param verbose: debug level
+    :param cid:      challenge identifier
+    :param cookie:   PHP session ID cookie
+    :param args:     HTTPBot arguments
+    :param kwargs:   HTTPBot keyword-arguments
+    
+    Note:
+      The cookie can also be left None in the input arguments and be loaded from
+       a .cookie file. It can be saved as "PHPSESSID=..." or simply "...".
+    
+    Example usage:
+    
+      from pybots import RingZer0Bot
+      
+      with RingZer0Bot(5, "...your-cookie...") as bot:
+          # do some computation with bot.inputs here
+          # NOTE: bot.inputs is a dictionary containing input values from
+          #        challenge's source ; e.g. 'message' or 'image' for this bot
+          bot.answer = computed_value
+          # now, while exiting the context, the flag will be displayed if the
+          #  answer was correct (or a message if wrong)
     """
-    def __init__(self, cid, verbose=False, cookie=None):
-        super(RingZer0Bot, self).__init__("{}{}".format(URL, cid), verbose)
+    def __init__(self, cid, cookie=None, *args, **kwargs):
+        super(RingZer0Bot, self).__init__("{}{}".format(URL, cid), *args,
+                                          **kwargs)
         self.answer = None
         self.cid = cid
         # set the cookie
@@ -50,7 +68,9 @@ class RingZer0Bot(HTTPBot):
                 cookie = f.read().strip()
         if not CKI.match(cookie):
             raise Exception
-        self._set_cookie("PHPSESSID={}".format(cookie))
+        if not cookie.startswith("PHPSESSID="):
+            cookie = "PHPSESSID={}".format(cookie)
+        self._set_cookie(cookie)
 
     @try_or_die("No CSRF token found", extra_info="response")
     def __get_csrf(self):
