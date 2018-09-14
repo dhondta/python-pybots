@@ -28,7 +28,7 @@ def bruteforce(max_len, alphabet=ALL_CHARS, from_zero=True):
     """
     for i in range(*[1 if from_zero else max_len, max_len + 1]):
         for c in product(alphabet, repeat=i):
-            yield ''.join(c)
+            yield c if isinstance(c[0], int) else ''.join(c)
 
 
 def filter_sources(sources_list, netloc=None):
