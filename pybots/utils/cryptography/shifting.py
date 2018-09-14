@@ -19,23 +19,83 @@ from binascii import hexlify, unhexlify
 from tinyscript.helpers import *
 
 
-class Geffe(object):
+class Base(object):
+    """ Class holding some common methods for other classes of this module """
+    def next_block(self, output_format="str", update=False):
+        """
+        Get the next 32bits-block of data.
+        
+        :param output_format: output format (string, hexadecimal or binary)
+        :param update:        update the state of the generator
+        """
+        update = self.update or update
+        return self.next_blocks(1, output_format, update)
+
+    def next_blocks(self, n, output_format="str", update=False):
+        """
+        Get the n next 32bits-blocks of data.
+        
+        :param n:             number of blocks of n bits to be generated after
+                               the target (from start if target is None)
+        :param output_format: output format (string, hexadecimal or binary)
+        :param update:        update the state of the generator
+        """
+        update = self.update or update
+        l = len(getattr(self, "target", None) or "")
+        s = self.get(l + n * self.n, output_format, update)
+        if output_format == "str":
+            return s[l//8:]
+        elif output_format == "hex":
+            return s[l//4:]
+        return s[l:]
+
+
+class Geffe(Base):
+    """
+    Geffe generator class.
+    
+    This can be defined by its key (12-chars string or 96 bits) or by a tuple of
+     3 seeds for its internal LFSR.
+
+    :param key:   12-chars key or str/list of 96 bits
+    :param seeds: 3-int tuple (or list) with the seeds for the LFSR
+    :param update: update the state of the generator when bits are generated
+
+    Example usage:
+
+      from pybots.utils import Geffe
+      
+      g = Geffe("a_12bits_key")
+      print(g.next_block())
+    """
+    n = 32
     taps = [
         (3, 4, 6, 7, 8, 9, 11, 32),
         (1, 2, 3, 4, 6, 8, 9, 13, 14, 32),
         (1, 2, 3, 7, 12, 14, 15, 32),
     ]
     
-    def __init__(self, key=None, seeds=(0, 0, 0)):
+    def __init__(self, key=None, seeds=(0, 0, 0), update=False):
         seeds = Geffe.format_param(key, seeds)
         self._lfsrs = [LFSR(s, t, 32) for s, t in zip(seeds, Geffe.taps)]
+        self.target = self._lfsrs[0].target
+        self.update = update
     
-    def get(self, length=None, output_format="str"):
+    def get(self, length=None, output_format="str", update=False):
+        """
+        Get a given number of bits from the Geffe generator with the given
+         output format.
+        
+        :param length:        number of bits to be generated
+        :param output_format: output format (string, hexadecimal or binary)
+        :param update:        update the state of the generator
+        """
+        update = self.update or update
         assert output_format in ["str", "hex", "bin"], "Bad output format"
         stream = []
-        for bits in zip(self._lfsrs[0].get(length, "bin"),
-                        self._lfsrs[1].get(length, "bin"),
-                        self._lfsrs[2].get(length, "bin")):
+        for bits in zip(self._lfsrs[0].get(length, "bin", update),
+                        self._lfsrs[1].get(length, "bin", update),
+                        self._lfsrs[2].get(length, "bin", update)):
             stream.append(Geffe.F(*bits))
         if output_format == "str":
             return bin2txt(stream)
@@ -43,7 +103,7 @@ class Geffe(object):
             return hexlify(bin2txt(stream))
         else:
             return stream
-    
+        
     @staticmethod
     def F(x1, x2, x3):
         return (x1 & x2) ^ (int(not x1) & x3)
@@ -70,7 +130,7 @@ class Geffe(object):
         return seeds
 
 
-class LFSR(object):
+class LFSR(Base):
     """
     Linear Feedback Shift Register (LFSR) class.
     
@@ -82,8 +142,16 @@ class LFSR(object):
     :param nbits:  LFSR register length of bits
     :param target: input string or list of bits to be matched while determining
                     LFSR's parameters
+    :param update: update the state of the LFSR when bits are generated
+
+    Example usage:
+
+      from pybots.utils import LFSR
+      
+      l = LFSR("0123456789abcdef")
+      print(l.next_block())
     """
-    def __init__(self, seed=0, taps=None, nbits=None, target=None):
+    def __init__(self, seed=0, taps=None, nbits=None, target=None, update=False):
         assert all(x is not None for x in [seed, taps, nbits]) or target, \
                "Either (seed, taps, nbits) or target must be set"
         self.target = target
@@ -92,11 +160,18 @@ class LFSR(object):
             self.__berlekamp_massey_algorithm()
         else:
             self.seed, self.taps, self.n = LFSR.format_param(seed, taps, nbits)
-        # test if parameters are correct if a target was provided
-        if self.target is not None:
-            self.test()
+            self.target = [b for b in self.seed]
+        # test if parameters are correct
+        self.test()
+        self.update = update
         
     def __berlekamp_massey_algorithm(self):
+        """
+        Berlekamp-Massey algorithm for finding the shortest LFSR for a given
+         binary output sequence.
+         
+        See: https://en.wikipedia.org/wiki/Berlekamp%E2%80%93Massey_algorithm
+        """
         # inspired from:
         #  https://gist.github.com/StuartGordonReid/a514ed478d42eca49568
         bitstream = list(map(int, [b for b in self.target]))
@@ -125,23 +200,33 @@ class LFSR(object):
         c.remove(0)
         self.seed, self.taps, self.n = LFSR.format_param(self.target[:l], c, l)
     
-    def get(self, length=None, output_format="str"):
+    def get(self, length=None, output_format="str", update=False):
+        """
+        Get a given number of bits from the LFSR with the given output format.
+        
+        :param length:        number of bits to be generated
+        :param output_format: output format (string, hexadecimal or binary)
+        :param update:        update the state of the generator
+        """
         assert output_format in ["str", "hex", "bin"], "Bad output format"
         length = length or (1 if self.target is None else len(self.target))
         stream = [b for b in self.seed]
-        assert len(stream) == self.n
-        for _ in xrange(length):
+        # generate length - nbits (from the starting stream) bits
+        for _ in xrange(length - self.n):
             bit = 0
             for tap in self.taps:
                 bit ^= stream[-tap]
             stream.append(bit)
-        stream = stream[:length]
+        # update state if required
+        if update:
+            self.seed = stream[-self.n:]
+            self.target = [b for b in self.seed]
+        # now format the output according to output_format
         if output_format == "str":
             return bin2txt(stream)
         elif output_format == "hex":
             return hexlify(bin2txt(stream))
-        else:
-            return stream
+        return stream
     
     def test(self, target=None):
         target = target or self.target

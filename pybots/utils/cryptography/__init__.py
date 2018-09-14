@@ -6,3 +6,4 @@ This package provides some useful objects and functions related to some common
 """
 
 from .hashing import *
+from .shifting import *
