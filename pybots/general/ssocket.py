@@ -168,9 +168,9 @@ class SocketBot(Template):
         """
         try:
             self.socket.close()
-            self.socket = None
         except:
             pass
+        self.socket = None
 
     @try_or_die("Socket establishment failed", socket.error)
     def connect(self, host=None, port=None, timeout=0, blocking=True):

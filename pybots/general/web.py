@@ -110,6 +110,7 @@ class WebBot(Template):
         :param cookie: content of the cookie
         """
         self.logger.debug("Setting the cookie...")
+        self.__cookie = cookie
         self.session.headers.update({'Cookie': cookie})
         return self
 
@@ -130,6 +131,30 @@ class WebBot(Template):
         if self.__ruagent:
             self.session.headers.update({'User-Agent': generate_user_agent()})
         self.session.proxies.update(self._proxies)
+
+    def close(self):
+        """
+        Unset the eventually configured session.
+        """
+        try:
+            self.session.close()
+        except:
+            pass
+        self.session = None
+
+    @property
+    def cookie(self):
+        """ Cookie property. """
+        try:
+            return self.__cookie
+        except AttributeError:
+            self.logger.info("No cookie set yet")
+
+    @cookie.setter
+    def cookie(self, cookie):
+        """ Cookie property setter. """
+        # NOTE: _set_cookie is left for backward-compatibility
+        self._set_cookie(cookie)
 
     @try_or_die("Request failed")
     def request(self, rqpath=None, method="GET", data=None, aheaders=None, **kw):

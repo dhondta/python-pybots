@@ -182,3 +182,12 @@ class Template(object):
             coloredlogs.install([logging.INFO, logging.DEBUG][self.verbose],
                                 logger=self.logger)
         self.logger.debug("Logging {}configured.".format(new_logger))
+    
+    @classmethod
+    def doc(cls):
+        """
+        Simple documentation method, displaying class' __doc__ attribute.
+        """
+        d = cls.__doc__
+        print("Undocumented bot" if d is None else d)
+            
