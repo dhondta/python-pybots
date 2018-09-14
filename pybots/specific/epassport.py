@@ -24,7 +24,7 @@ except ImportError:
     pypassport_installed = False
     Reader = object
 
-from .netcat import Netcat
+from .tcp import Netcat
 
 
 def check_MRZ(method):
