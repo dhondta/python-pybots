@@ -10,6 +10,7 @@ __copyright__ = "AGPLv3 (http://www.gnu.org/licenses/agpl.html)"
 __all__ = ["try_or_die", "try_and_pass", "try_and_warn"]
 
 
+import six
 import sys
 
 
@@ -47,9 +48,10 @@ def try_or_die(message, exc=Exception, extra_info=""):
                 return method(self, *args, **kwargs)
             except exc:
                 self.logger.critical(message)
-                if hasattr(self, extra_info) and \
-                    len(self.extra_info) > 0:
-                    self.logger.info(getattr(self, extra_info))
+                extra_info_value = getattr(self, extra_info, "")
+                if isinstance(extra_info_value, six.string_types) and \
+                   len(extra_info_value) > 0:
+                    self.logger.info(extra_info_value)
                 self.__exit__(*sys.exc_info())
         return wrapper
     return _try_or_die
