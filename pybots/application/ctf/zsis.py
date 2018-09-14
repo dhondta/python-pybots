@@ -25,6 +25,7 @@ from pybots.specific.http import HTTPBot
 DOM = "ctf.zsis.hr"
 URL = "https://{}/challenges/".format(DOM)
 FLAG = re.compile(r'.*(FLAG\-\{.+\}).*')
+CFN = ".cookie"
 
 
 class ZSISBot(HTTPBot):
@@ -33,17 +34,41 @@ class ZSISBot(HTTPBot):
      "Programming" category.
 
     :param cid:      challenge identifier
-    :param cookie: Root-Me username
-    :param disp:     display all exchanged messages or not
-    :param verbose:  verbose mode or not
-    :param prefix:   prefix messages for display or not
+    :param cookie:   PHP session ID cookie
+    :param args:     HTTPBot arguments
+    :param kwargs:   HTTPBot keyword-arguments
+    
+    Note:
+      The cookie can also be left None in the input arguments and be loaded from
+       a .cookie file. It can be saved as "PHPSESSID=..." or simply "...".
+    
+    Example usage:
+    
+      from pybots import ZSISBot
+      
+      with ZSISBot("5_programming_some_challenge", "...your-cookie...") as bot:
+          # do some computation with bot.inputs here
+          # NOTE: bot.inputs is a dictionary containing input values from
+          #        challenge's source ; i.e. 'challenge' for this particular bot
+          bot.answer = computed_value
+          # now, while exiting the context, the flag will be displayed if the
+          #  answer was correct (or a message if wrong)
     """
     def __init__(self, cid, cookie, *args, **kwargs):
         if not cid.endswith(".php"):
             cid += ".php"
         super(ZSISBot, self).__init__("{}{}".format(URL, cid), *args, **kwargs)
-        self._set_cookie("PHPSESSID={}".format(cookie))
         self.answer = None
+        self.cid = cid
+        # set the cookie
+        if cookie is None:
+            with open(CFN, 'r+') as f:
+                cookie = f.read().strip()
+        if not CKI.match(cookie):
+            raise Exception
+        if not cookie.startswith("PHPSESSID="):
+            cookie = "PHPSESSID={}".format(cookie)
+        self._set_cookie(cookie)
 
     @try_or_die("Unexpected error")
     def postamble(self):
@@ -74,3 +99,4 @@ class ZSISBot(HTTPBot):
         # get the challenge page and retrieve CSRF token and message
         self.get()
         self.logger.debug(self.response.text)
+        self.inputs = {'challenge': self.response.text}
