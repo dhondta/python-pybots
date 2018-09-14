@@ -219,6 +219,7 @@ class WebBot(Template):
             resource = urljoin(self.url, resource)
         self.logger.debug("Downloading resource...")
         with WebBot(resource, verbose=self.verbose) as bot:
+            bot.cookie = self.cookie
             bot.get(resource, stream=True)
             if bot.response.status_code == 200:
                 with open(filename, 'wb') as f:
