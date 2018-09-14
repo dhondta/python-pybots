@@ -32,9 +32,18 @@ class RootMeIRCBot(IRCBot):
 
     :param cid:      challenge ID number
     :param username: Root-Me username
-    :param disp:     display all exchanged messages or not
-    :param verbose:  verbose mode or not
-    :param prefix:   prefix messages for display or not
+    
+    Example usage:
+    
+      from pybots import RootMeIRCBot
+      
+      with RootMeIRCBot(1, "...your-rootme-username...") as bot:
+          # do some computation with bot.inputs here
+          # NOTE: bot.inputs is a dictionary containing input values from
+          #        challenge's source ; i.e. 'message' for this particular bot
+          bot.answer = computed_value
+          # now, while exiting the context, the flag will be displayed if the
+          #  answer was correct (or a message if wrong)        
     """
     def __init__(self, cid, username, *args, **kwargs):
         super(RootMeIRCBot, self).__init__("irc.root-me.org",
