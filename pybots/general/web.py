@@ -218,7 +218,7 @@ class WebBot(Template):
         if parsed.netloc == '':
             resource = urljoin(self.url, resource)
         self.logger.debug("Downloading resource...")
-        with WebBot(resource) as bot:
+        with WebBot(resource, verbose=self.verbose) as bot:
             bot.get(resource, stream=True)
             if bot.response.status_code == 200:
                 with open(filename, 'wb') as f:

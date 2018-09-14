@@ -99,7 +99,7 @@ class RingZer0Bot(HTTPBot):
         for div in wrapper.find_all('div', {"class" : "download"}):
             href = div.find('a').attrs['href']
             self.retrieve(href)
-            downloads.append(href)
+            downloads.append(os.path.basename(href))
         if len(downloads) > 0:
             self.logger.info(" - Downloads: {}".format(", ".join(downloads)))
         return self
