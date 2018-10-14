@@ -145,13 +145,14 @@ class WebBot(Template):
         try:
             return self.__cookie
         except AttributeError:
-            self.logger.info("No cookie set yet")
+            return
 
     @cookie.setter
     def cookie(self, cookie):
         """ Cookie property setter. """
         # NOTE: _set_cookie is left for backward-compatibility
-        self._set_cookie(cookie)
+        if cookie is not None:
+            self._set_cookie(cookie)
 
     @try_or_die("Request failed")
     def request(self, rqpath=None, method="GET", data=None, aheaders=None, **kw):
