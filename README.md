@@ -13,6 +13,7 @@ It currently features the following bots:
 - Application-specific:
   - CTF: RingZer0Bot, RootMeIRCBot, ZSISBot
   - Security: ShodanBot, VirusTotalBot
+  - Miscellaneous: GitRecoveryBot
   
 
 ## Installation
