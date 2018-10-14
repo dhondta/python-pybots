@@ -94,14 +94,15 @@ class RingZer0Bot(HTTPBot):
         """
         Retrieve the downloads from the challenge page.
         """
+        self.downloads = []
         wrapper = self.soup.find('div', {"class" : "challenge-wrapper"})
-        downloads = []
         for div in wrapper.find_all('div', {"class" : "download"}):
             href = div.find('a').attrs['href']
             self.retrieve(href)
-            downloads.append(os.path.basename(href))
-        if len(downloads) > 0:
-            self.logger.info(" - Downloads: {}".format(", ".join(downloads)))
+            self.downloads.append(os.path.basename(href))
+        if len(self.downloads) > 0:
+            self.logger.info(" - Downloads: {}"
+                             .format(", ".join(self.downloads)))
         return self
 
     @try_or_die("No flag found", extra_info="response")
