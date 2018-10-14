@@ -15,7 +15,7 @@ import re
 import zlib
 from subprocess import check_output, Popen, PIPE
 
-from pybots.utils.common import execute
+from pybots.utils import execute, RE_SHA1
 from pybots.specific.http import HTTPBot
 
 
@@ -62,7 +62,6 @@ KNOWN_FILES = [
     "refs/remotes/origin/HEAD",
     "refs/remotes/origin/master",
 ]
-SHA1_REGEX = re.compile(r'\b[0-9a-f]{40}\b')
 
 
 class GitRecoveryBot(HTTPBot):
@@ -73,6 +72,13 @@ class GitRecoveryBot(HTTPBot):
         super(GitRecoveryBot, self).__init__(*args, **kwargs)
         self.commits = []
         self.files = []
+        # check if git is installed
+        try:
+            execute("git --version")
+            self.__git_installed = True
+        except OSError:
+            self.__git_installed = False
+            self.logger.warn("Git not installed, some functions will not work")
         # prepare the folder structure
         if not os.path.exists(".git"):
             os.makedirs(".git")
@@ -87,13 +93,6 @@ class GitRecoveryBot(HTTPBot):
         self.__fetch_commits()
         with open(".checked", 'w') as f:
             pass
-        # check if git is installed
-        try:
-            execute("git --version")
-            self.__git_installed = True
-        except OSError:
-            self.__git_installed = False
-            self.logger.warn("Git not installed, some functions will not work")
     
     def __extract_commits(self, output):
         """
@@ -103,7 +102,7 @@ class GitRecoveryBot(HTTPBot):
         :return:       list of found hashes
         """
         hashes = []
-        for sha1 in SHA1_REGEX.findall(output):
+        for sha1 in RE_SHA1.findall(output):
             if sha1 not in self.commits:
                 self.__fetch_file(sha1, True)
             hashes.append(sha1)
