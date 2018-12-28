@@ -13,6 +13,7 @@ __copyright__ = "AGPLv3 (http://www.gnu.org/licenses/agpl.html)"
 __all__ = ["WebBot"]
 
 
+import brotli
 import copy
 import logging
 import os
@@ -38,6 +39,29 @@ urllib3.disable_warnings(InsecureRequestWarning)
 
 
 SUPPORTED_HTTP_METHODS = ["delete", "get", "head", "options", "post", "put"]
+
+
+class DecompressedResponse(object):
+    def __init__(self, response):
+        self._response = response
+    
+    def __getattr__(self, name):
+        return getattr(self._response, name)
+
+    @property
+    def text(self):
+        """ Adapted from requests' Response object """
+        content = None
+        encoding = self._response.encoding
+        if not self.content:
+            return str('')
+        if encoding is None:
+            encoding = self._response.apparent_encoding
+        try:
+            content = str(self.content, encoding, errors='replace')
+        except (LookupError, TypeError):
+            content = str(self.content)
+        return content
 
 
 class WebBot(Template):
@@ -142,8 +166,9 @@ class WebBot(Template):
     @property
     def cookie(self):
         """ Cookie property. """
+        #FIXME: get the session cookie the right way...
         try:
-            return self.__cookie
+            return self.session.headers.get("Cookie") or self.__cookie
         except AttributeError:
             return
 
@@ -202,6 +227,13 @@ class WebBot(Template):
         if 200 < self.response.status_code < 300:
             raise Exception("{} - {}".format(self.response.status_code,
                                              self.response.reason))
+        # handle special encodings
+        if self.response.headers.get('Content-Encoding') == "br":
+            self.response = DecompressedResponse(self.response)
+            try:
+                self.response.content = brotli.decompress(self.response.content)
+            except Exception as e:
+                self.logger.exception(e)
         self._parse()
         return self
 
