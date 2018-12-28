@@ -5,5 +5,6 @@ This package provides some bot implementations for communicating with some
 
 """
 
+from .gotcha import *
 from .shodan import *
 from .virustotal import *
