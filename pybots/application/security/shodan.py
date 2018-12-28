@@ -27,7 +27,7 @@ class ShodanBot(JSONBot):
     :param verbose: debug level
     """
     def __init__(self, apikey, verbose=False):
-        super(ShodanBot, self).__init__(DOM, verbose)
+        super(ShodanBot, self).__init__(DOM, verbose=verbose)
         self.apikey = apikey
 
     def __get(self, method, reqpath, **kwargs):
