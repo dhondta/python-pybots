@@ -9,7 +9,7 @@ requirements = parse_requirements("requirements.txt", session=False)
 setup(
   name = "pybots",
   packages = find_packages(),
-  version = "1.7.1",
+  version = "1.7.2",
   license = "AGPLv3",
   description = "A library for quickly creating client bots for communicating "
                 "with remote hosts.",
