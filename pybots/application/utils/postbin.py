@@ -63,7 +63,7 @@ class PostBinBot(JSONBot):
             return int(datetime.now().timestamp() * 1000) >= b.expires
     
     def __init__(self, *args, **kwargs):
-        super(PostBin, self).__init__("https://postb.in/", *args, **kwargs)
+        super(PostBinBot, self).__init__("https://postb.in/", *args, **kwargs)
     
     def bin(self, binid):
         """
@@ -87,7 +87,7 @@ class PostBinBot(JSONBot):
             if self.response.status_code == 404:
                 return
             raise e
-        b = PostBin.Bin(self.json)
+        b = PostBinBot.Bin(self.json)
         b.bot = self
         self._bins.append(b)
         return b
@@ -106,7 +106,7 @@ class PostBinBot(JSONBot):
         :return:      Bin object created
         """
         self.post("/api/bin")
-        b = PostBin.Bin(self.json)
+        b = PostBinBot.Bin(self.json)
         b.bot = self
         self._bins.append(b)
         return b
