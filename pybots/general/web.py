@@ -179,7 +179,7 @@ class WebBot(Template):
         if cookie is not None:
             self._set_cookie(cookie)
 
-    @try_or_die("Request failed")
+    @try_and_warn("Request failed")
     def request(self, rqpath=None, method="GET", data=None, aheaders=None, **kw):
         """
         Get a Web page.
@@ -224,17 +224,15 @@ class WebBot(Template):
                 **session_params)
         self.__print_response()
         # handle HTTP status code here
-        if not 200 <= self.response.status_code < 300:
-            raise Exception("{} - {}".format(self.response.status_code,
-                                             self.response.reason))
-        # handle special encodings
-        if self.response.headers.get('Content-Encoding') == "br":
-            self.response = DecompressedResponse(self.response)
-            try:
-                self.response.content = brotli.decompress(self.response.content)
-            except Exception as e:
-                self.logger.exception(e)
-        self._parse()
+        if 200 <= self.response.status_code < 300:
+            # handle special encodings
+            if self.response.headers.get('Content-Encoding') == "br":
+                self.response = r = DecompressedResponse(self.response)
+                try:
+                    r.content = brotli.decompress(r.content)
+                except Exception as e:
+                    self.logger.exception(e)
+            self._parse()
         return self
 
     @try_and_warn("Resource retrieval failed", trace=True)

@@ -19,9 +19,11 @@ from pybots.specific.json import JSONBot
 
 class PostBinBot(JSONBot):
     _bins = []
+    
     # Bin representation, parsed through the JSON received from the API
     class Bin(object):
         _requests = []
+        
         # Request representation, parsed through the JSON received from the API
         class Request(object):
             def __init__(self, json):
@@ -40,9 +42,10 @@ class PostBinBot(JSONBot):
             :return:      Request object popped
             """
             self.bot.get("/api/bin/{}/req/shift".format(self.id))
-            if self.bot.response.status_code == 404:
-                return
-            return Request(self.bot.json)
+            if self.bot.response.status_code == 200:
+                return PostBinBot.Bin.Request(self.bot.json)
+            else:
+                print(self.bot.response.status_code, self.bot.response.text)
         
         def request(self, reqid):
             """
@@ -54,15 +57,15 @@ class PostBinBot(JSONBot):
             if not hasattr(self, "bot"):
                 return
             self.bot.get("/api/bin/{}/req/{}".format(self.id, reqid))
-            if self.bot.response.status_code == 404:
-                return
-            return Request(self.bot.json)
+            if self.bot.response.status_code == 200:
+                return PostBinBot.Bin.Request(self.bot.json)
         
         @property
         def expired(self):
-            return int(datetime.now().timestamp() * 1000) >= b.expires
+            return int(datetime.now().timestamp() * 1000) >= self.expires
     
     def __init__(self, *args, **kwargs):
+        self.__clean = kwargs.pop("clean", False)
         super(PostBinBot, self).__init__("https://postb.in/", *args, **kwargs)
     
     def bin(self, binid):
@@ -81,16 +84,12 @@ class PostBinBot(JSONBot):
                     self._bins.remove(b)
                     self.logger.debug("Bin '{}' expired".format(b.id))
                 return b
-        try:
-            self.get("/api/bin/{}".format(binid))
-        except Exception as e:
-            if self.response.status_code == 404:
-                return
-            raise e
-        b = PostBinBot.Bin(self.json)
-        b.bot = self
-        self._bins.append(b)
-        return b
+        self.get("/api/bin/{}".format(binid))
+        if self.response.status_code == 200:
+            b = PostBinBot.Bin(self.json)
+            b.bot = self
+            self._bins.append(b)
+            return b
     
     def clear(self):
         """
@@ -99,6 +98,14 @@ class PostBinBot(JSONBot):
         for b in self._bins:
             self.delete(b.id)
     
+    def close(self):
+        """
+        Clear the bins before leaving.
+        """
+        if self.__clean:
+            self.clear()
+        super(PostBinBot, self).close()
+    
     def create(self):
         """
         Create a new bin in the list.
@@ -106,10 +113,11 @@ class PostBinBot(JSONBot):
         :return:      Bin object created
         """
         self.post("/api/bin")
-        b = PostBinBot.Bin(self.json)
-        b.bot = self
-        self._bins.append(b)
-        return b
+        if self.response.status_code == 201:
+            b = PostBinBot.Bin(self.json)
+            b.bot = self
+            self._bins.append(b)
+            return b
     
     def delete(self, binid):
         """
