@@ -44,8 +44,6 @@ class PostBinBot(JSONBot):
             self.bot.get("/api/bin/{}/req/shift".format(self.id))
             if self.bot.response.status_code == 200:
                 return PostBinBot.Bin.Request(self.bot.json)
-            else:
-                print(self.bot.response.status_code, self.bot.response.text)
         
         def request(self, reqid):
             """
