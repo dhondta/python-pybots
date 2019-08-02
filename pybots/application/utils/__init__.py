@@ -6,3 +6,4 @@ This package provides some bot implementations for interacting with some
 """
 
 from .git import *
+from .postbin import *
