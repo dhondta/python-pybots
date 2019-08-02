@@ -198,7 +198,7 @@ class WebBot(Template):
         if not hasattr(requests, m):
             self.logger.error("Bad request")
             raise AttributeError("requests has no method '{}'".format(m))
-        session_params = {'allow_redirects': True}
+        session_params = {'allow_redirects': kw.pop('allow_redirects', True)}
         # handle request streaming (i.e. for downloads)
         stream = kw.pop('stream', None)
         if stream is not None:
@@ -224,7 +224,7 @@ class WebBot(Template):
                 **session_params)
         self.__print_response()
         # handle HTTP status code here
-        if 200 < self.response.status_code < 300:
+        if not 200 <= self.response.status_code < 300:
             raise Exception("{} - {}".format(self.response.status_code,
                                              self.response.reason))
         # handle special encodings
@@ -245,7 +245,7 @@ class WebBot(Template):
         :param resource: resource to be downloaded
         :param filename: destination filename
         """
-        parsed = urlparse(resource)
+        parsed, success = urlparse(resource), False
         if filename is None:
             filename = os.path.basename(parsed.path) or "undefined"
         if parsed.netloc == '':
@@ -260,8 +260,11 @@ class WebBot(Template):
                         f.write(chunk)
                 bot.logger.debug("> Download successful")
                 self.logger.debug("> Saved to '{}'".format(filename))
+                success = True
             else:
                 bot.logger.error("> Download failed")
+        if success:
+            return filename
 
     @staticmethod
     def template(method):
