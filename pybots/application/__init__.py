@@ -6,5 +6,5 @@ This package provides some bot implementations for communicating with various
 """
 
 from .ctf import *
-from .misc import *
+from .utils import *
 from .security import *
