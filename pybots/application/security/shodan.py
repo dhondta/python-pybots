@@ -11,6 +11,7 @@ __all__ = ["ShodanBot"]
 
 
 from pybots.specific.json import JSONBot
+from time import sleep, time
 
 
 DOM = "https://api.shodan.io"
@@ -27,8 +28,9 @@ class ShodanBot(JSONBot):
     :param verbose: debug level
     """
     def __init__(self, apikey, verbose=False):
+        self.__k = apikey
+        self.__last = 0
         super(ShodanBot, self).__init__(DOM, verbose=verbose)
-        self.apikey = apikey
 
     def __get(self, method, reqpath, **kwargs):
         """
@@ -37,8 +39,12 @@ class ShodanBot(JSONBot):
         :param method:  HTTP method
         :param reqpath: request path
         """
-        getattr(self, method)(reqpath + "?key={}".format(self.apikey), **kwargs)
+        while time() - self.__last < 1:
+            sleep(.1)
+        self.__last = time()            
+        getattr(self, method)(reqpath + "?key={}".format(self.__k), **kwargs)
 
+    # ------------------------- SHODAN SEARCH METHODS --------------------------
     def shodan_host(self, ip, history=False, minify=False):
         """
         Returns all services that have been found on the given host IP.
@@ -99,6 +105,7 @@ class ShodanBot(JSONBot):
         """
         self.__get("get", "/shodan/ports")
 
+    # ----------------------- SHODAN ON-DEMAND SCANNING  -----------------------
     def shodan_protocols(self):
         """
         Returns an object containing all the protocols that can be used when
@@ -133,3 +140,24 @@ class ShodanBot(JSONBot):
         """
         params = {'ips': ips}
         self.__get("post", "/shodan/protocols", params=params)
+
+    def shodan_scan_id(self, id):
+        """
+        Check the progress of a previously submitted scan request. Possible
+         values for the status are: SUBMITTING|QUEUE|PROCESSING|DONE
+
+        :param id: unique scan ID that was returned by /shodan/scan
+        """
+        self.__get("get", "/shodan/scan/{}".format(id))
+
+    # ------------------------- SHODAN NETWORK ALERTS  -------------------------
+    def shodan_alert(self, name, filters=dict(), filters_ip=None, expires=None):
+        """
+        Check the progress of a previously submitted scan request. Possible
+         values for the status are: SUBMITTING|QUEUE|PROCESSING|DONE
+
+        :param id: unique scan ID that was returned by /shodan/scan
+        """
+        filters.setdefault('ip', [])
+        params = {'name': name, 'filters': filters}  #FIXME
+        self.__get("post", "/shodan/alert", params=params)
