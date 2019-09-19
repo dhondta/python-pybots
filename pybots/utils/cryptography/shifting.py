@@ -98,9 +98,9 @@ class Geffe(Base):
                         self._lfsrs[2].get(length, "bin", update)):
             stream.append(Geffe.F(*bits))
         if output_format == "str":
-            return bin2txt(stream)
+            return bin2str(stream)
         elif output_format == "hex":
-            return hexlify(bin2txt(stream))
+            return hexlify(bin2str(stream))
         else:
             return stream
         
@@ -223,9 +223,9 @@ class LFSR(Base):
             self.target = [b for b in self.seed]
         # now format the output according to output_format
         if output_format == "str":
-            return bin2txt(stream)
+            return bin2str(stream)
         elif output_format == "hex":
-            return hexlify(bin2txt(stream))
+            return hexlify(bin2str(stream))
         return stream
     
     def test(self, target=None):
@@ -246,7 +246,7 @@ class LFSR(Base):
         elif is_str(seed) and not is_bin(seed):
             if is_hex(seed):
                 seed = unhexlify(seed)
-            seed = txt2bin(seed)
+            seed = str2bin(seed)
         seed = [int(b) for b in seed]
         assert is_bin(seed), "Bad input format for seed"
         assert is_int(nbits), "Bad input format for number of bits"
@@ -260,6 +260,6 @@ class LFSR(Base):
         if is_str(target) and not is_bin(target):
             if is_hex(target):
                 target = unhexlify(target)
-            target = [int(b) for b in txt2bin(target)]
+            target = [int(b) for b in str2bin(target)]
         assert is_bin(target), "Bad input format for target"
         return target
