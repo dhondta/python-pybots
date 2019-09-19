@@ -1,4 +1,4 @@
-bs4
+beautifulsoup4
 #pycountry  # (if country name to code resolution required)
 #pypassport # (only for Python2.7)
 requests
