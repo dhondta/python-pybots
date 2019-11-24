@@ -1,32 +1,25 @@
-#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 """Bot client dedicated to Gotcha.pw.
 
 """
+from ...specific.http import HTTPBot
+from ...utils.regex import is_domain, is_email
 
-__author__ = "Alexandre D'Hondt"
-__version__ = "1.0"
-__copyright__ = "AGPLv3 (http://www.gnu.org/licenses/agpl.html)"
+
 __all__ = ["GotchaBot"]
 
-
-from pybots.specific.http import HTTPBot
-from pybots.utils.regex import is_domain, is_email
-
-
-DOM = "https://gotcha.pw"
+URL = "https://gotcha.pw"
 
 
 class GotchaBot(HTTPBot):
     """
     GotchaBot class for communicating with website Gotcha.
-    https://gotcha.pw/
 
-    :param verbose: debug level
+    :param args:     HTTPBot arguments
+    :param kwargs:   HTTPBot keyword-arguments
     """
-    
-    def __init__(self, verbose=False):
-        super(GotchaBot, self).__init__(DOM, verbose=verbose)
+    def __init__(self, *args, **kwargs):
+        super(GotchaBot, self).__init__(URL, *args, **kwargs)
 
     def lookup(self, item):
         """
@@ -34,9 +27,11 @@ class GotchaBot(HTTPBot):
         
         :param item: item to be searched (email or domain)
         """
-        assert is_email(item) or is_domain(item) or (item[0] == '@' and \
-            is_domain(item[1:])), "Bad input (should be an email or a domain)"
-        assert '*' not in item, "Wildcards cannot be used"
+        if not is_email(item) and not is_domain(item) and \
+            not (item[0] == '@' and is_domain(item[1:])):
+            raise ValueError("Bad input (should be an email or a domain)")
+        if '*' in item:
+            raise ValueError("Wildcards are not allowed")
         self.get("/search/{}".format(item))
         content, rows = self.soup.find("div", attrs={'id': "content"}), []
         if content is not None:

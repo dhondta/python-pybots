@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 """Bot client for TCP sessions.
 
@@ -11,14 +10,10 @@ If necessary, data can be precomputed in a precompute() method in order to have
  it available for handling (e.g. a lookup table).
 
 """
+from ..general.ssocket import SocketBot
 
-__author__ = "Alexandre D'Hondt"
-__version__ = "1.3"
-__copyright__ = "AGPLv3 (http://www.gnu.org/licenses/agpl.html)"
+
 __all__ = ["Netcat", "TCPBot"]
-
-
-from pybots.general.ssocket import SocketBot
 
 
 class TCPBot(SocketBot):
@@ -59,6 +54,6 @@ class TCPBot(SocketBot):
 
 class Netcat(TCPBot):
     """
-    Kept for backward-compatibility.
+    Alias for TCPBot, kept for backward-compatibility.
     """
     pass

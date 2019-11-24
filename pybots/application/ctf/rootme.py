@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 """Bot clients dedicated to Root-Me CTF website.
 
@@ -10,19 +9,11 @@ This module currently contains an IRC bot for use with the challenges from the
       an IRC bot
 
 """
+from ...specific.irc import IRCBot
+from ...utils.common import *
 
-__author__ = "Alexandre D'Hondt"
-__version__ = "1.2"
-__copyright__ = "AGPLv3 (http://www.gnu.org/licenses/agpl.html)"
+
 __all__ = ["RootMeIRCBot"]
-
-
-import base64
-import os
-import re
-from six import string_types
-
-from pybots.specific.irc import IRCBot
 
 
 class RootMeIRCBot(IRCBot):

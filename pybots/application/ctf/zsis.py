@@ -1,26 +1,16 @@
-#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-"""Bot clients dedicated to ZSIS CTF website.
+"""Bot client dedicated to ZSIS CTF website.
 
 This module provides a simple wrapper for conveniently writing solutions to the
  challenges of the "Programming" category.
 
 """
+from ...base.decorators import try_or_die
+from ...specific.http import HTTPBot
+from ...utils.common import *
 
-__author__ = "Alexandre D'Hondt"
-__version__ = "1.0"
-__copyright__ = "AGPLv3 (http://www.gnu.org/licenses/agpl.html)"
+
 __all__ = ["ZSISBot"]
-
-
-import base64
-import os
-import re
-import urllib
-
-from pybots.base.decorators import *
-from pybots.specific.http import HTTPBot
-
 
 DOM = "ctf.zsis.hr"
 URL = "https://{}/challenges/".format(DOM)

@@ -1,9 +1,8 @@
-beautifulsoup4
+bs4
 brotli
-#pycountry  # (if country name to code resolution required)
-#pypassport # (only for Python2.7)
+pycountry
+pypassport
 requests
-urllib3
 user_agent
 simplejson
 tinyscript

@@ -1,37 +1,32 @@
-#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 """Bot client dedicated to Shodan API.
 
 """
+from ...specific.json import JSONBot
+from ...utils.common import time_throttle
 
-__author__ = "Alexandre D'Hondt"
-__version__ = "1.0"
-__copyright__ = "AGPLv3 (http://www.gnu.org/licenses/agpl.html)"
+
 __all__ = ["ShodanBot"]
 
-
-from pybots.specific.json import JSONBot
-from time import sleep, time
-
-
-DOM = "https://api.shodan.io"
+URL = "https://api.shodan.io"
 
 
 class ShodanBot(JSONBot):
     """
     ShodanBot class for communicating with the API of Shodan.
-    https://developer.shodan.io/api
+    
+    Reference: https://developer.shodan.io/api
+    Note:      All API methods are rate-limited to 1 request/second.
 
-    Note: All API methods are rate-limited to 1 request/ second.
-
-    :param apikey:  API key
-    :param verbose: debug level
+    :param apikey: API key
+    :param args:   JSONBot arguments
+    :param kwargs: JSONBot keyword-arguments
     """
-    def __init__(self, apikey, verbose=False):
+    def __init__(self, apikey, *args, **kwargs):
         self.__k = apikey
-        self.__last = 0
-        super(ShodanBot, self).__init__(DOM, verbose=verbose)
+        super(ShodanBot, self).__init__(URL, *args, **kwargs)
 
+    @time_throttle(1)
     def __get(self, method, reqpath, **kwargs):
         """
         Generic API sending method for appending the API key to the parameters.
@@ -39,9 +34,6 @@ class ShodanBot(JSONBot):
         :param method:  HTTP method
         :param reqpath: request path
         """
-        while time() - self.__last < 1:
-            sleep(.1)
-        self.__last = time()            
         getattr(self, method)(reqpath + "?key={}".format(self.__k), **kwargs)
 
     # ------------------------- SHODAN SEARCH METHODS --------------------------

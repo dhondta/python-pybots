@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 """Bot client for HTTP session using JSON objects.
 
@@ -6,17 +5,13 @@ The JSONBot class, inheriting from the WebBot class holding the base mechanism
  and logging, manages Web interactions with the sites using JSON objects.
 
 """
-
-__author__ = "Alexandre D'Hondt"
-__version__ = "1.0"
-__copyright__ = "AGPLv3 (http://www.gnu.org/licenses/agpl.html)"
-__all__ = ["JSONBot"]
-
-
 import simplejson
 
-from pybots.base.decorators import try_and_pass
-from pybots.general.web import *
+from ..base.decorators import try_and_pass
+from ..general.web import *
+
+
+__all__ = ["JSONBot"]
 
 
 class JSONBot(WebBot):
@@ -45,5 +40,5 @@ class JSONBot(WebBot):
         """
         Parse the requested JSON.
         """
-        self.json = None
+        self.json = None  # this ensures that the json attribute is set
         self.json = simplejson.loads(self.response.text.strip())

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 """Classes and functions related to hashing.
 
@@ -7,9 +6,7 @@ The following classes and functions allow to build hash lookup tables from text
 
 """
 
-__author__ = "Alexandre D'Hondt"
-__version__ = "1.0"
-__copyright__ = "AGPLv3 (http://www.gnu.org/licenses/agpl.html)"
+
 __all__ = ["LookupTable"]
 
 
@@ -30,9 +27,12 @@ class LookupTable(object):
     """
     def __init__(self, dictionary, algorithm="md5", ratio=1,
                  dict_filter=None, verbose=True, logger=None):
-        assert os.path.isfile(dictionary)
-        assert algorithm in ["md5", "sha1", "sha256"]
-        assert isinstance(ratio, int) and ratio > 0
+        if not os.path.isfile(dictionary):
+            raise ValueError("Bad dictionary file")
+        if algorithm not in ["md5", "sha1", "sha256"]:
+            raise ValueError("Bad hashing algorithm")
+        if not isinstance(ratio, float) or 0 >= ratio > 1:
+            raise ValueError("Bad ratio")
         self.logger = logger
         self.verbose = verbose
         algorithm = eval(algorithm)
@@ -40,8 +40,9 @@ class LookupTable(object):
         self.__log("Making the lookup table ; this may take a while...")
         with open(dictionary) as f:
             filtered = 0
+            m = round(1 / float(ratio))
             for i, l in enumerate(f):
-                if (i - filtered) % ratio == 0:
+                if (i - filtered) % m == 0:
                     l = l.strip()
                     if hasattr(dict_filter, '__call__') and dict_filter(l):
                         self.__lookup[algorithm(l)] = l
@@ -58,7 +59,7 @@ class LookupTable(object):
 
     def get(self, h):
         """
-        Cracking public method
+        Cracking public method.
 
         :param h: input hash
         :return: corresponding value

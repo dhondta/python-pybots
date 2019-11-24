@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 """Bot client for socket communication.
 
@@ -6,13 +5,6 @@ This generic bot allows to manage a socket session by using simple read/write
  methods.
 
 """
-
-__author__ = "Alexandre D'Hondt"
-__version__ = "1.3"
-__copyright__ = "AGPLv3 (http://www.gnu.org/licenses/agpl.html)"
-__all__ = ["SocketBot"]
-
-
 import inspect
 import os
 import re
@@ -23,6 +15,8 @@ from six import string_types
 from pybots.base.decorators import *
 from pybots.base.template import Template
 
+
+__all__ = ["SocketBot"]
 
 P3 = sys.version_info.major == 3
 

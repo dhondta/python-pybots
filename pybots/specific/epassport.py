@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 """Bot client for EPassport remote virtual terminal.
 
@@ -6,13 +5,6 @@ This bot allows to communicate with an EPassport remote virtual terminal for
  reading passport information.
 
 """
-
-__author__ = "Alexandre D'Hondt"
-__version__ = "1.1"
-__copyright__ = "AGPLv3 (http://www.gnu.org/licenses/agpl.html)"
-__all__ = ["EPassport"]
-
-
 import re
 import sys
 try:
@@ -24,7 +16,10 @@ except ImportError:
     pypassport_installed = False
     Reader = object
 
-from .tcp import Netcat
+from .tcp import TCPBot
+
+
+__all__ = ["EPassport"]
 
 
 def check_MRZ(method):

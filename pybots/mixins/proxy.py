@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 """Mixins for selecting a public HTTP proxy.
 
@@ -6,16 +5,12 @@ This mixin allows to retrieve a proxy address from a public list of public HTTP
  proxies and to setup the bot with a selected one.
 
 """
-
-__author__ = "Alexandre D'Hondt"
-__version__ = "1.1"
-__copyright__ = "AGPLv3 (http://www.gnu.org/licenses/agpl.html)"
-__all__ = ["PublicHTTPProxyMixin", "PublicSocksProxyMixin"]
-
-
 from pybots.base.decorators import *
 from pybots.utils.ip import get_my_public_ip
 from pybots.utils.proxy import *
+
+
+__all__ = ["PublicHTTPProxyMixin", "PublicSocksProxyMixin"]
 
 
 @applicable_to("WebBot")

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 """Generic bot client template.
 
@@ -6,13 +5,6 @@ Each specific bot inherits from the generic class "Template" holding the base
  machinery and logging for managing interactions with remote hosts.
 
 """
-
-__author__ = "Alexandre D'Hondt"
-__version__ = "1.3"
-__copyright__ = "AGPLv3 (http://www.gnu.org/licenses/agpl.html)"
-__all__ = ["Template"]
-
-
 import logging
 import os
 import sys
@@ -33,6 +25,8 @@ except ImportError:
 
 from .decorators import *
 
+
+__all__ = ["Template"]
 
 LOG_FORMAT = '%(asctime)s [%(levelname)s] %(name)s %(message)s'
 DATE_FORMAT = '%H:%M:%S'
@@ -190,4 +184,3 @@ class Template(object):
         """
         d = cls.__doc__
         print("Undocumented bot" if d is None else d)
-            

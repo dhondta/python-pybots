@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 """Bot client for HTTP session with response parsing.
 
@@ -7,17 +6,13 @@ The HTTPBot class, inheriting from the WebBot class holding the base mechanism
  with BeautifulSoup.
 
 """
-
-__author__ = "Alexandre D'Hondt"
-__version__ = "1.0"
-__copyright__ = "AGPLv3 (http://www.gnu.org/licenses/agpl.html)"
-__all__ = ["HTTPBot"]
-
-
 import bs4
 
-from pybots.base.decorators import try_and_warn
-from pybots.general.web import *
+from ..base.decorators import try_and_warn
+from ..general.web import *
+
+
+__all__ = ["HTTPBot"]
 
 
 class HTTPBot(WebBot):

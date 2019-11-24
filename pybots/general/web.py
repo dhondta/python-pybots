@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 """Bot client for Web communication.
 
@@ -6,13 +5,6 @@ Each specific bot inherits from a generic Bot class holding the base
  mechanism and logging for managing Web interactions with the handled sites.
 
 """
-
-__author__ = "Alexandre D'Hondt"
-__version__ = "1.7"
-__copyright__ = "AGPLv3 (http://www.gnu.org/licenses/agpl.html)"
-__all__ = ["WebBot"]
-
-
 import brotli
 import copy
 import logging
@@ -38,7 +30,7 @@ from urllib3.exceptions import InsecureRequestWarning
 urllib3.disable_warnings(InsecureRequestWarning)
 
 
-SUPPORTED_HTTP_METHODS = ["delete", "get", "head", "options", "post", "put"]
+__all__ = ["WebBot"]
 
 
 class DecompressedResponse(object):
@@ -93,7 +85,7 @@ class WebBot(Template):
         self.__ruagent = random_uagent
         self._set_session()
         self.logger.debug("Binding HTTP methods...")
-        for m in SUPPORTED_HTTP_METHODS:
+        for m in ["delete", "get", "head", "options", "post", "put"]:
             setattr(self, m, MethodType(WebBot.template(m), self))
 
     def __print_request(self):

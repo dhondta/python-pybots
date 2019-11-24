@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 """Bot client dedicated to RingZer0 CTF website.
 
@@ -6,20 +5,12 @@
       whose keys are the tags found on the challenge page
 
 """
+from ...base.decorators import try_or_die
+from ...specific.http import HTTPBot
+from ...utils.common import *
 
-__author__ = "Alexandre D'Hondt"
-__version__ = "1.3"
-__copyright__ = "AGPLv3 (http://www.gnu.org/licenses/agpl.html)"
+
 __all__ = ["RingZer0Bot"]
-
-
-import base64
-import os
-import re
-
-from pybots.base.decorators import *
-from pybots.specific.http import HTTPBot
-
 
 DOM = "ringzer0team.com"
 URL = "https://{}/challenges/".format(DOM)
@@ -29,7 +20,6 @@ CFN = ".cookie"
 CKI = re.compile(r'^[a-z0-9]{26}$')
 os.environ['NO_PROXY'] = DOM  # disables proxy check by requests module for
                               #  this domain
-
 
 class RingZer0Bot(HTTPBot):
     """
