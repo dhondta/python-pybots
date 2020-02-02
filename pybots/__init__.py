@@ -5,5 +5,6 @@ This module provides various bot implementations for managing sessions with
 
 """
 
-from .application import *
-from .specific import *
+from .apis import *
+from .bots import *
+from .core import *
