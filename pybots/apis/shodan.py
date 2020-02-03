@@ -57,22 +57,24 @@ class ShodanAPI(JSONBot, API):
                 raise ValueError("Bad facet")
         return ",".join(r)
     
-    def __validate(**kwargs):
+    def __validate(self, **kwargs):
         """
         Private generic validation function for Shodan API arguments.
         """
         for k, v in kwargs.items():
             if k == "domain":
                 domain_name(v)
+            elif k == "filters":
+                if not isinstance(v, dict) and list(v.keys()) == ["ip"]:
+                    raise ValueError("bad filters dictionary")
             elif k in ["history", "minify", "notify"]:
-                for f in v:
-                    if not isinstance(f, bool):
-                        raise ValueError("Bad boolean flag")
+                if not isinstance(v, bool):
+                    raise ValueError("bad boolean flag")
             elif k == "hostnames":
                 for hn in v:
                     hostname(hn)
             elif k == "id" and not re.match(r"^[0-9A-Z]{16}$"):
-                raise ValueError("Bad ID")
+                raise ValueError("bad ID format, should be: [0-9A-Z]{16}")
             elif k == "ips":
                 for ip in v:
                     ip_address(ip)
@@ -85,7 +87,8 @@ class ShodanAPI(JSONBot, API):
                 port_number(v)
             elif k == "protocol":
                 if v not in self.shodan.protocols().keys():
-                    raise ValueError("Bad protocol")
+                    raise ValueError("bad protocol, check .protocols() to get "
+                                     "the list of valid ones")
             elif k == "sort":
                 if v not in ["votes", "timestamp"]:
                     raise ValueError("'sort' must be one of: votes|timestamp")
@@ -101,7 +104,7 @@ class ShodanAPI(JSONBot, API):
         getattr(self, method)(reqpath + "?key=%s" % self._api_key, **kwargs)
 
     @apicall
-    @cache(300)
+    @cache(3600)
     def account_profile(self):
         """
         Returns information about the Shodan account linked to this API key.
@@ -110,6 +113,7 @@ class ShodanAPI(JSONBot, API):
     
     @apicall
     @private
+    @invalidate("account_profile", "info")
     @cache(300)
     def dns_domain(self, domain):
         """
@@ -120,7 +124,7 @@ class ShodanAPI(JSONBot, API):
         self._get("get", "/dns/domain/%s" % domain)
 
     @apicall
-    @cache(300)
+    @cache(300, 3)
     def dns_resolve(self, *hostnames):
         """
         Look up the IP address for the provided list of hostnames.
@@ -128,11 +132,11 @@ class ShodanAPI(JSONBot, API):
         :param hostnames: comma-separated list of hostnames
         """
         self.__validate(hostnames=hostnames)
-        r, params = {}, {'hostnames': ",".join(hostnames)}
-        self._get("get", "/dns/resolve", params=params)
+        self._get("get", "/dns/resolve",
+                  params={'hostnames': ",".join(hostnames)})
 
     @apicall
-    @cache(300)
+    @cache(300, 3)
     def dns_reverse(self, *ips):
         """
         Look up the hostnames that have been defined for the given list of
@@ -141,8 +145,7 @@ class ShodanAPI(JSONBot, API):
         :param ips: comma-separated list of IP addresses
         """
         self.__validate(ips=ips)
-        params = {'ips': ",".join(ips)}
-        self._get("get", "/dns/reverse", params=params)
+        self._get("get", "/dns/reverse", params={'ips': ",".join(ips)})
     
     @apicall
     @cache(300)
@@ -240,6 +243,7 @@ class ShodanAPI(JSONBot, API):
     
     @apicall
     @private
+    @invalidate("org")
     @cache(3600)
     def org_member_add(self, user, notify=False):
         """
@@ -250,6 +254,7 @@ class ShodanAPI(JSONBot, API):
     
     @apicall
     @private
+    @invalidate("org")
     @cache(3600)
     def org_member_delete(self, user):
         """
@@ -268,7 +273,6 @@ class ShodanAPI(JSONBot, API):
         self._get("get", "/shodan/alert/info")
     
     @apicall
-    @invalidate("shodan_alerts")
     def shodan_alert(self, id):
         """
         Returns the information about a specific network alert.
@@ -277,6 +281,26 @@ class ShodanAPI(JSONBot, API):
         """
         self.__validate(id=id)
         self._get("get", "/shodan/alert/%s/info" % id)
+    
+    @apicall
+    @invalidate("notifiers")
+    def shodan_alert_new(self, name, filters=None, expires=0):
+        """
+        Create a network alert for a defined IP/ netblock which can be used to
+         subscribe to changes/ events that are discovered within that range.
+        
+        :param name:    name to describe the network alert
+        :param filters: object specifying the criteria that an alert should
+                         trigger
+                        NB: The only supported option at the moment is the "ip"
+                             filter.
+        :param expires: number of seconds that the alert should be active
+        """
+        self.__validate(filters=filters)
+        data = {'name': name, 'filters': filters}
+        if expires > 0:
+            data['expires'] = expires
+        self._get("post", "/shodan/alert", data=data)
     
     @apicall
     @invalidate("shodan_alerts")
@@ -398,8 +422,7 @@ class ShodanAPI(JSONBot, API):
         :param dataset: name of the dataset
         """
         self.__validate(dataset=dataset)
-        params = {'dataset': dataset}
-        self._get("get", "/shodan/data", params=params)
+        self._get("get", "/shodan/data", params={'dataset': dataset})
     
     @apicall
     @cache(3600)
@@ -412,12 +435,12 @@ class ShodanAPI(JSONBot, API):
         :param minify:  True to only return the list of ports and the
                          general host information, no banners
         """
-        self.__validate(ips=[ip], history=history, minify=minify])
-        params = {'history': history, 'minify': minify}
-        self._get("get", "/shodan/host/%s" % ip, params=params)
+        self.__validate(ips=[ip], history=history, minify=minify)
+        self._get("get", "/shodan/host/%s" % ip,
+                  params={'history': history, 'minify': minify})
     
     @apicall
-    @cache(3600)
+    @cache(300)
     def shodan_host_count(self, query, *facets):
         """
         This method behaves identical to "/shodan/host/search" with the only
@@ -437,6 +460,9 @@ class ShodanAPI(JSONBot, API):
             params['facets'] = facets
         self._get("get", "/shodan/host/count", params=params)
     
+    @apicall
+    @invalidate("account_profile", "info")
+    @cache(300)
     def shodan_host_search(self, query, *facets, **kwargs):
         """
         Search Shodan using the same query syntax as the website and use facets
@@ -452,13 +478,13 @@ class ShodanAPI(JSONBot, API):
         page = kwargs.get('page', 1)
         minify = kwargs.get('minify', False)
         facets = self.__facet_str(facets)
-        self.__validate(query=query, facets=facets, page=page, flags=[minify])
+        self.__validate(query=query, facets=facets, page=page, minify=minify)
         params = {'query': query, 'page': page, 'minify': minify}
         if facets != "":
             params['facets'] = facets
         self._get("get", "/shodan/host/search", params=params)
     
-    @property
+    @apicall
     @cache(86400)
     def shodan_host_search_facets(self):
         """
@@ -467,7 +493,7 @@ class ShodanAPI(JSONBot, API):
         """
         self._get("get", "/shodan/host/search/facets")
     
-    @property
+    @apicall
     @cache(86400)
     def shodan_host_search_filters(self):
         """
@@ -476,16 +502,16 @@ class ShodanAPI(JSONBot, API):
         """
         self._get("get", "/shodan/host/search/filters")
     
+    @apicall
     def shodan_host_search_tokens(self, query):
         """
         Lets the user determine which filters are being used by the query string
          and what parameters were provided to the filters.
 
-        :param query:  Shodan search query
+        :param query: Shodan search query
         """
         self.__validate(query=query)
-        params = {'query': query}
-        self._get("get", "/shodan/host/search/tokens", params=params)
+        self._get("get", "/shodan/host/search/tokens", params={'query': query})
     
     @apicall
     @cache(86400)
@@ -517,8 +543,8 @@ class ShodanAPI(JSONBot, API):
                        (asc|desc)
         """
         self.__validate(page=page, order=order, sort=sort)
-        params = {'page': page, 'sort': sort, 'order': order}
-        self._get("get", "/shodan/query", params=params)
+        self._get("get", "/shodan/query",
+                  params={'page': page, 'sort': sort, 'order': order})
     
     @apicall
     @cache(300)
@@ -532,8 +558,8 @@ class ShodanAPI(JSONBot, API):
                        items 
         """
         self.__validate(query=query, page=page)
-        params = {'query': query, 'page': page}
-        self._get("get", "/shodan/query/search", params=params)
+        self._get("get", "/shodan/query/search",
+                  params={'query': query, 'page': page})
     
     @apicall
     @cache(3600)
@@ -544,8 +570,7 @@ class ShodanAPI(JSONBot, API):
         :param size: number of tags to return
         """
         self.__validate(size=size)
-        params = {'size': size}
-        self._get("get", "/shodan/query/tags", params=params)
+        self._get("get", "/shodan/query/tags", params={'size': size})
     
     @apicall
     def shodan_scan(self, id):
@@ -577,10 +602,11 @@ class ShodanAPI(JSONBot, API):
                           supported protocols)
         """
         self.__validate(port=port, protocol=protocol)
-        data = {'port': port, 'protocol': protocol}
-        self._get("post", "/shodan/scan/internet", data=data)
+        self._get("post", "/shodan/scan/internet",
+                  data={'port': port, 'protocol': protocol})
     
     @apicall
+    @invalidate("account_profile", "info")
     def shodan_scan_new(self, *ips):
         """
         Request Shodan to crawl a network.
@@ -593,8 +619,7 @@ class ShodanAPI(JSONBot, API):
                      that should get crawled
         """
         self.__validate(ips=ips)
-        data = {'ips': ",".join(ips)}
-        self._get("post", "/shodan/scan", data=data)
+        self._get("post", "/shodan/scan", data={'ips': ",".join(ips)})
     
     @apicall
     @cache(300)
