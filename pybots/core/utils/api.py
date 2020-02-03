@@ -23,7 +23,23 @@ TIME_THROTTLING    = {}
 from_cache = lambda s, n: getattr(s, "_api_cache", {}).get(n)
 
 
+def _decorated(f):
+    """
+    Small utility function to retrieve the reference to a decorated function.
+    
+    :param f: any decorator level of the target function
+    """
+    while hasattr(f, "__wrapped__"):
+        f = f.__wrapped__
+    return f
+
+
 def _id(something):
+    """
+    Small utility function to compute the ID of anything.
+    
+    :param something: any object
+    """
     try:
         return hash(something)
     except TypeError:
@@ -35,9 +51,10 @@ def _result(f, self, *args, **kwargs):
     Proxy function to return the result of a method and, if the result is None,
      in some different use cases, return something.
     """
-    r = f(self, *args, **kwargs)
-    if r is None and JSONBot in self.__class__.__bases__:
-        r = self.json
+    s = getattr(self, "_parent", self)
+    r = f(s, *args, **kwargs)
+    if r is None and JSONBot in s.__class__.__bases__:
+        r = s.json
     if isinstance(r, dict):
         err = r.get('error')
         if err is not None:
@@ -47,19 +64,16 @@ def _result(f, self, *args, **kwargs):
 
 def apicall(f):
     """
-    Dummy API method decorator for marking a method as an API call.
+    Dummy API method decorator for flagging a method as an API call.
     """
     @wraps(f)
     def _wrapper(self, *args, **kwargs):
         return _result(f, self, *args, **kwargs)
-    g = f
-    while hasattr(g, "__wrapped__"):
-        g = g.__wrapped__
-    g.__apicall__ = True
+    _decorated(f).__apicall__ = True
     return _wrapper
 
 
-def cache(timeout=300):
+def cache(timeout=300, retries=1):
     """
     API method decorator for caching or getting the cached result.
     """
@@ -68,34 +82,46 @@ def cache(timeout=300):
         multi = len(spec.args) == 1 and spec.varargs is not None
         @wraps(f)
         def _subwrapper(self, *args, **kwargs):
-            self = getattr(self, "_parent", self)
-            if not self._disable_cache:
+            if multi and len(args) == 0:
+                return
+            s = getattr(self, "_parent", self)
+            if not s._disable_cache:
                 force = kwargs.pop('force', False)
                 # handle varargs by searching for or writing each item in the
                 #  cache, letting the request grouped with non-cached items
                 if multi:
                     entries, tmp = {}, []
                     for item in args:
-                        entry = self.from_cache(f, (item, ), kwargs)
-                        if entry is None:
+                        entry = s.from_cache(f, (item, ), kwargs)
+                        if entry is None or \
+                           len(entry) == 1 and isinstance(entry, dict) and \
+                           list(entry.values())[0] is None:
                             tmp.append(item)
+                        elif isinstance(entry, dict):
+                            entries.update(entry)
                         else:
                             entries[item] = entry
-                    args = tuple(tmp)
-                    if len(args) > 0:
-                        entries.update(_result(f, self, *args, **kwargs))
-                        for i, e in self.json.items():
-                            self.to_cache(f, (i, ), kwargs, timeout, entry=e)
+                    n = retries
+                    while len(tmp) > 0 and n > 0:
+                        r = _result(f, s, *tmp, **kwargs)
+                        for i, e in (r.items() if isinstance(r, dict) else \
+                                     zip(tmp, r)):
+                            if e is None:
+                                continue
+                            s.to_cache(f, (i, ), kwargs, timeout, entry=e)
+                            tmp.remove(i)
+                            entries[i] = e
+                        n -= 1
                     return entries
                 else:
-                    entry = self.from_cache(f, args, kwargs)
-                    return self.to_cache(f, args, kwargs, timeout) \
+                    entry = s.from_cache(f, args, kwargs)
+                    return s.to_cache(f, args, kwargs, timeout) \
                            if entry is None or force else entry
             else:
-                l = getattr(self, "logger", None)
+                l = getattr(s, "logger", None)
                 if l:
                     l.debug("Cache disabled")
-                return _result(f, self, *args, **kwargs)
+                return _result(f, s, *args, **kwargs)
         return _subwrapper
     return _wrapper
 
@@ -108,21 +134,22 @@ def invalidate(*other_f):
     def _wrapper(inner_f):
         @wraps(inner_f)
         def _subwrapper(self, *args, **kwargs):
-            n = self.__class__.__name__
-            s = getattr(self, "_{}__parent".format(n), self)
-            cls = s.__class__
-            #f = getattr(c, "_{}__api_registry".format(c.__name__))[other_f]
+            s = getattr(self, "_parent", self)
             try:
-                return inner_f(self, *args, **kwargs)
+                return inner_f(s, *args, **kwargs)
             finally:
-                c = self._api_cache
-                for f in other_f:
-                    fid = _id(cls.__api_registry[f])
-                    if c.get(i) is not None:
-                        c[i] = {}
-                        l = getattr(self, "logger", None)
-                        if l:
-                            l.debug("Invalidated cache entry for '%s'" % f)
+                f = _decorated(inner_f)
+                if getattr(f, "_api_cache_hit", False):
+                    delattr(f, "_api_cache_hit")
+                else:
+                    c = s._api_cache
+                    for f in other_f:
+                        fid = _id(s.__class__._MetaAPI__api_registry[f])
+                        if c.get(fid) is not None:
+                            c[fid] = {}
+                            l = getattr(s, "logger", None)
+                            if l:
+                                l.debug("Invalidated cache entry for '%s'" % f)
         return _subwrapper
     return _wrapper
 
@@ -175,14 +202,12 @@ class MetaAPI(type):
             return subcls
         subcls.__api_registry = {}
         for k, f in getmembers(subcls):
-            g = f
-            while hasattr(g, "__wrapped__"):
-                g = g.__wrapped__
+            g = _decorated(f)
             if not hasattr(g, "__apicall__"):
                 continue
             n = f.__name__
             # keep function's reference associated to its original name
-            subcls.__api_registry[n] = f
+            subcls.__api_registry[n] = g
             # tokenize the name and create a tree of APIObjects with the tokens
             ftype, tokens = "get", n.split("_")
             if tokens[-1] == "DEL":
@@ -244,6 +269,7 @@ class API(with_metaclass(MetaAPI, object)):
                     err = r.get('error')
                     if err is not None:
                         raise APIError(err)
+                _decorated(f)._api_cache_hit = True
                 return r
     
     def to_cache(self, f, args=(), kwargs={}, timeout=300, entry=None):
