@@ -1,39 +1,35 @@
 # -*- coding: UTF-8 -*-
-"""Bot client dedicated to Censys API.
+"""Client-side API dedicated to Censys API.
 
 """
 import re
 from tinyscript.helpers.data.types import *
 
-from ..core.protocols.http import JSONBot
 from ..core.utils.api import *
 
 
 __all__ = ["CensysAPI"]
 
-URL = "https://censys.io"
 
-
-class CensysAPI(JSONBot, API):
+class CensysAPI(API):
     """
     CensysAPI class for communicating with the API of Censys.
     
     Reference: https://censys.io/api
     Note:      All API methods are rate-limited to 1 request/second.
 
-    :param apikey: (API id, API secret)
-    :param args:   JSONBot / API arguments
-    :param kwargs: JSONBot keyword-arguments
+    :param api_id:     API id
+    :param api_secret: API secret
+    :param kwargs:     JSONBot / API keyword-arguments
     """
-    def __init__(self, apikey, *args, **kwargs):
-        self.__api_info = None
-        self.public = True
-        API.__init__(self, apikey, **kwargs)
-        JSONBot.__init__(self, URL, *args, **kwargs)
-
+    url = "https://censys.io"
+    
+    def __init__(self, api_id, api_secret, **kwargs):
+        super(CensysAPI, self).__init__(self, (api_id, api_secret), **kwargs)
+    
     def __validate(self, index, **kwargs):
         """
-        Private generic validation function for Shodan API arguments.
+        Private generic validation function for API arguments.
         """
         for k, v in kwargs.items():
             if k == "buckets":
@@ -64,7 +60,7 @@ class CensysAPI(JSONBot, API):
                     raise ValueError("bad series ID")
     
     @time_throttle(1)
-    def _get(self, method, reqpath, **kwargs):
+    def _request(self, method, reqpath, **kwargs):
         """
         Generic API sending method for appending the API key to the parameters.
 
@@ -73,7 +69,7 @@ class CensysAPI(JSONBot, API):
         :param kwargs:  requests.[...](...) parameters
         """
         kwargs['auth'] = self._apikey
-        getattr(self, method)("/api/v1" + reqpath, **kwargs)
+        super(CensysAPI, self)._request("/api/v1" + reqpath, method, **kwargs)
     
     # Create Report endpoint: https://censys.io/api/v1/docs/report
     def _report(self, index, query, field=None, buckets=50):
@@ -91,8 +87,10 @@ class CensysAPI(JSONBot, API):
                          (max is 500)
         """
         self.__validate(index, query=query, fields=[field], buckets=buckets)
-        self._get("post", "/report/%s" % index,
-                  data={'query': query, 'field': field, 'buckets': buckets})
+        data = {'query': query, 'buckets': buckets}
+        if field:
+            data['field'] = field
+        self._request("post", "/report/%s" % index, data=data)
     
     # Search endpoint: https://censys.io/api/v1/docs/search
     def _search(self, index, query, page=1, fields=None, flatten=True):
@@ -111,9 +109,10 @@ class CensysAPI(JSONBot, API):
         """
         self.__validate(index, query=query, page=page, fields=fields,
                         flatten=flatten)
-        self._get("post", "/search/%s" % index,
-                  data={'query': query, 'page': page, 'fields': fields,
-                        'flatten': flatten})
+        data = {'query': query, 'page': page, 'flatten': flatten}
+        if fields:
+            data['fields'] = fields
+        self._request("post", "/search/%s" % index, data=data)
     
     # View Document endpoint: https://censys.io/api/v1/docs/view
     def _view(self, index, id):
@@ -123,7 +122,7 @@ class CensysAPI(JSONBot, API):
         :param id: ID of the requested document
         """
         self.__validate(index, id=id)
-        self._get("get", "/view/%s/%s" % (index, id))
+        self._request("get", "/view/%s/%s" % (index, id))
     
     # Account endpoint: https://censys.io/api/v1/docs/account
     @apicall
@@ -132,7 +131,7 @@ class CensysAPI(JSONBot, API):
         """
         Returns information about your Censys account.
         """
-        self._get("get", "/account")
+        self._request("get", "/account")
     
     # Get Series endpoint: https://censys.io/api/v1/docs/data
     @apicall
@@ -141,7 +140,7 @@ class CensysAPI(JSONBot, API):
         """
         Returns a data on the types of scans regularly performed ("series").
         """
-        self._get("get", "/data")
+        self._request("get", "/data")
     
     # View Series endpoint: https://censys.io/api/v1/docs/data
     @apicall
@@ -154,7 +153,7 @@ class CensysAPI(JSONBot, API):
         :param series: ID of the series, e.g., 22-ssh-banner-full_ipv4
         """
         self.__validate(series=series)
-        self._get("get", "/data/%s" % series)
+        self._request("get", "/data/%s" % series)
     
     # View Result endpoint: https://censys.io/api/v1/docs/data
     @apicall
@@ -168,56 +167,56 @@ class CensysAPI(JSONBot, API):
         :param result: ID of the result, e.g., 20150930T0056
         """
         self.__validate(series=series, result=result)
-        self._get("get", "/data/%s/%s" % (series, result))
+        self._request("get", "/data/%s/%s" % (series, result))
     
     @apicall
     @cache(300)
     def report_certificates(self, query, page=1, fields=None, flatten=True):
         self._report("certificates", query, page, fields, flatten)
     report_certificates.__doc__ = _report.__doc__
-
+    
     @apicall
     @cache(300)
     def report_ipv4(self, query, page=1, fields=None, flatten=True):
         self._report("ipv4", query, page, fields, flatten)
     report_ipv4.__doc__ = _report.__doc__
-
+    
     @apicall
     @cache(300)
     def report_websites(self, query, page=1, fields=None, flatten=True):
         self._report("websites", query, page, fields, flatten)
     report_websites.__doc__ = _report.__doc__
-
+    
     @apicall
     @cache(300)
     def search_certificates(self, query, page=1, fields=None, flatten=True):
         self._search("certificates", query, page, fields, flatten)
     search_certificates.__doc__ = _search.__doc__.format("certificates")
-
+    
     @apicall
     @cache(300)
     def search_ipv4(self, query, page=1, fields=None, flatten=True):
         self._search("ipv4", query, page, fields, flatten)
     search_certificates.__doc__ = _search.__doc__.format("ipv4")
-
+    
     @apicall
     @cache(300)
     def search_websites(self, query, page=1, fields=None, flatten=True):
         self._search("websites", query, page, fields, flatten)
     search_certificates.__doc__ = _search.__doc__.format("websites")
-
+    
     @apicall
     @cache(300)
     def view_certificate(self, id):
         self._view("certificates", id)
     view_certificate.__doc__ = _view.__doc__.format("certificate")
-
+    
     @apicall
     @cache(300)
     def view_ipv4(self, id):
         self._view("ipv4", id)
     view_certificate.__doc__ = _view.__doc__.format("ipv4")
-
+    
     @apicall
     @cache(300)
     def view_website(self, id):

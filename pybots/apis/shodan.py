@@ -1,21 +1,18 @@
 # -*- coding: UTF-8 -*-
-"""Bot client dedicated to Shodan API.
+"""Client-side API dedicated to Shodan API.
 
 """
 import re
 from six import string_types
 from tinyscript.helpers.data.types.network import *
 
-from ..core.protocols.http import JSONBot
 from ..core.utils.api import *
 
 
 __all__ = ["ShodanAPI"]
 
-URL = "https://api.shodan.io"
 
-
-class ShodanAPI(JSONBot, API):
+class ShodanAPI(API):
     """
     ShodanAPI class for communicating with the API of Shodan.
     
@@ -34,12 +31,12 @@ class ShodanAPI(JSONBot, API):
         'plus':       ("Small Business API", False),
         'stream-100': ("Enterprise", False),
     }
+    url = "https://api.shodan.io"
     
     def __init__(self, apikey, *args, **kwargs):
         self.__api_info = None
         self.public = True
-        API.__init__(self, apikey, **kwargs)
-        JSONBot.__init__(self, URL, *args, **kwargs)
+        super(ShodanAPI, self).__init__(self, apikey, **kwargs)
 
     def __facet_str(self, *facets):
         """
@@ -59,7 +56,7 @@ class ShodanAPI(JSONBot, API):
     
     def __validate(self, **kwargs):
         """
-        Private generic validation function for Shodan API arguments.
+        Private generic validation function for API arguments.
         """
         for k, v in kwargs.items():
             if k == "domain":
@@ -94,14 +91,15 @@ class ShodanAPI(JSONBot, API):
                     raise ValueError("'sort' must be one of: votes|timestamp")
 
     @time_throttle(1)
-    def _get(self, method, reqpath, **kwargs):
+    def _request(self, method, reqpath, **kwargs):
         """
         Generic API sending method for appending the API key to the parameters.
 
         :param method:  HTTP method
         :param reqpath: request path
         """
-        getattr(self, method)(reqpath + "?key=%s" % self._api_key, **kwargs)
+        reqpath += "?key=%s" % self._api_key
+        super(ShodanAPI, self)._request(reqpath, method, **kwargs)
 
     @apicall
     @cache(3600)
@@ -109,7 +107,7 @@ class ShodanAPI(JSONBot, API):
         """
         Returns information about the Shodan account linked to this API key.
         """
-        self._get("get", "/account/profile")
+        self._request("get", "/account/profile")
     
     @apicall
     @private
@@ -121,7 +119,7 @@ class ShodanAPI(JSONBot, API):
          Uses 1 query credit per lookup.
         """
         self.__validate(domain=domain)
-        self._get("get", "/dns/domain/%s" % domain)
+        self._request("get", "/dns/domain/%s" % domain)
 
     @apicall
     @cache(300, 3)
@@ -132,8 +130,8 @@ class ShodanAPI(JSONBot, API):
         :param hostnames: comma-separated list of hostnames
         """
         self.__validate(hostnames=hostnames)
-        self._get("get", "/dns/resolve",
-                  params={'hostnames': ",".join(hostnames)})
+        self._request("get", "/dns/resolve",
+                      params={'hostnames': ",".join(hostnames)})
 
     @apicall
     @cache(300, 3)
@@ -145,7 +143,7 @@ class ShodanAPI(JSONBot, API):
         :param ips: comma-separated list of IP addresses
         """
         self.__validate(ips=ips)
-        self._get("get", "/dns/reverse", params={'ips': ",".join(ips)})
+        self._request("get", "/dns/reverse", params={'ips': ",".join(ips)})
     
     @apicall
     @cache(300)
@@ -153,9 +151,10 @@ class ShodanAPI(JSONBot, API):
         """
         Returns information about the API plan belonging to the given API key.
         """
-        self._get("get", "/api-info")
+        self._request("get", "/api-info")
         try:
-            p, self.public = self.API_PLANS[self.json['plan']]
+            p, self.public = self.API_PLANS[self._json['plan']]
+            self._disable_time_throttling = not self.public
             self.logger.debug("API plan: {} ({})"
                              .format(p, ["private", "public"][self.public]))
         except:
@@ -171,7 +170,7 @@ class ShodanAPI(JSONBot, API):
         :param ip: host IP address
         """
         self.__validate(ips=[ip])
-        self._get("get", "/labs/honeyscore/%s" % ip)
+        self._request("get", "/labs/honeyscore/%s" % ip)
     
     @apicall
     @cache(300)
@@ -179,7 +178,7 @@ class ShodanAPI(JSONBot, API):
         """
         Get a list of all the notifiers that the user has created.
         """
-        self._get("get", "/notifier")
+        self._request("get", "/notifier")
     
     @apicall
     @cache(300)
@@ -190,7 +189,7 @@ class ShodanAPI(JSONBot, API):
         :param id: notifier ID
         """
         self.__validate(id=id)
-        self._get("get", "/notifier/%s" % id)
+        self._request("get", "/notifier/%s" % id)
     
     @apicall
     @invalidate("notifiers")
@@ -201,7 +200,7 @@ class ShodanAPI(JSONBot, API):
         :param id: notifier ID
         """
         self.__validate(id=id)
-        self._get("delete", "/notifier/%s" % id)
+        self._request("delete", "/notifier/%s" % id)
     
     @apicall
     def notifier_edit(self, id, **data):
@@ -211,7 +210,7 @@ class ShodanAPI(JSONBot, API):
         :param id: notifier ID
         """
         self.__validate(id=id)
-        self._get("put", "/notifier", data=data)
+        self._request("put", "/notifier", data=data)
     
     @apicall
     @invalidate("notifiers")
@@ -220,7 +219,7 @@ class ShodanAPI(JSONBot, API):
         Create a new notification service endpoint that Shodan services can send
          notifications through.
         """
-        self._get("post", "/notifier", data=data)
+        self._request("post", "/notifier", data=data)
     
     @apicall
     @cache(86400)
@@ -229,7 +228,7 @@ class ShodanAPI(JSONBot, API):
         Get a list of all the notification providers that are available and the
          parameters to submit when creating them.
         """
-        self._get("get", "/notifier/provider")
+        self._request("get", "/notifier/provider")
     
     @apicall
     @private
@@ -239,7 +238,7 @@ class ShodanAPI(JSONBot, API):
         Get information about your organization such as the list of its members,
          upgrades, authorized domains and more.
         """
-        self._get("get", "/org")
+        self._request("get", "/org")
     
     @apicall
     @private
@@ -250,7 +249,7 @@ class ShodanAPI(JSONBot, API):
         Add a Shodan user to the organization and upgrade them.
         """
         self.__validate(user=user, notify=notify)
-        self._get("put", "/org/member/%s" % user, data={'notify': notify})
+        self._request("put", "/org/member/%s" % user, data={'notify': notify})
     
     @apicall
     @private
@@ -261,7 +260,7 @@ class ShodanAPI(JSONBot, API):
         Remove and downgrade the provided member from the organization.
         """
         self.__validate(user=user)
-        self._get("delete", "/org/member/%s" % user)
+        self._request("delete", "/org/member/%s" % user)
     
     @apicall
     @cache(3600)
@@ -270,7 +269,7 @@ class ShodanAPI(JSONBot, API):
         Returns a listing of all the network alerts that are currently
          active on the account.
         """
-        self._get("get", "/shodan/alert/info")
+        self._request("get", "/shodan/alert/info")
     
     @apicall
     def shodan_alert(self, id):
@@ -280,7 +279,7 @@ class ShodanAPI(JSONBot, API):
         :param id: alert ID that was returned by /shodan/alert
         """
         self.__validate(id=id)
-        self._get("get", "/shodan/alert/%s/info" % id)
+        self._request("get", "/shodan/alert/%s/info" % id)
     
     @apicall
     @invalidate("notifiers")
@@ -300,7 +299,7 @@ class ShodanAPI(JSONBot, API):
         data = {'name': name, 'filters': filters}
         if expires > 0:
             data['expires'] = expires
-        self._get("post", "/shodan/alert", data=data)
+        self._request("post", "/shodan/alert", data=data)
     
     @apicall
     @invalidate("shodan_alerts")
@@ -311,7 +310,7 @@ class ShodanAPI(JSONBot, API):
         :param id: alert ID
         """
         self.__validate(id=id)
-        self._get("delete", "/shodan/alert/%s" % id)
+        self._request("delete", "/shodan/alert/%s" % id)
     
     @apicall
     @cache(300)
@@ -324,7 +323,7 @@ class ShodanAPI(JSONBot, API):
         :param notifier_id: notifier ID
         """
         self.__validate(ids=[id, notifier_id])
-        self._get("get", "/shodan/alert/%s/notifier/%s" % (id, notifier_id))
+        self._request("get", "/shodan/alert/%s/notifier/%s" % (id, notifier_id))
     
     @apicall
     @invalidate("shodan_alert_notifier")
@@ -337,7 +336,8 @@ class ShodanAPI(JSONBot, API):
         :param notifier_id: notifier ID
         """
         self.__validate(ids=[id, notifier_id])
-        self._get("delete", "/shodan/alert/%s/notifier/%s" % (id, notifier_id))
+        self._request("delete", "/shodan/alert/%s/notifier/%s" % \
+                                (id, notifier_id))
     
     @apicall
     @cache(3600)
@@ -346,7 +346,7 @@ class ShodanAPI(JSONBot, API):
         Returns a listing of all the network alerts that are currently
          active on the account.
         """
-        self._get("get", "/shodan/alert/triggers")
+        self._request("get", "/shodan/alert/triggers")
     
     @apicall
     @cache(300)
@@ -358,7 +358,7 @@ class ShodanAPI(JSONBot, API):
         :param trigger: trigger name
         """
         self.__validate(id=id, trigger=trigger)
-        self._get("get", "/shodan/alert/%s/trigger/%s" % (id, trigger))
+        self._request("get", "/shodan/alert/%s/trigger/%s" % (id, trigger))
     
     @apicall
     @invalidate("shodan_alert_triggers", "shodan_alert_trigger")
@@ -371,7 +371,7 @@ class ShodanAPI(JSONBot, API):
         :param trigger: trigger name
         """
         self.__validate(id=id, trigger=trigger)
-        self._get("delete", "/shodan/alert/%s/trigger/%s" % (id, trigger))
+        self._request("delete", "/shodan/alert/%s/trigger/%s" % (id, trigger))
     
     @apicall
     @cache(300)
@@ -384,8 +384,8 @@ class ShodanAPI(JSONBot, API):
         :param service: service specified in the format "ip:port"
         """
         self.__validate(id=id, service=service, trigger=trigger)
-        self._get("put", "/shodan/alert/%s/trigger/%s/ignore/%s" % \
-                  (id, trigger, service))
+        self._request("put", "/shodan/alert/%s/trigger/%s/ignore/%s" % \
+                             (id, trigger, service))
     
     @apicall
     @invalidate("shodan_alert_trigger_ignore")
@@ -399,8 +399,8 @@ class ShodanAPI(JSONBot, API):
         :param service: service specified in the format "ip:port"
         """
         self.__validate(id=id, service=service, trigger=trigger)
-        self._get("delete", "/shodan/alert/%s/trigger/%s/ignore/%s" % \
-                  (id, trigger, service))
+        self._request("delete", "/shodan/alert/%s/trigger/%s/ignore/%s" % \
+                                (id, trigger, service))
     
     @apicall
     @private
@@ -409,7 +409,7 @@ class ShodanAPI(JSONBot, API):
         """
         See a list of the datasets that are available for download.
         """
-        self._get("get", "/shodan/data")
+        self._request("get", "/shodan/data")
     
     @apicall
     @private
@@ -422,7 +422,7 @@ class ShodanAPI(JSONBot, API):
         :param dataset: name of the dataset
         """
         self.__validate(dataset=dataset)
-        self._get("get", "/shodan/data", params={'dataset': dataset})
+        self._request("get", "/shodan/data", params={'dataset': dataset})
     
     @apicall
     @cache(3600)
@@ -436,8 +436,8 @@ class ShodanAPI(JSONBot, API):
                          general host information, no banners
         """
         self.__validate(ips=[ip], history=history, minify=minify)
-        self._get("get", "/shodan/host/%s" % ip,
-                  params={'history': history, 'minify': minify})
+        self._request("get", "/shodan/host/%s" % ip,
+                      params={'history': history, 'minify': minify})
     
     @apicall
     @cache(300)
@@ -458,7 +458,7 @@ class ShodanAPI(JSONBot, API):
         params = {}
         if facets != "":
             params['facets'] = facets
-        self._get("get", "/shodan/host/count", params=params)
+        self._request("get", "/shodan/host/count", params=params)
     
     @apicall
     @invalidate("account_profile", "info")
@@ -482,7 +482,7 @@ class ShodanAPI(JSONBot, API):
         params = {'query': query, 'page': page, 'minify': minify}
         if facets != "":
             params['facets'] = facets
-        self._get("get", "/shodan/host/search", params=params)
+        self._request("get", "/shodan/host/search", params=params)
     
     @apicall
     @cache(86400)
@@ -491,7 +491,7 @@ class ShodanAPI(JSONBot, API):
         Returns a list of facets that can be used to get a breakdown of the top
          values for a property.
         """
-        self._get("get", "/shodan/host/search/facets")
+        self._request("get", "/shodan/host/search/facets")
     
     @apicall
     @cache(86400)
@@ -500,7 +500,7 @@ class ShodanAPI(JSONBot, API):
         Returns a list of facets that can be used to get a breakdown of the top
          values for a property.
         """
-        self._get("get", "/shodan/host/search/filters")
+        self._request("get", "/shodan/host/search/filters")
     
     @apicall
     def shodan_host_search_tokens(self, query):
@@ -511,7 +511,8 @@ class ShodanAPI(JSONBot, API):
         :param query: Shodan search query
         """
         self.__validate(query=query)
-        self._get("get", "/shodan/host/search/tokens", params={'query': query})
+        self._request("get", "/shodan/host/search/tokens",
+                      params={'query': query})
     
     @apicall
     @cache(86400)
@@ -519,7 +520,7 @@ class ShodanAPI(JSONBot, API):
         """
         Returns a list of port numbers that the crawlers are looking for.
         """
-        self._get("get", "/shodan/ports")
+        self._request("get", "/shodan/ports")
     
     @apicall
     @cache(86400)
@@ -528,7 +529,7 @@ class ShodanAPI(JSONBot, API):
         Returns an object containing all the protocols that can be used when
          launching an Internet scan.
         """
-        self._get("get", "/shodan/protocols")
+        self._request("get", "/shodan/protocols")
     
     @apicall
     @cache(300)
@@ -543,8 +544,8 @@ class ShodanAPI(JSONBot, API):
                        (asc|desc)
         """
         self.__validate(page=page, order=order, sort=sort)
-        self._get("get", "/shodan/query",
-                  params={'page': page, 'sort': sort, 'order': order})
+        self._request("get", "/shodan/query",
+                      params={'page': page, 'sort': sort, 'order': order})
     
     @apicall
     @cache(300)
@@ -558,8 +559,8 @@ class ShodanAPI(JSONBot, API):
                        items 
         """
         self.__validate(query=query, page=page)
-        self._get("get", "/shodan/query/search",
-                  params={'query': query, 'page': page})
+        self._request("get", "/shodan/query/search",
+                      params={'query': query, 'page': page})
     
     @apicall
     @cache(3600)
@@ -570,7 +571,7 @@ class ShodanAPI(JSONBot, API):
         :param size: number of tags to return
         """
         self.__validate(size=size)
-        self._get("get", "/shodan/query/tags", params={'size': size})
+        self._request("get", "/shodan/query/tags", params={'size': size})
     
     @apicall
     def shodan_scan(self, id):
@@ -582,7 +583,7 @@ class ShodanAPI(JSONBot, API):
         :param id: unique scan ID that was returned by /shodan/scan
         """
         self.__validate(id=id)
-        self._get("get", "/shodan/scan/%s" % id)
+        self._request("get", "/shodan/scan/%s" % id)
     
     @apicall
     @cache(3600)
@@ -602,8 +603,8 @@ class ShodanAPI(JSONBot, API):
                           supported protocols)
         """
         self.__validate(port=port, protocol=protocol)
-        self._get("post", "/shodan/scan/internet",
-                  data={'port': port, 'protocol': protocol})
+        self._request("post", "/shodan/scan/internet",
+                      data={'port': port, 'protocol': protocol})
     
     @apicall
     @invalidate("account_profile", "info")
@@ -619,7 +620,7 @@ class ShodanAPI(JSONBot, API):
                      that should get crawled
         """
         self.__validate(ips=ips)
-        self._get("post", "/shodan/scan", data={'ips': ",".join(ips)})
+        self._request("post", "/shodan/scan", data={'ips': ",".join(ips)})
     
     @apicall
     @cache(300)
@@ -628,7 +629,7 @@ class ShodanAPI(JSONBot, API):
         Shows the HTTP headers that your client sends when connecting to a
          webserver.
         """
-        self._get("get", "/tools/httpheaders")
+        self._request("get", "/tools/httpheaders")
     
     @apicall
     @cache(300)
@@ -636,4 +637,4 @@ class ShodanAPI(JSONBot, API):
         """
         Get your current IP address as seen from the Internet.
         """
-        self._get("get", "/tools/myip")
+        self._request("get", "/tools/myip")
