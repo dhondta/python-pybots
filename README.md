@@ -55,6 +55,6 @@ with TCPBot("LAN_host", 1234, no_proxy=True) as bot:
 
 ## Contribution
 
-For contributions or suggestions, please [open an Issue](https://github.com/dhondta/pybots/issues/new) and clearly explain, using an example or a use case if appropriate. 
+For contributions or suggestions, please [open an Issue](https://github.com/dhondta/python-pybots/issues/new) and clearly explain, using an example or a use case if appropriate. 
 
 If you want to get new bots added, please submit a Pull Request.

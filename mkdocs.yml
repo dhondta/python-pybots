@@ -1,5 +1,5 @@
 site_name: "PyBots - A library for quickly building simple robots"
-repo_url: https://github.com/dhondta/pybots
+repo_url: https://github.com/dhondta/python-pybots
 site_author: dhondta
 docs_dir: docs
 pages:
