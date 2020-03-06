@@ -1,50 +1,61 @@
 # -*- coding: UTF-8 -*-
-"""Bot client dedicated to VirusTotal API.
+"""Client-side API dedicated to VirusTotal API.
 
 """
 from tinyscript.helpers.data.types import *
 
-from ..core.protocols.http import JSONBot
 from ..core.utils.api import *
 
 
-__all__ = ["VirusTotalBot"]
-
-DOM = "https://www.virustotal.com"
-REQ = "/vtapi/v2/"
-RES = {
-    'file': ["behaviour", "download", "scan", "rescan", "report"],
-    'url': ["scan", "report"],
-    'domain': ["report"],
-    'ip-address': ["report"],
-    'comments': ["put"],
-}
+__all__ = ["VirusTotalAPI"]
 
 
 def valid_hash(f):
     if not (is_md5(f) or is_sha1(f) or is_sha256(f)):
-        raise ValueError("Not a valid resource hash")
+        raise ValueError("not a valid resource hash")
 
 
-class VirusTotalBot(JSONBot):
+class VirusTotalAPI(API):
     """
     VirusTotalBot class for communicating with the API v2 of VirusTotal.
     
-    Reference: https://www.virustotal.com/es/documentation/public-api/
+    Reference: https://developers.virustotal.com/reference
 
     :param api_key: API key
     :param public:  whether the usage of the API is public
     :param args:    JSONBot arguments
     :param kwargs:  JSONBot keyword-arguments
     """
+    resource_types = {
+        'file': ["behaviour", "download", "scan", "rescan", "report"],
+        'url': ["scan", "report"],
+        'domain': ["report"],
+        'ip-address': ["report"],
+        'comments': ["put"],
+    }
+    url = "https://www.virustotal.com"
+    
     def __init__(self, api_key, public=True, *args, **kwargs):
-        super(VirusTotalBot, self).__init__(DOM, *args, **kwargs)
+        self.__api_info = None
+        super(VirusTotalAPI, self).__init__(DOM, *args, **kwargs)
         self.api_key = api_key
         self.public = public
         self._disable_time_throttling = not public
+    
+    def __validate(self, **kwargs):
+        """
+        Private generic validation function for API arguments.
+        """
+        for k, v in kwargs.items():
+            if k == "action":
+                if v not in self.resource_types[kwargs.get('restype')]:
+                    raise ValueError("bad action (given the resource type)")
+            elif k == "restype":
+                if v not in self.resource_types.keys():
+                    raise ValueError("bad resource type")
 
     @time_throttle(60, 4)
-    def __get(self, method, restype, action, extra=None, **kwargs):
+    def _request(self, method, restype, action, extra=None, **kwargs):
         """
         Generic API sending method for appending the API key to the parameters.
 
@@ -53,19 +64,15 @@ class VirusTotalBot(JSONBot):
         :param action:  action item to be processed for the given resource
         :param extra:   additional URL subpath to be used
         """
-        if method not in ["get", "post"]:
-            raise ValueError("Method should be 'get' or 'post'")
-        if restype not in RES.keys():
-            raise ValueError("Bad resource type")
-        if action not in RES[restype]:
-            raise ValueError("Bad action (given the selected resource type)")
-        url = REQ + restype + "/" + action
+        self.__validate(action=action, restype=restype)
+        url = "/vtapi/v2/%s/%s" % (restype, action)
         if extra:
-            url += "/" + extra
+            url += "/%s" % extra
         url = kwargs.pop('override_url', None) or url
         params = kwargs.pop('params', {})
-        params['apikey'] = self.api_key
-        getattr(self, method)(url, params=params, **kwargs)
+        params['apikey'] = self._api_key
+        kwargs['params'] = params
+        super(VirusTotalAPI, self)._request(url, method, **kwargs)
 
     # ------------------------------- COMMENTS ---------------------------------
     def comment_get(self, resource, before=None):

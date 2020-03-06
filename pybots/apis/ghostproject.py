@@ -2,7 +2,7 @@
 """Bot client dedicated to Nuclear Leaks.
 
 """
-import ast
+import cfscrape
 import re
 from tinyscript.helpers.data.types import *
 
@@ -23,12 +23,12 @@ class GhostProjectAPI(API):
     def __init__(self, **kwargs):
         super(GhostProjectAPI, self).__init__(None, **kwargs)
         s = self._session.headers
+        #FIXME: get Cloudflare clearance cookie by following the protocol for
+        #        DDoS protection
         s['Origin'] = self.url
         s['Content-Type'] = "application/x-www-form-urlencoded; charset=UTF-8"
         s['X-Requested-With'] = "XMLHttpRequest"
-        #FIXME: get Cloudflare clearance cookie for cirvumventing the DDoS
-        #        protection ; e.g. use 'cfscrape'
-    
+     
     def __validate(self, **kwargs):
         """
         Private generic validation function for API arguments.

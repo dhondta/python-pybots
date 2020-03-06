@@ -23,7 +23,7 @@ class ShodanAPI(API):
     :param args:   JSONBot / API arguments
     :param kwargs: JSONBot keyword-arguments
     """
-    API_PLANS = {
+    plans = {
         'basic':      ("Freelancer API", True),
         'corp':       ("Corporate API", False),
         'dev':        ("Membership", True),
@@ -36,7 +36,7 @@ class ShodanAPI(API):
     def __init__(self, apikey, *args, **kwargs):
         self.__api_info = None
         self.public = True
-        super(ShodanAPI, self).__init__(self, apikey, **kwargs)
+        super(ShodanAPI, self).__init__(apikey, **kwargs)
 
     def __facet_str(self, *facets):
         """
@@ -153,7 +153,7 @@ class ShodanAPI(API):
         """
         self._request("get", "/api-info")
         try:
-            p, self.public = self.API_PLANS[self._json['plan']]
+            p, self.public = self.plans[self._json['plan']]
             self._disable_time_throttling = not self.public
             self.logger.debug("API plan: {} ({})"
                              .format(p, ["private", "public"][self.public]))

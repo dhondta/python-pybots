@@ -7,6 +7,11 @@ This subpackage contains:
 - Utility functions
 
 """
-
 from .mixins import *
 from .protocols import *
+
+from .mixins import __features__ as _mixins
+from .protocols import __features__ as _protocols
+
+
+__all__ = _mixins + _protocols

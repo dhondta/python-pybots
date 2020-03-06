@@ -11,19 +11,18 @@ from ..core.utils.api import *
 
 __all__ = ["HaveIBeenPwnedAPI"]
 
-URL = "https://haveibeenpwned.com"
 
-
-class HaveIBeenPwnedAPI(JSONBot, API):
+class HaveIBeenPwnedAPI(API):
     """
     HaveIBeenPwnedAPI class for communicating with the API of HaveIBeenPwned.
     
     Reference: https://haveibeenpwned.com/API/v3
     Note:      All API methods are rate-limited to 1000 requests/second.
 
-    :param apikey: API key
     :param kwargs: JSONBot / API eyword-arguments
     """
+    url = "https://haveibeenpwned.com"
+    
     def __init__(self, apikey=None, app=None, **kwargs):
         self.__headers = {}
         self.public = True
@@ -31,8 +30,7 @@ class HaveIBeenPwnedAPI(JSONBot, API):
             self.public = False
         if app:
             self.__headers['User-Agent'] = app
-        API.__init__(self, apikey, **kwargs)
-        JSONBot.__init__(self, URL, **kwargs)
+        super(HaveIBeenPwnedAPI, self).__init__(apikey, **kwargs)
     
     def __validate(self, **kwargs):
         """

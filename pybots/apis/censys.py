@@ -25,7 +25,7 @@ class CensysAPI(API):
     url = "https://censys.io"
     
     def __init__(self, api_id, api_secret, **kwargs):
-        super(CensysAPI, self).__init__(self, (api_id, api_secret), **kwargs)
+        super(CensysAPI, self).__init__((api_id, api_secret), **kwargs)
     
     def __validate(self, index, **kwargs):
         """

@@ -1,12 +1,12 @@
 """Security-related bots.
 
 This package provides some bot implementations for communicating with some
- security-related API's or applications.
+ security Web services.
 
 """
-from .gotcha import *
+from .shodan import *
 
-from .gotcha import __all__ as _gotcha
+from .shodan import __all__ as _shodan
 
 
-__all__ = _gotcha
+__all__ = _shodan

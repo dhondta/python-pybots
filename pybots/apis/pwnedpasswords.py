@@ -26,7 +26,7 @@ class PwnedPasswordsAPI(API):
     
     def __init__(self, **kwargs):
         kwargs['kind'] = "http"
-        super(PwnedPasswordsAPI, self).__init__(self, None, **kwargs)
+        super(PwnedPasswordsAPI, self).__init__(None, **kwargs)
     
     # Searching by range
     @time_throttle(1, 1000)

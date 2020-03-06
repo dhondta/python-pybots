@@ -7,20 +7,19 @@ import types
 from datetime import datetime, timedelta
 from functools import wraps
 from inspect import getargspec, getmembers
-from six import with_metaclass
+from six import string_types, with_metaclass
 from time import sleep, time
 from tinyscript.helpers.data.types import is_method
 
-from ..protocols.http import JSONBot
+from ..protocols.http import HTTPBot, JSONBot
 
 
-__all__ = __features__ = ["apicall", "cache", "from_cache", "invalidate",
-                          "private", "time_throttle", "API", "APIError",
-                          "APIObject"]
+__all__ = __features__ = ["apicall", "cache", "invalidate", "private",
+                          "time_throttle", "API", "APIError", "APIObject"]
 
-TIME_THROTTLING    = {}
+TIME_THROTTLING = {}
 
-from_cache = lambda s, n: getattr(s, "_api_cache", {}).get(n)
+is_json    = lambda s: JSONBot in s.__class__.__bases__
 
 
 def _decorated(f):
@@ -53,12 +52,14 @@ def _result(f, self, *args, **kwargs):
     """
     s = getattr(self, "_parent", self)
     r = f(s, *args, **kwargs)
-    if r is None and JSONBot in s.__class__.__bases__:
+    if r is None and is_json(s):
         r = s.json
     if isinstance(r, dict):
         err = r.get('error')
         if err is not None:
-            raise APIError(err)
+            code = r.get('status') or r.get('code') or r.get('statusCode') or \
+                   r.get('status_code')
+            raise APIError(err, code)
     return r
 
 
@@ -68,7 +69,7 @@ def apicall(f):
     """
     @wraps(f)
     def _wrapper(self, *args, **kwargs):
-        return _result(f, self, *args, **kwargs)
+        return f(getattr(self, "_parent", self), *args, **kwargs)
     _decorated(f).__apicall__ = True
     return _wrapper
 
@@ -90,37 +91,41 @@ def cache(timeout=300, retries=1):
                 # handle varargs by searching for or writing each item in the
                 #  cache, letting the request grouped with non-cached items
                 if multi:
-                    entries, tmp = {}, []
+                    entries, tmp = {} if is_json(s) else [], []
                     for item in args:
-                        entry = s.from_cache(f, (item, ), kwargs)
+                        entry = s._from_cache(f, (item, ), kwargs)
                         if entry is None or \
-                           len(entry) == 1 and isinstance(entry, dict) and \
+                           isinstance(entry, dict) and len(entry) == 1 and \
                            list(entry.values())[0] is None:
                             tmp.append(item)
                         elif isinstance(entry, dict):
                             entries.update(entry)
-                        else:
+                        elif isinstance(entries, dict):
                             entries[item] = entry
+                        elif isinstance(entries, list):
+                            entries.append(entry)
                     n = retries
                     while len(tmp) > 0 and n > 0:
                         r = _result(f, s, *tmp, **kwargs)
                         for i, e in (r.items() if isinstance(r, dict) else \
-                                     zip(tmp, r)):
+                                   zip(tmp, r if is_json(s) else [r] \
+                                       if len(tmp) == 1 else r.strip("\n"))):
                             if e is None:
                                 continue
-                            s.to_cache(f, (i, ), kwargs, timeout, entry=e)
+                            s._to_cache(f, (i, ), kwargs, timeout, entry=e)
                             tmp.remove(i)
-                            entries[i] = e
+                            if is_json(s):
+                                entries[i] = e
+                            else:
+                                entries.append(e)
                         n -= 1
                     return entries
                 else:
-                    entry = s.from_cache(f, args, kwargs)
-                    return s.to_cache(f, args, kwargs, timeout) \
+                    entry = s._from_cache(f, args, kwargs)
+                    return s._to_cache(f, args, kwargs, timeout) \
                            if entry is None or force else entry
             else:
-                l = getattr(s, "logger", None)
-                if l:
-                    l.debug("Cache disabled")
+                s._logger.debug("Cache disabled")
                 return _result(f, s, *args, **kwargs)
         return _subwrapper
     return _wrapper
@@ -147,9 +152,8 @@ def invalidate(*other_f):
                         fid = _id(s.__class__._MetaAPI__api_registry[f])
                         if c.get(fid) is not None:
                             c[fid] = {}
-                            l = getattr(s, "logger", None)
-                            if l:
-                                l.debug("Invalidated cache entry for '%s'" % f)
+                            s._logger.debug("Invalidated cache entry for '%s'" \
+                                            % f)
         return _subwrapper
     return _wrapper
 
@@ -161,7 +165,7 @@ def private(f):
     """
     @wraps(f)
     def _wrapper(self, *args, **kwargs):
-        if not self.public:
+        if self.public:
             raise APIError("Only available in the private API")
         return f(self, *args, **kwargs)
     return _wrapper
@@ -170,6 +174,8 @@ def private(f):
 def time_throttle(seconds, requests=1):
     """
     API method decorator for setting time throttling on a request method.
+    
+    NB: this should be put before '@apicall' and '@cache'.
     
     :param seconds:  time frame in which the the maximum number of requests
                       can be achieved
@@ -196,6 +202,9 @@ def time_throttle(seconds, requests=1):
 
 
 class MetaAPI(type):
+    """
+    API metaclass, for handling child attributes as instances of APIObject's.
+    """
     def __new__(meta, name, bases, clsdict, subcls=None):
         subcls = subcls or type.__new__(meta, name, bases, clsdict)
         if subcls.__name__ == "API":
@@ -209,12 +218,7 @@ class MetaAPI(type):
             # keep function's reference associated to its original name
             subcls.__api_registry[n] = g
             # tokenize the name and create a tree of APIObjects with the tokens
-            ftype, tokens = "get", n.split("_")
-            if tokens[-1] == "DEL":
-                tokens, ftype = tokens[:-1], "del"
-            elif tokens[-1] == "SET":
-                tokens, ftype = tokens[:-1], "set"
-            o = subcls
+            o, tokens = subcls, n.split("_")
             for i, token in enumerate(tokens):
                 if i != len(tokens) - 1:
                     if not hasattr(o, token):
@@ -227,12 +231,7 @@ class MetaAPI(type):
                         fc = APIObject()
                         fc.__doc__ = f.__doc__
                         setattr(o, token, fc)
-                    if ftype == "get":
-                        fc._APIObject__get = types.MethodType(f, fc)
-                    elif ftype == "set":
-                        fc._APIObject__set = types.MethodType(f, fc)
-                    elif ftype == "del":
-                        fc._APIObject__del = types.MethodType(f, fc)
+                    fc._APIObject__get = types.MethodType(f, fc)
         subcls._disable_cache = False
         subcls._disable_time_throttling = False
         return subcls
@@ -240,31 +239,53 @@ class MetaAPI(type):
 
 class API(with_metaclass(MetaAPI, object)):
     """
-    API class, for handling child attributes as instances of APIObject's.
-    """
-    _instances = {}
-    _shared_attrs = ["_disable_cache", "_get", "from_cache", "to_cache"]
+    API class, for managing cache.
     
-    def __init__(self, apikey, **kwargs):
+    :param key:                     API key
+    :param url:                     API URL
+    :param kind:                    http|json
+    :param disable_cache:           whether it should be initialized without
+                                     caching
+    :param disable_time_throttling: whether it should be initialized without
+                                     time throttling
+    """
+    def __init__(self, key, url=None, kind="json", disable_cache=False,
+                 disable_time_throttling=False, **kwargs):
         self._api_cache = {}
-        self._api_key = apikey
-        self._disable_cache = kwargs.pop('disable_cache', False)
-        self._disable_time_throttling = kwargs.pop('disable_time_throttling',
-                                                   False)
+        self._api_key = key
+        self._disable_cache = disable_cache
+        self._disable_time_throttling = disable_time_throttling
+        # transform every apicall-decorated method to API objects ; this allows
+        #  to decompose methods into a hierarchy of bound objects, e.g.
+        #  bot.search_host_info => bot.search.host.info
         for k, v in getmembers(self):
             if isinstance(v, APIObject):
                 v._parent = self
+        # then select and initialize the underlying bot
+        if kind not in ["http", "json"]:
+            raise ValueError("bad API type")
+        botcls = [HTTPBot, JSONBot][kind == "json"]
+        self.__bot = botcls(url or self.url, **kwargs)
     
-    def from_cache(self, f, args=(), kwargs={}):
+    def __enter__(self):
+        """ Context manager enter method, executing after __init__. """
+        self.__bot.__enter__()
+        return self
+    
+    def __exit__(self, *args, **kwargs):
+        """ Context manager exit method, for gracefully closing the bot. """
+        self.__bot.__exit__(*args, **kwargs)
+    
+    def _from_cache(self, f, args=(), kwargs={}):
+        """ Cache request method. """
         if not self._disable_cache:
-            id_f, id_a = API.ids(f, args, kwargs)
+            id_f, id_a = API._ids(f, args, kwargs)
             c = self._api_cache
             c.setdefault(id_f, {})
             entry = c[id_f].get(id_a)
             if entry is not None and (entry[0] - datetime.now()).seconds >= 0:
-                l, r = getattr(self, "logger", None), entry[1]
-                if l:
-                    l.debug("Got result of '%s' from cache" % f.__name__)
+                r = entry[1]
+                self._logger.debug("Got result of '%s' from cache" % f.__name__)
                 if isinstance(r, dict):
                     err = r.get('error')
                     if err is not None:
@@ -272,36 +293,66 @@ class API(with_metaclass(MetaAPI, object)):
                 _decorated(f)._api_cache_hit = True
                 return r
     
-    def to_cache(self, f, args=(), kwargs={}, timeout=300, entry=None):
+    def _request(self, *args, **kwargs):
+        """ Binding to bot's request method. """
+        return self.__bot.request(*args, **kwargs)
+    
+    def _to_cache(self, f, args=(), kwargs={}, timeout=300, entry=None):
+        """ Cache record method. """
         if not self._disable_cache:
-            id_f, id_a = API.ids(f, args, kwargs)
+            id_f, id_a = API._ids(f, args, kwargs)
             c = self._api_cache
             c.setdefault(id_f, {})
             entry = entry or _result(f, self, *args, **kwargs)
             c[id_f][id_a] = (datetime.now() + timedelta(seconds=timeout), entry)
-            l = getattr(self, "logger", None)
-            if l:
-                l.debug("Cached result of '%s'" % f.__name__)
+            self._logger.debug("Cached result of '%s'" % f.__name__)
             return entry
     
-    def toggle_caching(self):
+    def _toggle_caching(self):
         self._disable_cache = not self._disable_cache
     
-    def toggle_time_throttling(self):
+    def _toggle_time_throttling(self):
         self._disable_time_throttling = not self._disable_time_throttling
     
+    @property
+    def _json(self):
+        return getattr(self.__bot, "json", None)
+    
+    @property
+    def _logger(self):
+        return self.__bot.logger
+    
+    @property
+    def _proxies(self):
+        return self.__bot._proxies
+    
+    @property
+    def _response(self):
+        return getattr(self.__bot, "response", None)
+    
+    @property
+    def _session(self):
+        return self.__bot.session
+    
+    @property
+    def _soup(self):
+        return getattr(self.__bot, "soup", None)
+    
     @staticmethod
-    def ids(f, args, kwargs):
+    def _ids(f, args, kwargs):
         id_f, id_a = _id(f), ()
         for a in args:
             id_a += (_id(a), )
         for k, w in kwargs.items():
             id_a += (_id("{}={}".format(k, _id(v))), )
-        return id_f, id_a
+        return id_f, _id(id_a)
 
 
 class APIError(Exception):
-    pass
+    def __init__(self, message, code=None):
+        if code:
+            message = "{} ({})".format(message, code)
+        super(APIError, self).__init__(message)
 
 
 class APIObject(object):
@@ -310,22 +361,15 @@ class APIObject(object):
         self.__parent = None
     
     def __call__(self, *args, **kwargs):
-        if hasattr(self, "_APIObject__set") and \
-            (len(args) == 0 or not hasattr(self, "_APIObject__get")):
-            return self.__set(*args, **kwargs)
-        elif hasattr(self, "_APIObject__get"):
+        if hasattr(self, "_APIObject__get"):
             return self.__get(*args, **kwargs)
-    
-    def __del__(self):
-        if hasattr(self, "_APIObject__del"):
-            return self.__del()
     
     def __getattr__(self, name):
         a = self.__dict__.get(name)
         if a:
             return a
         p = self.__dict__.get('_APIObject__parent')
-        a = getattr(p, name, None) if name in API._shared_attrs else None
+        a = getattr(p, name, None)
         if a is None:
             raise AttributeError("'{}' object has no attribute '{}'"
                                  .format(p.__class__.__name__, name))

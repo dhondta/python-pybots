@@ -20,7 +20,7 @@ class HaveIBeenSoldAPI(API):
     url = "https://haveibeensold.app"
     
     def __init__(self, **kwargs):
-        super(HaveIBeenSoldAPI, self).__init__(self, None, **kwargs)
+        super(HaveIBeenSoldAPI, self).__init__(None, **kwargs)
         kwargs['random_uagent'] = True
         s = self._session.headers
         s['Content-Type'] = "application/x-www-form-urlencoded"
