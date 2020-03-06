@@ -249,13 +249,17 @@ class WebBot(Template):
             self.response = self.session.send(self._request,
                 proxies=proxies or self.session.proxies, verify=False,
                 **session_params)
+            self.logger.debug("HTTPS certificate NOT verified")
         self.__print_response()
         # handle HTTP status code here
         if 200 <= self.response.status_code < 300:
             # handle special encodings
             if self.response.headers.get('Content-Encoding') == "br":
                 self.response = r = DecompressedResponse(self.response)
-                r.content = brotli.decompress(r.content)
+                try:
+                    r.content = brotli.decompress(r.content)
+                except brotli.error:
+                    pass
         self._parse()
         return self
 

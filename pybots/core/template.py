@@ -53,12 +53,12 @@ class Template(object):
         self._exited = False
         self.logger = None
         # keep track of bots
-        c = self.__class__.__name__
-        Template.bots.setdefault(c, {})
-        Template.counters.setdefault(c, 0)
-        Template.counters[c] += 1
-        Template.bots[c][self] = Template.counters[c]
-        self.name = "{}-{}".format(c, Template.counters[c])
+        c, t = self.__class__.__name__, Template
+        t.bots.setdefault(c, {})
+        t.counters.setdefault(c, 0)
+        t.counters[c] += 1
+        t.bots[c][self] = t.counters[c]
+        self.name = "{}-{}".format(c, t.counters[c])
         # configure logging
         self.verbose = verbose
         self.configure()
