@@ -10,7 +10,6 @@ From the most to the least generic, the currently available bots are:
 !!! summary "Specific-purpose"
     * Netcat-like
     * IRC
-    * EPassport (relying on [`pypassport`](https://pypi.python.org/pypi/pypassport), only for Python 2)
     * HTTP
     * JSON
 

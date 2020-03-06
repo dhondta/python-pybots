@@ -123,19 +123,6 @@ with MyNetcat(ip_address, port) as nc:
     nc.write("dir", eol="\r\n")
 ```
 
-<font size="4"><b>`EPassport`</b></font>
-
-This bot is a more specific implementation of the `Netcat` bot, especially made for working with `pypassport` (only supported with Python 2.7). It implements a reader class called `RemoteVirtualTerminal` using `pypassport.Reader` that makes the interface between the bot and the library for emulating the terminal that reads the epassport information.
-
-![](imgs/bot-epassport.png)
-
-`set_MRZ` and `get_photo` methods return `self` for method chaining. This allows a simple implementation like follows:
-
-``` python
-with EPassport(ip_address, port) as ep:
-    ep.set_MRZ("...").get_photo("photo.jpg")
-```
-
 <font size="4"><b>`IRCBot`</b></font>
 
 This bot aims to manage conversations on an IRC server using a `msg` method. It connects and sends user's data (by default, the nickname is `ircbot` and the full name is `IRC Bot`). It then executes the user-defined preamble and finally tries to connect to the input channel.

@@ -8,7 +8,6 @@ pages:
   - Using Bots: usage.md
   - Creating Bots: create.md
   - Examples:
-    - 'Hacky Easter 2017': examples/hacky-easter-2017.md
     - 'Hackvent 2017': examples/hackvent-2017.md
     - 'RingZer0': examples/ringzer0.md
     - 'Root-Me': examples/rootme.md
@@ -23,3 +22,5 @@ markdown_extensions:
   - codehilite:
       linenums: true
   - pymdownx.details
+  - toc:
+      permalink: true

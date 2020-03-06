@@ -1,7 +1,6 @@
 bs4
 brotli
 pycountry
-pypassport
 requests
 user_agent
 simplejson
