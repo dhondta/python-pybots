@@ -6,10 +6,13 @@
 import types
 from datetime import datetime, timedelta
 from functools import wraps
-from inspect import getargspec, getmembers
-from six import string_types, with_metaclass
+from inspect import getmembers
+from six import with_metaclass
 from time import sleep, time
-from tinyscript.helpers.data.types import is_method
+try:
+    from inspect import getfullargspec as getargspec
+except ImportError:
+    from inspect import getargspec
 
 from ..protocols.http import HTTPBot, JSONBot
 
