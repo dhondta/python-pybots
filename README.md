@@ -1,8 +1,8 @@
 [![PyPi](https://img.shields.io/pypi/v/pybots.svg)](https://pypi.python.org/pypi/pybots/)
-[![Read The Docs](https://readthedocs.org/projects/pybots/badge/?version=latest)](http://pybots.readthedocs.io/en/latest/?badge=latest)
-[![Build Status](https://travis-ci.org/dhondta/pybots.svg?branch=master)](https://travis-ci.org/dhondta/pybots)
-[![Requirements Status](https://requires.io/github/dhondta/pybots/requirements.svg?branch=master)](https://requires.io/github/dhondta/pybots/requirements/?branch=master)
-[![Known Vulnerabilities](https://snyk.io/test/github/dhondta/pybots/badge.svg?targetFile=requirements.txt)](https://snyk.io/test/github/dhondta/pybots?targetFile=requirements.txt)
+[![Read The Docs](https://readthedocs.org/projects/python-pybots/badge/?version=latest)](http://python-pybots.readthedocs.io/en/latest/?badge=latest)
+[![Build Status](https://travis-ci.org/dhondta/python-pybots.svg?branch=master)](https://travis-ci.org/dhondta/python-pybots)
+[![Requirements Status](https://requires.io/github/dhondta/python-pybots/requirements.svg?branch=master)](https://requires.io/github/dhondta/python-pybots/requirements/?branch=master)
+[![Known Vulnerabilities](https://snyk.io/test/github/dhondta/python-pybots/badge.svg?targetFile=requirements.txt)](https://snyk.io/test/github/dhondta/python-pybots?targetFile=requirements.txt)
 [![Python Versions](https://img.shields.io/pypi/pyversions/pybots.svg)](https://pypi.python.org/pypi/pybots/)
 [![License](https://img.shields.io/pypi/l/pybots.svg)](https://pypi.python.org/pypi/pybots/)
 
