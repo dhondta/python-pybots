@@ -6,9 +6,8 @@
 import os
 import re
 import zlib
-from six import ensure_str
 from subprocess import check_output, Popen, PIPE
-from tinyscript.helpers import b, execute, u
+from tinyscript.helpers import b, ensure_str, execute, u
 
 from ...core.protocols.http import HTTPBot
 
