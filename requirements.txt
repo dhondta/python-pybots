@@ -1,7 +1,8 @@
 bs4
 brotli
+cfscrape
 pycountry
 requests
-user_agent
 simplejson
 tinyscript
+user_agent
