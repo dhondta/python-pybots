@@ -3,6 +3,7 @@
 """Simple utility objects related to API's.
 
 """
+import re
 import types
 from datetime import datetime, timedelta
 from functools import wraps
@@ -16,13 +17,30 @@ except ImportError:
 
 from ..protocols.http import HTTPBot, JSONBot
 
+SEARCH_BACKENDS = []
+try:
+    import jmespath
+    SEARCH_BACKENDS.append("jmespath")
+except ImportError:
+    pass
+try:
+    import jsonpath
+    SEARCH_BACKENDS.append("jsonpath")
+except ImportError:
+    pass
+try:
+    import yaql
+    SEARCH_BACKENDS.append("yaql")
+except ImportError:
+    pass
 
-__all__ = __features__ = ["apicall", "cache", "invalidate", "private",
-                          "time_throttle", "API", "APIError", "APIObject"]
+
+__all__ = __features__ = ["apicall", "cache", "invalidate", "private", "time_throttle",
+                          "API", "APIError", "APIObject", "SearchAPI"]
 
 TIME_THROTTLING = {}
 
-is_json    = lambda s: JSONBot in s.__class__.__bases__
+is_json = lambda s: JSONBot in s.__class__.__bases__
 
 
 def _decorated(f):
@@ -50,8 +68,8 @@ def _id(something):
 
 def _result(f, self, *args, **kwargs):
     """
-    Proxy function to return the result of a method and, if the result is None,
-     in some different use cases, return something.
+    Proxy function to return the result of a method and, if the result is None, in some different use cases, return
+     something.
     """
     s = getattr(self, "_parent", self)
     r = f(s, *args, **kwargs)
@@ -91,15 +109,14 @@ def cache(timeout=300, retries=1):
             s = getattr(self, "_parent", self)
             if not s._disable_cache:
                 force = kwargs.pop('force', False)
-                # handle varargs by searching for or writing each item in the
-                #  cache, letting the request grouped with non-cached items
+                # handle varargs by searching for or writing each item in the cache, letting the request grouped with
+                #  non-cached items
                 if multi:
                     entries, tmp = {} if is_json(s) else [], []
                     for item in args:
                         entry = s._from_cache(f, (item, ), kwargs)
                         if entry is None or \
-                           isinstance(entry, dict) and len(entry) == 1 and \
-                           list(entry.values())[0] is None:
+                           isinstance(entry, dict) and len(entry) == 1 and list(entry.values())[0] is None:
                             tmp.append(item)
                         elif isinstance(entry, dict):
                             entries.update(entry)
@@ -110,9 +127,8 @@ def cache(timeout=300, retries=1):
                     n = retries
                     while len(tmp) > 0 and n > 0:
                         r = _result(f, s, *tmp, **kwargs)
-                        for i, e in (r.items() if isinstance(r, dict) else \
-                                   zip(tmp, r if is_json(s) else [r] \
-                                       if len(tmp) == 1 else r.strip("\n"))):
+                        for i, e in (r.items() if isinstance(r, dict) else zip(tmp, r if is_json(s) else [r]
+                                     if len(tmp) == 1 else r.strip("\n"))):
                             if e is None:
                                 continue
                             s._to_cache(f, (i, ), kwargs, timeout, entry=e)
@@ -125,8 +141,7 @@ def cache(timeout=300, retries=1):
                     return entries
                 else:
                     entry = s._from_cache(f, args, kwargs)
-                    return s._to_cache(f, args, kwargs, timeout) \
-                           if entry is None or force else entry
+                    return s._to_cache(f, args, kwargs, timeout) if entry is None or force else entry
             else:
                 s._logger.debug("Cache disabled")
                 return _result(f, s, *args, **kwargs)
@@ -136,8 +151,7 @@ def cache(timeout=300, retries=1):
 
 def invalidate(*other_f):
     """
-    API method decorator for invalidating the cached result of another API
-     method.
+    API method decorator for invalidating the cached result of another API method.
     """
     def _wrapper(inner_f):
         @wraps(inner_f)
@@ -155,16 +169,14 @@ def invalidate(*other_f):
                         fid = _id(s.__class__._MetaAPI__api_registry[f])
                         if c.get(fid) is not None:
                             c[fid] = {}
-                            s._logger.debug("Invalidated cache entry for '%s'" \
-                                            % f)
+                            s._logger.debug("Invalidated cache entry for '%s'" % f)
         return _subwrapper
     return _wrapper
 
 
 def private(f):
     """
-    API method decorator for checking if an API method is public based on a
-     'public' attribute.
+    API method decorator for checking if an API method is public based on a 'public' attribute.
     """
     @wraps(f)
     def _wrapper(self, *args, **kwargs):
@@ -180,8 +192,7 @@ def time_throttle(seconds, requests=1):
     
     NB: this should be put before '@apicall' and '@cache'.
     
-    :param seconds:  time frame in which the the maximum number of requests
-                      can be achieved
+    :param seconds:  time frame in which the the maximum number of requests can be achieved
     :param requests: maximum number of requests during the time frame
     """
     def _wrapper(f):
@@ -247,10 +258,8 @@ class API(with_metaclass(MetaAPI, object)):
     :param key:                     API key
     :param url:                     API URL
     :param kind:                    http|json
-    :param disable_cache:           whether it should be initialized without
-                                     caching
-    :param disable_time_throttling: whether it should be initialized without
-                                     time throttling
+    :param disable_cache:           whether it should be initialized without caching
+    :param disable_time_throttling: whether it should be initialized without time throttling
     """
     def __init__(self, key, url=None, kind="json", disable_cache=False,
                  disable_time_throttling=False, **kwargs):
@@ -374,8 +383,7 @@ class APIObject(object):
         p = self.__dict__.get('_APIObject__parent')
         a = getattr(p, name, None)
         if a is None:
-            raise AttributeError("'{}' object has no attribute '{}'"
-                                 .format(p.__class__.__name__, name))
+            raise AttributeError("'{}' object has no attribute '{}'".format(p.__class__.__name__, name))
         return a
     
     @property
@@ -388,3 +396,48 @@ class APIObject(object):
         for a in self.__dict__.values():
             if isinstance(a, APIObject):
                 a._parent = parent
+
+
+class SearchAPI(API):
+    """
+    SearchAPI class, for managing cache and a search feature relying on multiple backends.
+
+    :param key:                     API key
+    :param url:                     API URL
+    :param kind:                    http|json
+    :param disable_cache:           whether it should be initialized without caching
+    :param disable_time_throttling: whether it should be initialized without time throttling
+    :param search_backend:          search backend to be used
+    """
+
+    def __init__(self, key, url=None, kind="json", disable_cache=False, disable_time_throttling=False,
+                 search_backend=None, **kwargs):
+        self.__backend = search_backend
+        super(SearchAPI, self).__init__(key, url, kind, disable_cache, disable_time_throttling, **kwargs)
+
+    def search(self, query):
+        if self.__backend == "jmespath":
+            return jmespath.search(query, self.json)
+        elif self.__backend == "yaql":
+             return self.__engine(query).evaluate(data=self.json)
+        elif self.__backend == "jsonpath":
+            return jsonpath.jsonpath(self.json, query) or []
+        else:
+            r = []
+            for record in self.json['data']:
+                for _, v in record.items():
+                    if re.search(query, v):
+                        r.append(record)
+            return r
+
+    @property
+    def backend(self):
+        return self.__backend
+
+    @backend.setter
+    def backend(self, value):
+        if value and value not in SEARCH_BACKENDS:
+            raise ValueError("Bad search backend")
+        if value == "yaql":
+            self.__engine = yaql.factory.YaqlFactory().create()
+        self.__backend = value
