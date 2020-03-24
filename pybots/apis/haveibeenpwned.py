@@ -5,7 +5,6 @@
 import time
 from tinyscript.helpers.data.types import *
 
-from ..core.protocols.http import JSONBot
 from ..core.utils.api import *
 
 
@@ -79,25 +78,19 @@ class HaveIBeenPwnedAPI(API):
         """
         Return a list of all breaches a particular account has been involved in.
         
-        :param account:            account to be searched for (not case
-                                    sensitive, trimmed of leading or trailing
-                                    white spaces)
+        :param account:            account to be searched for (not case sensitive, trimmed of leading or trailing white
+                                    spaces)
         :param truncate_response:  return the full breach model
-        :param domain:             filter the result set to only breaches
-                                    against the domain specified
-        :param include_unverified: return breaches that have been flagged as
-                                    "unverified"
+        :param domain:             filter the result set to only breaches against the domain specified
+        :param include_unverified: return breaches that have been flagged as "unverified"
         """
         if not self._api_key:
             raise APIError("missing hibp-api-key", 401)
-        self.__validate(account=account, domain=domain,
-                        flags=[truncate_response, include_unverified])
-        params = {'truncateResponse': truncate_response,
-                  'includeUnverified': include_unverified}
+        self.__validate(account=account, domain=domain, flags=[truncate_response, include_unverified])
+        params = {'truncateResponse': truncate_response, 'includeUnverified': include_unverified}
         if domain:
             params['domain'] = domain
-        self._request("get", "/breachedaccount/%s" % account, params=params,
-                      aheaders={'hibp-api-key': self._api_key})
+        self._request("get", "/breachedaccount/%s" % account, params=params, aheaders={'hibp-api-key': self._api_key})
     
     # Getting a single breached site
     @apicall
@@ -118,11 +111,9 @@ class HaveIBeenPwnedAPI(API):
         """
         Return the details of each of breach in the system.
         
-        NB: A "breach" is an instance of a system having been compromised by an
-             attacker and the data disclosed.
+        NB: A "breach" is an instance of a system having been compromised by an attacker and the data disclosed.
         
-        :param domain: filter the result set to only breaches against the domain
-                        specified
+        :param domain: filter the result set to only breaches against the domain specified
         """
         self.__validate(domain=domain)
         self._request("get", "/breaches", params={'domain': domain})
@@ -143,33 +134,26 @@ class HaveIBeenPwnedAPI(API):
     @cache(3600)
     def pasteaccount(self, account):
         """
-        Return a collection of pastes related to the given accoutn.
+        Return a collection of pastes related to the given account.
         
-        :param account: account to be searched for (not case sensitive, trimmed
-                         of leading or trailing white spaces)
+        :param account: account to be searched for (not case sensitive, trimmed of leading or trailing white spaces)
         
         Attribute   Type    Description
-        ------------------------------------------------------------------------
-        Source 	    string  The paste service the record was retrieved from.
-                            Values:Pastebin, Pastie, Slexy, Ghostbin, QuickLeak,
-                                    JustPaste, AdHocUrl, PermanentOptOut, OptOut
-        Id 	        string  The ID of the paste as it was given at the source
-                             service. Combined with the "Source" attribute, this
-                             can be used to resolve the URL of the paste.
-        Title 	    string  The title of the paste as observed on the source
-                             site. This may be null and if so will be omitted
-                             from the response.
-        Date 	    date    The date and time (precision to the second) that the
-                             paste was posted. This is taken directly from the
-                             paste site when this information is available but
-                             may be null if no date is published.
-        EmailCount 	integer The number of emails that were found when processing
-                             the paste. Emails are extracted by using the
-                             regular expression \b+(?!^.{256})[a-zA-Z0-9\.\-_\+]
-                             +@[a-zA-Z0-9\.\-_]+\.[a-zA-Z]+\b 
+        ----------------------------------------------------------------------------------------------------------------
+        Source 	    string  The paste service the record was retrieved from. Values:Pastebin, Pastie, Slexy, Ghostbin,
+                             QuickLeak, JustPaste, AdHocUrl, PermanentOptOut, OptOut
+        Id 	        string  The ID of the paste as it was given at the source service. Combined with the "Source"
+                             attribute, this can be used to resolve the URL of the paste.
+        Title 	    string  The title of the paste as observed on the source site. This may be null and if so will be
+                             omitted from the response.
+        Date 	    date    The date and time (precision to the second) that the paste was posted. This is taken
+                             directly from the paste site when this information is available but may be null if no date
+                             is published.
+        EmailCount 	integer The number of emails that were found when processing the paste. Emails are extracted by
+                             using the regular expression:
+                              \b+(?!^.{256})[a-zA-Z0-9\.\-_\+]+@[a-zA-Z0-9\.\-_]+\.[a-zA-Z]+\b
         """
         if not self._api_key:
             raise APIError("missing hibp-api-key", 401)
         self.__validate(account=account)
-        self._request("get", "/pasteaccount/%s" % account,
-                      aheaders={'hibp-api-key': self._api_key})
+        self._request("get", "/pasteaccount/%s" % account, aheaders={'hibp-api-key': self._api_key})

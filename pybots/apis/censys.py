@@ -31,18 +31,18 @@ class CensysAPI(API):
         """
         Private generic validation function for API arguments.
         """
+        # FIXME: validate 'index'
         for k, v in kwargs.items():
             if k == "buckets":
                 positive_int(v, False)
-                if buckets > 500:
+                if v > 500:
                     raise ValueError("value exceeding maximum allowed (500)")
             elif k == "domain":
                 domain_name(v)
             elif k == "fields":
                 for f in v:
                     if not re.match(r"^[a-z][a-z0-9]*(\.[a-z][a-z0-9]*)*$", f):
-                        raise ValueError("bad field value (should be in dot "
-                                         "notation)")
+                        raise ValueError("bad field value (should be in dot notation)")
             elif k in ["flatten"]:
                 if not isinstance(v, bool):
                     raise ValueError("bad boolean flag")
@@ -52,8 +52,8 @@ class CensysAPI(API):
                 if not re.match("^[0-9a-z]+(\.[0-9a-z]+)*\:\s(.+)$", v):
                     raise ValueError("bad query string")
             elif k == "result":
-                if not re.match(r"^\d{4}(0[0-9]|1[0-2])(0[1-9]|[1-2][0-9]|3"
-                               r"[0-1])[A-Z]([0-1][0-9]|2[0-3])[0-5][0-9]$", v):
+                if not re.match(r"^\d{4}(0[0-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])[A-Z]([0-1][0-9]|2[0-3])[0-5][0-9]$",
+                                v):
                     raise ValueError("bad result ID")
             elif k == "series":
                 if not re.match("^[0-9a-z]+([-_][0-9a-z]+)*$", v):
@@ -74,17 +74,13 @@ class CensysAPI(API):
     # Create Report endpoint: https://censys.io/api/v1/docs/report
     def _report(self, index, query, field=None, buckets=50):
         """
-        The build report endpoint lets you run aggregate reports on the
-         breakdown of a field in a result set analogous to the "Build Report"
-         functionality in the front end. For example, if you wanted to determine
-         the breakdown of cipher suites selected by Top Million Websites.
+        The build report endpoint lets you run aggregate reports on the breakdown of a field in a result set analogous
+         to the "Build Report" functionality in the front end. For example, if you wanted to determine the breakdown of
+         cipher suites selected by Top Million Websites.
         
-        :param query:   query to be executed,
-                         e.g. 80.http.get.headers.server: nginx
-        :param field:   field to be run a breakdown on in dot notation,
-                         e.g. location.country_code
-        :param buckets: maximum number of values to be returned in the report
-                         (max is 500)
+        :param query:   query to be executed, e.g. 80.http.get.headers.server: nginx
+        :param field:   field to be run a breakdown on in dot notation, e.g. location.country_code
+        :param buckets: maximum number of values to be returned in the report (max is 500)
         """
         self.__validate(index, query=query, fields=[field], buckets=buckets)
         data = {'query': query, 'buckets': buckets}
@@ -95,20 +91,16 @@ class CensysAPI(API):
     # Search endpoint: https://censys.io/api/v1/docs/search
     def _search(self, index, query, page=1, fields=None, flatten=True):
         """
-        Searches against the current data in the {0} index and returns
-         a paginated result set of {0} that match the search.
+        Searches against the current data in the {0} index and returns a paginated result set of {0} that match the
+         search.
         
-        :param query:   query to be executed,
-                         e.g. 80.http.get.headers.server: nginx
+        :param query:   query to be executed, e.g. 80.http.get.headers.server: nginx
         :param page:    page of the result set to be returned
-                         NB:  The number of pages in the result set is available
-                               under metadata in any request.
-        :param fields:  fields to be returned in the result set in dot notation,
-                         e.g. location.country_code
+                         NB:  The number of pages in the result set is available under metadata in any request.
+        :param fields:  fields to be returned in the result set in dot notation, e.g. location.country_code
         :param flatten: format of the returned results
         """
-        self.__validate(index, query=query, page=page, fields=fields,
-                        flatten=flatten)
+        self.__validate(index, query=query, page=page, fields=fields, flatten=flatten)
         data = {'query': query, 'page': page, 'flatten': flatten}
         if fields:
             data['fields'] = fields
@@ -147,8 +139,8 @@ class CensysAPI(API):
     @cache(300)
     def data_series(self, series):
         """
-        Returns data about a particular series (a scan of the same protocol and
-         destination accross time) including the list of scans.
+        Returns data about a particular series (a scan of the same protocol and destination accross time) including the
+         list of scans.
         
         :param series: ID of the series, e.g., 22-ssh-banner-full_ipv4
         """
@@ -160,8 +152,7 @@ class CensysAPI(API):
     @cache(300)
     def data_series_result(self, series, result):
         """
-        Returns data on a particular scan ("result"), as found in the Get Series
-         or View Series endpoints.
+        Returns data on a particular scan ("result"), as found in the Get Series or View Series endpoints.
         
         :param series: ID of the series, e.g., 22-ssh-banner-full_ipv4
         :param result: ID of the result, e.g., 20150930T0056

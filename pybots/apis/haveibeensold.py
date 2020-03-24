@@ -2,7 +2,6 @@
 """Client-side API dedicated to HaveIBeenSold API.
 
 """
-import time
 from tinyscript.helpers.data.types import *
 
 from ..core.utils.api import *
@@ -49,8 +48,7 @@ class HaveIBeenSoldAPI(API):
         """
         self.__validate(action=action, email=email)
         s = super(HaveIBeenSoldAPI, self)
-        s._request("/api/api.php", "post", random_uagent=True,
-                   data={'email': email, 'action': action})
+        s._request("/api/api.php", "post", random_uagent=True, data={'email': email, 'action': action})
         if self._json.get('status') == "success":
             return self._json.get('data')
         elif self._json.get('status') == "error":
@@ -64,7 +62,7 @@ class HaveIBeenSoldAPI(API):
         
         :param email: email address
         """
-        self._post(email, "add")
+        self._request(email, "add")
         self._logger.warning("a confirmation link has been sent to this email")
     
     @apicall
@@ -75,7 +73,7 @@ class HaveIBeenSoldAPI(API):
         
         :param email: email address
         """
-        return self._post(email, "check")
+        return self._request(email, "check")
     
     @apicall
     def delete(self, email):
@@ -84,5 +82,5 @@ class HaveIBeenSoldAPI(API):
         
         :param email: email address
         """
-        self._post(email, "del")
+        self._request(email, "del")
         self._logger.warning("a confirmation link has been sent to this email")

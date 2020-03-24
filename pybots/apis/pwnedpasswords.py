@@ -4,10 +4,8 @@
 """
 import hashlib
 import random
-import re
 from six import b
 
-from ..core.protocols.http import HTTPBot
 from ..core.utils.api import *
 
 

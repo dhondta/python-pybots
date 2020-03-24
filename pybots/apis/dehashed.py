@@ -2,7 +2,6 @@
 """Client-side API dedicated to DeHashed API.
 
 """
-import time
 from tinyscript.helpers.data.types import *
 
 from ..core.utils.api import *
@@ -74,9 +73,8 @@ class DeHashedAPI(API):
         :param page:  page number (5 results/page)
         """
         self.__validate(page=page, query=query)
-        #FIXME: no query validation at this time ; see 
-        #        https://www.dehashed.com/docs, section "Search Operators &
-        #                                                Wildcard"
+        #FIXME: no query validation at this time ;
+        # see https://www.dehashed.com/docs, section "Search Operators & Wildcard"
         params = {}
         if page:
             params = {'page': page}

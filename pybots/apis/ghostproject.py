@@ -26,11 +26,11 @@ class GhostProjectAPI(API):
         s['X-Requested-With'] = "XMLHttpRequest"
         try:
             cookies, uagent = cloudscraper.get_tokens(self.url + "/x000x1337.php")
+            self._session.cookies.update(cookies)
+            self._session.headers['User-Agent'] = uagent
         except Exception as e:
             if "Could not collect tokens" in str(e):
                 raise APIError("Could not collect cloudflare clearance")
-        self._session.cookies.update(cookies)
-        self._session.headers['User-Agent'] = uagent
 
     def __validate(self, **kwargs):
         """
