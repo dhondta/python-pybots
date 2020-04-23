@@ -1,8 +1,7 @@
 # -*- coding: UTF-8 -*-
 """Mixins for crawling Web pages.
 
-This mixin allows to add a crawling functionality to a bot, available through a
- 'crawl(url)' method.
+This mixin allows to add a crawling functionality to a bot, available through a 'crawl(url)' method.
 
 """
 from bs4 import BeautifulSoup

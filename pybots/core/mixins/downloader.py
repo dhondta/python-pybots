@@ -1,8 +1,7 @@
 # -*- coding: UTF-8 -*-
 """Mixins for bulk-downloading resources based on a list of URL's.
 
-This mixin allows to add a list-based bulk-download functionality to a WebBot,
- available through a 'bulk_download()' method.
+This mixin allows to add a list-based bulk-download functionality to a WebBot, available through a 'bulk_download()' method.
 
 """
 from os import makedirs
@@ -20,9 +19,9 @@ class BulkDownloadMixin(object):
         """
         Bulk-download URL's, mixed from a list or from a file.
 
-        :parame urls:      list of URL's or request paths
-        :parame from_file: file with a list of URL's or request paths
-        :parame dest:      destination folder
+        :param urls:      list of URL's or request paths
+        :param from_file: file with a list of URL's or request paths
+        :param dest:      destination folder
         """
         dest = kwargs.get('dest', ".")
         urls = list(urls)

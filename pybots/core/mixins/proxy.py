@@ -1,8 +1,7 @@
 # -*- coding: UTF-8 -*-
 """Mixins for selecting a public HTTP proxy.
 
-This mixin allows to retrieve a proxy address from a public list of public HTTP
- proxies and to setup the bot with a selected one.
+This mixin allows to retrieve a proxy address from a public list of public HTTP proxies and to setup the bot with a selected one.
 
 """
 from tinyscript.helpers.decorators import *
