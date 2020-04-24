@@ -35,12 +35,10 @@ except ImportError:
     pass
 
 
-__all__ = __features__ = ["apicall", "cache", "invalidate", "private", "time_throttle",
-                          "API", "APIError", "APIObject", "SearchAPI"]
+__all__ = __features__ = ["apicall", "cache", "invalidate", "private", "time_throttle", "API", "APIError", "APIObject",
+                          "SearchAPI"]
 
 TIME_THROTTLING = {}
-
-is_json = lambda s: JSONBot in s.__class__.__bases__
 
 
 def _decorated(f):
@@ -73,13 +71,12 @@ def _result(f, self, *args, **kwargs):
     """
     s = getattr(self, "_parent", self)
     r = f(s, *args, **kwargs)
-    if r is None and is_json(s):
-        r = s.json
+    if r is None:
+        r = s._json
     if isinstance(r, dict):
         err = r.get('error')
         if err is not None:
-            code = r.get('status') or r.get('code') or r.get('statusCode') or \
-                   r.get('status_code')
+            code = r.get('status') or r.get('code') or r.get('statusCode') or r.get('status_code')
             raise APIError(err, code)
     return r
 
@@ -112,7 +109,7 @@ def cache(timeout=300, retries=1):
                 # handle varargs by searching for or writing each item in the cache, letting the request grouped with
                 #  non-cached items
                 if multi:
-                    entries, tmp = {} if is_json(s) else [], []
+                    entries, tmp = {} if s._kind == "json" else [], []
                     for item in args:
                         entry = s._from_cache(f, (item, ), kwargs)
                         if entry is None or \
@@ -127,13 +124,13 @@ def cache(timeout=300, retries=1):
                     n = retries
                     while len(tmp) > 0 and n > 0:
                         r = _result(f, s, *tmp, **kwargs)
-                        for i, e in (r.items() if isinstance(r, dict) else zip(tmp, r if is_json(s) else [r]
+                        for i, e in (r.items() if isinstance(r, dict) else zip(tmp, r if s._kind == "json" else [r]
                                      if len(tmp) == 1 else r.strip("\n"))):
                             if e is None:
                                 continue
                             s._to_cache(f, (i, ), kwargs, timeout, entry=e)
                             tmp.remove(i)
-                            if is_json(s):
+                            if s._kind == "json":
                                 entries[i] = e
                             else:
                                 entries.append(e)
@@ -141,7 +138,9 @@ def cache(timeout=300, retries=1):
                     return entries
                 else:
                     entry = s._from_cache(f, args, kwargs)
-                    return s._to_cache(f, args, kwargs, timeout) if entry is None or force else entry
+                    if entry is None or force:
+                        entry = s._to_cache(f, args, kwargs, timeout)
+                    return entry
             else:
                 s._logger.debug("Cache disabled")
                 return _result(f, s, *args, **kwargs)
@@ -267,6 +266,7 @@ class API(with_metaclass(MetaAPI, object)):
         self._api_key = key
         self._disable_cache = disable_cache
         self._disable_time_throttling = disable_time_throttling
+        self._kind = kind
         # transform every apicall-decorated method to API objects ; this allows
         #  to decompose methods into a hierarchy of bound objects, e.g.
         #  bot.search_host_info => bot.search.host.info
@@ -355,7 +355,7 @@ class API(with_metaclass(MetaAPI, object)):
         id_f, id_a = _id(f), ()
         for a in args:
             id_a += (_id(a), )
-        for k, w in kwargs.items():
+        for k, v in kwargs.items():
             id_a += (_id("{}={}".format(k, _id(v))), )
         return id_f, _id(id_a)
 
@@ -417,14 +417,14 @@ class SearchAPI(API):
 
     def search(self, query):
         if self.__backend == "jmespath":
-            return jmespath.search(query, self.json)
+            return jmespath.search(query, self._json)
         elif self.__backend == "yaql":
-             return self.__engine(query).evaluate(data=self.json)
+             return self.__engine(query).evaluate(data=self._json)
         elif self.__backend == "jsonpath":
-            return jsonpath.jsonpath(self.json, query) or []
+            return jsonpath.jsonpath(self._json, query) or []
         else:
             r = []
-            for record in self.json['data']:
+            for record in self._json['data']:
                 for _, v in record.items():
                     if re.search(query, v):
                         r.append(record)
