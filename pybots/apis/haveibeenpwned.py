@@ -61,20 +61,19 @@ class HaveIBeenPwnedAPI(API):
         retries = kwargs.pop('retries', 3)
         s = super(HaveIBeenPwnedAPI, self)
         s._request("/api/v3" + reqpath, method, aheaders=h, **kwargs)
-        if isinstance(self.json, dict) and self.json.get('statusCode'):
-            code = self.json['statusCode']
+        if isinstance(self._json, dict) and self._json.get('statusCode'):
+            code = self._json['statusCode']
             if code == 429 and retries > 0:
                 time.sleep(2)
                 kwargs['retries'] = retries - 1
                 self._request(method, reqpath, **kwargs)
             else:
-                raise APIError(self.json['message'], code)
+                raise APIError(self._json['message'], code)
     
     # Getting all breaches for an account
     @apicall
     @cache(3600)
-    def breachedaccount(self, account, truncate_response=True, domain=None,
-                        include_unverified=True):
+    def breachedaccount(self, account, truncate_response=True, domain=None, include_unverified=True):
         """
         Return a list of all breaches a particular account has been involved in.
         
@@ -84,8 +83,7 @@ class HaveIBeenPwnedAPI(API):
         :param domain:             filter the result set to only breaches against the domain specified
         :param include_unverified: return breaches that have been flagged as "unverified"
         """
-        if not self._api_key:
-            raise APIError("missing hibp-api-key", 401)
+        self._check_apikey("missing hibp-api-key")
         self.__validate(account=account, domain=domain, flags=[truncate_response, include_unverified])
         params = {'truncateResponse': truncate_response, 'includeUnverified': include_unverified}
         if domain:
@@ -153,7 +151,6 @@ class HaveIBeenPwnedAPI(API):
                              using the regular expression:
                               \b+(?!^.{256})[a-zA-Z0-9\.\-_\+]+@[a-zA-Z0-9\.\-_]+\.[a-zA-Z]+\b
         """
-        if not self._api_key:
-            raise APIError("missing hibp-api-key", 401)
+        self._check_apikey("missing hibp-api-key")
         self.__validate(account=account)
         self._request("get", "/pasteaccount/%s" % account, aheaders={'hibp-api-key': self._api_key})

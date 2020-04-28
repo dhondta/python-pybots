@@ -288,6 +288,11 @@ class API(with_metaclass(MetaAPI, object)):
         """ Context manager exit method, for gracefully closing the bot. """
         self.__bot.__exit__(*args, **kwargs)
     
+    def _check_apikey(self, msg="missing API key", code=401):
+        """ API key check function. """
+        if not self._api_key:
+            raise APIError(msg, code)
+    
     def _from_cache(self, f, args=(), kwargs={}):
         """ Cache request method. """
         if not self._disable_cache:
@@ -409,7 +414,6 @@ class SearchAPI(API):
     :param disable_time_throttling: whether it should be initialized without time throttling
     :param search_backend:          search backend to be used
     """
-
     def __init__(self, key, url=None, kind="json", disable_cache=False, disable_time_throttling=False,
                  search_backend=None, **kwargs):
         self.__backend = search_backend
