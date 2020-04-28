@@ -420,6 +420,7 @@ class SearchAPI(API):
         super(SearchAPI, self).__init__(key, url, kind, disable_cache, disable_time_throttling, **kwargs)
 
     def search(self, query):
+        query = str(query)
         if self.__backend == "jmespath":
             return jmespath.search(query, self._json)
         elif self.__backend == "yaql":
@@ -430,7 +431,7 @@ class SearchAPI(API):
             r = []
             for record in self._json['data']:
                 for _, v in record.items():
-                    if re.search(query, v):
+                    if re.search(query, str(v)):
                         r.append(record)
             return r
 
