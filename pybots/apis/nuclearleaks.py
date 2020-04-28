@@ -41,7 +41,7 @@ class NuclearLeaksAPI(SearchAPI):
             raise APIError("could not retrieve the list of Nuclear Leaks")
         table = self._soup.find('table', id="breaches-table")
         self.headers = [th.text.lower().replace(" ", "_") for th in table.find('thead').findAll('th')]
-        self.json = {'data': []}
+        self._API__bot.json = {'data': []}
         for tr in table.find('tbody').findAll('tr'):
             row = {}
             for i, td in enumerate(tr.findAll('td')):
@@ -50,8 +50,8 @@ class NuclearLeaksAPI(SearchAPI):
                 if k == "dump_date":
                     t = td.text
                     row['year'] = int(t.split("-")[0]) if t != "" else datetime.now().year
-            self.json['data'].append(row)
-        return self.json
+            self._json['data'].append(row)
+        return self._json
     
     @apicall
     def search(self, query):
