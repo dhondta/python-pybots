@@ -5,12 +5,9 @@ Each specific bot inherits from a generic Bot class holding the base
  mechanism and logging for managing Web interactions with the handled sites.
 
 """
-import brotli
-import copy
 import logging
 import os
 import requests
-import shutil
 import urllib3
 from tinyscript.helpers.decorators import *
 from types import MethodType
@@ -33,29 +30,6 @@ urllib3.disable_warnings(InsecureRequestWarning)
 __all__ = ["WebBot"]
 
 
-class DecompressedResponse(object):
-    def __init__(self, response):
-        self._response = response
-    
-    def __getattr__(self, name):
-        return getattr(self._response, name)
-
-    @property
-    def text(self):
-        """ Adapted from requests' Response object """
-        content = None
-        encoding = self._response.encoding
-        if not self.content:
-            return str('')
-        if encoding is None:
-            encoding = self._response.apparent_encoding
-        try:
-            content = str(self.content, encoding, errors='replace')
-        except (LookupError, TypeError):
-            content = str(self.content)
-        return content
-
-
 class WebBot(Template):
     """
     Bot template class holding the base machinery for building a Web bot.
@@ -64,15 +38,11 @@ class WebBot(Template):
     :param verbose:  debug level
     :param no_proxy: force ignoring the proxy
     """
-    headers = {'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                             "AppleWebKit/537.36 (KHTML, like Gecko) "
+    headers = {'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
                              "Chrome/60.0.3112.113 Safari/537.36",
-               'Accept': "text/html,application/xhtml+xml,application/"
-                         "xml;q=0.9,*/*;q=0.8",
-               'Accept-Language': "en-US,en;q=0.5",
-               'Accept-Encoding': "gzip, deflate, br",
-               'Connection': "keep-alive",
-               'DNT': "1", 'Upgrade-Insecure-Requests': "1"}
+               'Accept': "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+               'Accept-Language': "en-US,en;q=0.5", 'Accept-Encoding': "gzip, deflate, br",
+               'Connection': "keep-alive", 'DNT': "1", 'Upgrade-Insecure-Requests': "1"}
 
     def __init__(self, url, auth=None, verbose=False, no_proxy=False,
                  random_uagent=False):
@@ -92,32 +62,18 @@ class WebBot(Template):
         """
         Pretty print method for debugging HTTP communication.
         """
-        data = "\n\n    {}\n".format(self._request.body) \
-                if self._request.method == "POST" else "\n"
-        self.logger.debug("Sent request:\n    {} {}\n{}".format( \
-            self._request.method,
-            self._request.url,
-            '\n'.join('    {}: {}'.format(k, v) \
-                for k, v in sorted(self._request.headers.items())))
-            + data)
+        headers = '\n'.join("    {}: {}".format(k, v) for k, v in sorted(self._request.headers.items()))
+        data = "\n\n    {}\n".format(self._request.body) if self._request.method == "POST" else "\n"
+        self.logger.debug("Sent request:\n    {} {}\n{}"
+                          .format(self._request.method, self._request.url, headers + data))
 
     def __print_response(self):
         """
         Pretty print method for debugging HTTP communication.
         """
+        headers = '\n'.join("    {}: {}".format(k, v) for k, v in sorted(self.response.headers.items()))
         self.logger.debug("Received response:\n    {} {}\n{}\n"
-            .format(self.response.status_code, self.response.reason,
-            '\n'.join('    {}: {}'.format(k, v) \
-                for k, v in sorted(self.response.headers.items()))))
-
-    def _parse(self):
-        """
-        Template method for parsing the response.
-        """
-        if hasattr(self, "parse"):
-            self.logger.debug("Parsing response...")
-            self.parse()
-            self.logger.debug("Parsing done.")
+                          .format(self.response.status_code, self.response.reason, headers))
 
     def _set_cookie(self, cookie):
         """
@@ -161,7 +117,6 @@ class WebBot(Template):
     @property
     def cookie(self):
         """ Cookie property. """
-        #FIXME: get the session cookie the right way...
         try:
             return self.session.headers.get("Cookie") or self.__cookie
         except AttributeError:
@@ -188,79 +143,66 @@ class WebBot(Template):
         if parsed.netloc == '':
             resource = urljoin(self.url, resource)
         self.logger.debug("Downloading resource...")
-        with WebBot(resource, verbose=self.verbose) as bot:
-            bot.cookie = self.cookie
-            bot.get(resource, stream=True)
-            if bot.response.status_code == 200:
-                with open(filename, 'wb') as f:
-                    for chunk in bot.response:
-                        f.write(chunk)
-                bot.logger.debug("> Download successful")
-                self.logger.debug("> Saved to '{}'".format(filename))
-                success = True
-            else:
-                bot.logger.error("> Download failed")
+        self.request(resource, stream=True)
+        if self.response.status_code == 200:
+            with open(filename, 'wb') as f:
+                for chunk in self.response:
+                    f.write(chunk)
+            self.logger.debug("> Download successful ; saved to '{}'".format(filename))
+            success = True
+        else:
+            self.logger.error("> Download failed")
         if success:
             return filename
     retrieve = download
 
     @try_and_warn("Request failed", trace=True)
-    def request(self, rqpath=None, method="GET", data=None, aheaders=None, **kw):
+    def request(self, url=None, method="GET", data=None, aheaders=None, **kw):
         """
         Get a Web page.
 
-        :param rqpath:   request path (to be added to self.url)
+        :param url:      full URL or request path (to be added to self.url)
         :param method:   HTTP method
         :param data:     data to be sent (if applicable, i.e. for POST)
         :param aheaders: additional HTTP headers (dictionary)
         :post:           self.response, self.soup populated
         """
-        if not isinstance(data or {}, dict):
+        aheaders = aheaders or {}
+        data = data or {}
+        if not isinstance(data, dict):
             raise ValueError("Bad input data")
-        if not isinstance(aheaders or {}, dict):
+        if not isinstance(aheaders, dict):
             raise ValueError("Bad input additional headers")
         self.logger.debug("Requesting with method {}...".format(method))
-        url = self.url if rqpath is None else urljoin(self.url, rqpath)
+        url = self.url if url is None else urljoin(self.url, url)
         m = method.lower()
         if not hasattr(requests, m):
             self.logger.error("Bad request")
             raise AttributeError("requests has no method '{}'".format(m))
         session_params = {'allow_redirects': kw.pop('allow_redirects', True)}
         # handle request streaming (i.e. for downloads)
-        stream = kw.pop('stream', None)
-        if stream is not None:
-            session_params['stream'] = stream
-        # handle user agent randomization ; this allows to randomize the user
-        #  agent at the request level and not the session one
+        session_params['stream'] = kw.pop('stream', False)
+        # handle user agent randomization ; this allows to randomize the user agent at the request level and not the
+        #  session one
         if kw.pop('random_uagent', False):
-            aheaders = aheaders or {}
             aheaders['User-Agent'] = generate_user_agent()
         # now prepare the request
-        request = requests.Request(method, url, data=data or {},
-                                   headers=aheaders or {}, **kw)
+        request = requests.Request(method, url, data=data or {}, headers=aheaders or {}, **kw)
         self._request = self.session.prepare_request(request)
         self.__print_request()
         # handle change in proxies configuration and send the request
-        proxies = kw.pop('proxies', None)
+        session_params['proxies'] = kw.pop('proxies', None) or self.session.proxies
         try:
-            self.response = self.session.send(self._request,
-                proxies=proxies or self.session.proxies, **session_params)
+            self.response = self.session.send(self._request, **session_params)
         except:
-            self.response = self.session.send(self._request,
-                proxies=proxies or self.session.proxies, verify=False,
-                **session_params)
+            session_params['verify'] = False
+            self.response = self.session.send(self._request, **session_params)
             self.logger.debug("HTTPS certificate NOT verified")
         self.__print_response()
-        # handle HTTP status code here
-        if 200 <= self.response.status_code < 300:
-            # handle special encodings
-            if self.response.headers.get('Content-Encoding') == "br":
-                self.response = r = DecompressedResponse(self.response)
-                try:
-                    r.content = brotli.decompress(r.content)
-                except brotli.error:
-                    pass
-        self._parse()
+        if hasattr(self, "parse"):
+            self.logger.debug("Parsing response...")
+            self.parse()
+            self.logger.debug("Parsing done.")
         return self
 
     @staticmethod
@@ -273,8 +215,7 @@ class WebBot(Template):
         doc = """ Alias for request(method="{0}"). """
         if method == "get":
             def f(self, rqpath=None, params=None, aheaders=None, **k):
-                return self.request(rqpath, method.upper(), None, aheaders,
-                                    params=params, **k)
+                return self.request(rqpath, method.upper(), None, aheaders, params=params, **k)
         if method in ["delete", "head", "options"]:
             def f(self, rqpath=None, aheaders=None, **k):
                 return self.request(rqpath, method.upper(), None, aheaders, **k)

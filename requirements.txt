@@ -1,5 +1,4 @@
 bs4
-brotli
 cloudscraper
 pycountry
 requests
