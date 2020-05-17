@@ -260,8 +260,7 @@ class API(with_metaclass(MetaAPI, object)):
     :param disable_cache:           whether it should be initialized without caching
     :param disable_time_throttling: whether it should be initialized without time throttling
     """
-    def __init__(self, key, url=None, kind="json", disable_cache=False,
-                 disable_time_throttling=False, **kwargs):
+    def __init__(self, key, url=None, kind="json", disable_cache=False, disable_time_throttling=False, **kwargs):
         self._api_cache = {}
         self._api_key = key
         self._disable_cache = disable_cache
@@ -332,16 +331,16 @@ class API(with_metaclass(MetaAPI, object)):
         self._disable_time_throttling = not self._disable_time_throttling
     
     @property
+    def _config(self):
+        return self.__bot.config
+    
+    @property
     def _json(self):
         return getattr(self.__bot, "json", None)
     
     @property
     def _logger(self):
         return self.__bot.logger
-    
-    @property
-    def _proxies(self):
-        return self.__bot._proxies
     
     @property
     def _response(self):

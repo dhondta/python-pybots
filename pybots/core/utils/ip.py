@@ -21,8 +21,7 @@ MYIP_SOURCES = [
     (JSONBot, "http://httpbin.org/ip", lambda x: x.json['origin']),
     (JSONBot, "http://ip-api.com/json", lambda x: x.json['query']),
     (JSONBot, "https://api.ipify.org/?format=json", lambda x: x.json['ip']),
-    (JSONBot, "https://wtfismyip.com/json",
-     lambda x: x.json['YourFuckingIPAddress']),
+    (JSONBot, "https://wtfismyip.com/json", lambda x: x.json['YourFuckingIPAddress']),
 ]
 get_my_public_ip_sources = lambda: [urlparse(s[1]).netloc for s in MYIP_SOURCES]
 
@@ -41,10 +40,8 @@ def get_my_public_ip(source=None, only_https=False, verbose=False):
         url = urlparse(url)
         if only_https and url.scheme == "https":
             continue
-        with bot_cls("{}://{}".format(url.scheme, url.netloc), verbose=verbose,
-                     random_uagent=True) as bot:
-            bot.logger.debug("Trying to get public IP with '{}'..."
-                             .format(url.netloc))
+        with bot_cls("{}://{}".format(url.scheme, url.netloc), verbose=verbose, random_uagent=True) as bot:
+            bot.logger.debug("Trying to get public IP with '{}'...".format(url.netloc))
             if url.query != '':
                 bot.get("{}?{}".format(url.path, url.query))
             else:
