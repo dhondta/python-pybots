@@ -21,28 +21,12 @@ __all__ = ["SocketBot"]
 P3 = sys.version_info.major == 3
 
 
-def addr_family(host):
-    """
-    Return the right address family (IPv4/IPv6) of host.
-
-    :param host: input hostname or address
-    :return:     the right socket address family
-    """
-    addr = socket.gethostbyname(host)
-    try:
-        socket.inet_pton(socket.AF_INET6, addr)
-        return socket.AF_INET6
-    except socket.error:
-        return socket.AF_INET
-
-
 class ProxySocket(object):
     """
     Proxy socket for tunneling socket communication through an HTTP tunnel.
     
-    Inspired from implementation available at:
-     http://code.activestate.com/recipes/577643-transparent-http-tunnel-for-
-        python-sockets-to-be-u/
+    Inspired from the implementation available at:
+     http://code.activestate.com/recipes/577643-transparent-http-tunnel-for-python-sockets-to-be-u/
 
     :param sock:   socket instance
     :param phost:  proxy hostname or IP address
@@ -115,8 +99,7 @@ class SocketBot(Template):
     prefix_srv = "[SRV]"
     prefix_bot = "[BOT]"
 
-    def __init__(self, host, port, disp=False, verbose=False, prefix=False,
-                 no_proxy=False):
+    def __init__(self, host, port, disp=False, verbose=False, prefix=False, no_proxy=False):
         super(SocketBot, self).__init__(verbose, no_proxy)
         self._set_proxy()
         self.buffer = ""
@@ -136,19 +119,18 @@ class SocketBot(Template):
         if self.prefix:
             prefix = [self.prefix_bot, self.prefix_srv][mode == 'r']
             l = len(prefix)
-            data = prefix + " " + "\n {0}".format(l * " ") \
-                          .join(data.split('\n'))
+            data = prefix + " " + "\n {0}".format(l * " ").join(data.split('\n'))
         return data.strip()
 
     def _set_proxy(self):
         """
         Create specific socket object if a proxy is to be used.
         """
+        prx = self._get_option('proxy', 'socks')
         try:
-            prx = self._proxies['socks']
             phost, pport = prx.split("://")[1].split("/")[0].split(":")
             pport = int(pport)
-        except KeyError:
+        except AttributeError:
             phost, pport = None, 0
         if phost is not None and pport in range(1, 2**16):
             ProxySocket.setup(self, phost, pport)
@@ -271,18 +253,18 @@ class SocketBot(Template):
         self.buffer = self.buffer[pos + len(pattern):]
         return data
   
-    def receive(self, *a, **kw):
+    def receive(self, *args, **kwargs):
         """
         Alias for read and read_until.
         """
-        return [self.read_until, self.read][isinstance(a[0], int) \
-            if len(a) > 0 else 'pattern' not in kw.keys()](*a, **kw)
+        r = isinstance(args[0], int) if len(args) > 0 else 'pattern' not in kwargs.keys()
+        return [self.read_until, self.read][r](*args, **kwargs)
 
-    def send(self, *a, **kw):
+    def send(self, *args, **kwargs):
         """
         Alias for write.
         """
-        return self.write(*a, **kw)
+        return self.write(*args, **kwargs)
  
     def send_receive(self, data='', pattern='\n', eol='\n', disp=None):
         """

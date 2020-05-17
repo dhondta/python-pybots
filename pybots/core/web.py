@@ -102,7 +102,7 @@ class WebBot(Template):
         #  once per session
         if self.__ruagent:
             self.session.headers.update({'User-Agent': generate_user_agent()})
-        self.session.proxies.update(self._proxies)
+        self.session.proxies.update(self.config['proxy'])
 
     def close(self):
         """

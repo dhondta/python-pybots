@@ -1,8 +1,8 @@
 # -*- coding: UTF-8 -*-
 """Generic bot client template.
 
-Each specific bot inherits from the generic class "Template" holding the base
- machinery and logging for managing interactions with remote hosts.
+Each specific bot inherits from the generic class "Template" holding the base machinery and logging for managing
+ interactions with remote hosts.
 
 """
 import coloredlogs
@@ -19,8 +19,8 @@ except ImportError:  # Python2
 
 __all__ = ["Template"]
 
-LOG_FORMAT = '%(asctime)s [%(levelname)s] %(name)s %(message)s'
-DATE_FORMAT = '%H:%M:%S'
+LOG_FORMAT = "%(asctime)s [%(levelname)s] %(name)s %(message)s"
+DATE_FORMAT = "%H:%M:%S"
 
 
 class IpyExit(SystemExit):
@@ -28,12 +28,11 @@ class IpyExit(SystemExit):
 
     Exception temporarily redirects stderr to buffer.
 
-    Source: https://stackoverflow.com/questions/44893461/problems-exiting-from-
-             python-using-ipython-spyder/48000399#48000399
+    Source: https://stackoverflow.com/questions/44893461/problems-exiting-from-python-using-ipython-spyder/48000399
     """
     def __init__(self):
         sys.stderr = StringIO()
-
+    
     def __del__(self):
         sys.stderr.close()
         sys.stderr = sys.__stderr__  # restore from backup
@@ -48,9 +47,10 @@ class Template(object):
     """
     bots = {}
     counters = {}
-
+    
     def __init__(self, verbose=False, no_proxy=False):
         self._exited = False
+        self.config = {}
         self.logger = None
         # keep track of bots
         c, t = self.__class__.__name__, Template
@@ -60,32 +60,27 @@ class Template(object):
         t.bots[c][self] = t.counters[c]
         self.name = "{}-{}".format(c, t.counters[c])
         # configure logging
-        self.verbose = verbose
-        self.configure()
-        # configure post-execution workflow
-        self.force_postamble = False    # (if exception raised)
-        self.force_postcompute = False 
+        self._set_logging(verbose=verbose)
         # execute precomputation if any, before the connection is opened
-        self._precompute()
+        self.__precompute()
         # check for proxy configuration
-        if no_proxy:
-            self._proxies = {}
-        else:
-            self._proxies = getproxies()
+        if not no_proxy:
+            proxies = getproxies()
+            for k, v in proxies.items():
+                self._set_option('proxy', k, v)
             for kenv in ['HTTP_PROXY', 'HTTPS_PROXY', 'FTP_PROXY']:
-                kdict = kenv.split('_')[0].lower()
-                if kenv not in self._proxies and kenv in os.environ.keys():
-                    self._proxies.update({kdict: os.environ[kenv]})
+                if kenv in os.environ.keys():
+                    self._set_option('proxy', kenv.split('_')[0].lower(), os.environ[kenv])
         self.logger.debug("Base initialization done.")
-
+    
     def __enter__(self):
         """
         Context manager enter method, executing after __init__.
         """
         self.logger.debug("Entering context...")
-        self._preamble()
+        self.__preamble()
         return self
-
+    
     def __exit__(self, exc_type, exc_value, traceback):
         """
         Context manager exit method, for gracefully closing the bot.
@@ -100,18 +95,17 @@ class Template(object):
         if exc_type is KeyboardInterrupt:
             self.logger.warn("Bot execution interrupted.")
         self.logger.debug("Exiting context...")
-        if self.__no_error or self.force_postamble:
-            self._postamble()
+        if self.__no_error or self._get_option('bot', 'force_postamble', False):
+            self.__postamble()
         if hasattr(self, "close"):
             self.logger.debug("Gracefully closing bot...")
             self.close()
         # show the exception before attempting postcomputation
-        if exc_type not in [KeyboardInterrupt, SystemExit] and \
-           exc_value is not None:
+        if exc_type not in [KeyboardInterrupt, SystemExit] and exc_value is not None:
             self.logger.exception(exc_value)
         # execute postcomputation if any, after the connection is closed
-        if self.__no_error or self.force_postcompute:
-            self._postcompute()
+        if self.__no_error or self._get_option('bot', 'force_postcompute', False):
+            self.__postcompute()
         # if run from IPython, handle exit without killing the current kernel
         try:
             __IPYTHON__
@@ -119,51 +113,81 @@ class Template(object):
         except NameError:
             pass
         self._exited = True
-
+    
     @try_or_die("Something failed during postamble.")
-    def _postamble(self):
+    def __postamble(self):
         if hasattr(self, "postamble"):
             self.logger.debug("Executing postamble...")
             self.postamble()
             self.logger.debug("Postamble done.")
-
+    
     @try_and_warn("Something failed during postcomputation.")
-    def _postcompute(self):
+    def __postcompute(self):
         if hasattr(self, "postcompute"):
             self.logger.debug("Postcomputing...")
             self.postcompute()
             self.logger.debug("Postcomputation done.")
-
+    
     @try_or_die("Something failed during preamble.")
-    def _preamble(self):
+    def __preamble(self):
         if hasattr(self, "preamble"):
             self.logger.debug("Executing preamble...")
             self.preamble()
             self.logger.debug("Preamble done.")
-
+    
     @try_and_warn("Something failed during precomputation.")
-    def _precompute(self):
+    def __precompute(self):
         if hasattr(self, "precompute"):
             self.logger.debug("Precomputing...")
             self.precompute()
             self.logger.debug("Precomputation done.")
-
-    def configure(self, log_fmt=LOG_FORMAT, date_fmt=DATE_FORMAT):
+    
+    def _get_option(self, section, option, default=None, options=None):
+        """
+        Get (and set if relevant) an option value from the configuration dictionary, given an input dictionary of
+         options if defined (typically the keyword-arguments from a method). It sets the value in the following order of
+         precedence: (1) 'options' argument, (2) current config then (3) 'default' argument.
+        
+        :param section: configuration section
+        :param option:  option name
+        :param default: default value
+        :param options: keyword-arguments dictionary
+        """
+        self.config.setdefault(section, {})
+        default = self.config[section].get(option, default)
+        self.config[section][option] = v = (options or {}).get(option, default)
+        self.logger.debug("Config[{}][{}] = {}".format(section, option, v))
+        return v
+    
+    def _set_logging(self, **kwargs):
         """
         Configure logging.
 
         :param log_fmt:  log message format
         :param date_fmt: datetime format
         """
+        log_fmt = self._get_option('logging', 'log_format', LOG_FORMAT, kwargs)
+        date_fmt = self._get_option('logging', 'date_format', DATE_FORMAT, kwargs)
+        verbose = self._get_option('logging', 'verbose', False, kwargs)
+        first = self.logger is None
         self.logger = logging.getLogger(self.name)
         handler = logging.StreamHandler()
         formatter = logging.Formatter(log_fmt, date_fmt)
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
-        self.logger.setLevel([logging.INFO, logging.DEBUG][self.verbose])
+        self.logger.setLevel([logging.INFO, logging.DEBUG][verbose])
         coloredlogs.DEFAULT_LOG_FORMAT = log_fmt
         coloredlogs.DEFAULT_DATE_FORMAT = date_fmt
-        coloredlogs.install([logging.INFO, logging.DEBUG][self.verbose],
-                            logger=self.logger)
-        self.logger.debug("Logging {}configured."
-                          .format(["re", ""][self.logger is None]))
+        coloredlogs.install([logging.INFO, logging.DEBUG][verbose], logger=self.logger)
+        self.logger.debug("Logging {}configured.".format(["re", ""][first]))
+    
+    def _set_option(self, section, option, value):
+        """
+        Set an option value of the configuration dictionary.
+        
+        :param section: configuration section
+        :param option:  option name
+        :param value:   option value
+        """
+        self.config.setdefault(section, {})
+        self.config[section][option] = value
