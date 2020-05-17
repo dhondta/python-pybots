@@ -3,7 +3,6 @@
 
 """
 import os
-from six import b
 from time import sleep, time
 try:
     from selenium import webdriver

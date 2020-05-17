@@ -5,11 +5,9 @@ python:
   - "3.5"
   - "3.6"
   - "3.7"
+  - "3.8"
 cache: pip
 install:
-  - pip install netaddr
-  - pip install patchy
-  - pip install pathlib
   - pip install -r requirements.txt
   - python setup.py install
 script:
