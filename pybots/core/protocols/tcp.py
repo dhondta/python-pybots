@@ -3,12 +3,6 @@
 
 This bot allows to manage a TCP session by using simple read/write methods.
 
-A series of read/write operations or a complete session can be written in the
- preamble() method.
-
-If necessary, data can be precomputed in a precompute() method in order to have
- it available for handling (e.g. a lookup table).
-
 """
 from ..ssocket import SocketBot
 
@@ -52,8 +46,4 @@ class TCPBot(SocketBot):
         self.read_until('\n', disp=True)
 
 
-class Netcat(TCPBot):
-    """
-    Alias for TCPBot, kept for backward-compatibility.
-    """
-    pass
+Netcat = TCPBot  # alias kept for backward-compatibility

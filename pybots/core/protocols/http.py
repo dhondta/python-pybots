@@ -1,9 +1,8 @@
 # -*- coding: UTF-8 -*-
 """Bot client for HTTP session with response parsing.
 
-The HTTPBot class, inheriting from the WebBot class holding the base mechanism
- and logging, manages Web interactions with the sites handling response parsing
- with BeautifulSoup. The JSONBot does the same, but handling a JSON request and
+The HTTPBot class, inheriting from the WebBot class holding the base mechanism and logging, manages Web interactions
+ with the sites handling response parsing with BeautifulSoup. The JSONBot does the same, but handling a JSON request and
  response.
 
 """

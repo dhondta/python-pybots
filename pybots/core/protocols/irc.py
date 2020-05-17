@@ -3,9 +3,6 @@
 
 This bot allows to manage Internet Chat Relay discussion.
 
-If necessary, data can be precomputed in a precompute() method in order to have
- it available for handling (e.g. a lookup table).
-
 """
 from ..ssocket import SocketBot
 
@@ -31,12 +28,13 @@ class IRCBot(SocketBot):
 
       from pybots import IRCBot
 
-      with IRCBot('127.0.0.1', channel="#test-channel") as bot:
+      with IRCBot('127.0.0.1', channel="test") as bot:
           bot.msg("world", "Hello !")
     """
-    def __init__(self, host, port=6667, channel=None, nickname="ircbot",
-                 fullname="IRC Bot", *args, **kwargs):
+    def __init__(self, host, port=6667, channel=None, nickname="ircbot", fullname="IRC Bot", *args, **kwargs):
         super(IRCBot, self).__init__(host, port, *args, **kwargs)
+        if channel and not channel.startswith("#"):
+            channel = "#" + channel
         self.channel = channel
         self.nickname = nickname
         self.fullname = fullname
@@ -57,7 +55,10 @@ class IRCBot(SocketBot):
         """
         Join an IRC channel (if any provided).
         """
+        channel = channel or self.channel
         if channel is not None:
+            if not channel.startswith("#"):
+                channel = "#" + channel
             self.logger.debug("Joining channel {}...".format(channel))
             self.channel = channel
             self.write("JOIN {}".format(channel))
@@ -84,5 +85,5 @@ class IRCBot(SocketBot):
         data = super(IRCBot, self).read(length, disp)
         if "ERROR" in data:
             self.logger.error(data.strip())
-            SocketBot.close()
+            self.close()
         return data
