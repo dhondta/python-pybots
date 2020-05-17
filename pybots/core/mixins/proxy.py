@@ -1,7 +1,8 @@
 # -*- coding: UTF-8 -*-
 """Mixins for selecting a public HTTP proxy.
 
-This mixin allows to retrieve a proxy address from a public list of public HTTP proxies and to setup the bot with a selected one.
+This mixin allows to retrieve a proxy address from a public list of public HTTP proxies and to setup the bot with a
+ selected one.
 
 """
 from tinyscript.helpers.decorators import *
@@ -18,8 +19,8 @@ class PublicHTTPProxyMixin(object):
     @try_and_warn("Public HTTP proxy setting failed", trace=True)
     def set_public_proxy(self, proxy=None, country=None, netloc=None):
         """
-        Setup a randomly chosen public HTTP proxy from available proxy list or
-         a single one selected by country or network location.
+        Setup a randomly chosen public HTTP proxy from available proxy list or a single one selected by country or
+         network location.
 
         For a list of supported proxy lists:
 
@@ -32,10 +33,9 @@ class PublicHTTPProxyMixin(object):
         """
         if proxy is None:
             proxy = find_public_http_proxy(country, netloc, self.verbose)
-        # NOTE: this supposes that the selected public proxy works ; retries not
-        #        handled yet
+        # NOTE: this supposes that the selected public proxy works ; retries note handled yet
         self._old_public_ip = get_my_public_ip()
-        self._proxies.update({'http': proxy})
+        self._set_option('proxy', 'http', proxy)
         self._set_session()
 
 
@@ -44,8 +44,8 @@ class PublicSocksProxyMixin(object):
     @try_and_warn("Public Socks proxy setting failed", trace=True)
     def set_public_proxy(self, country=None, source=None):
         """
-        Setup a randomly chosen public Socks proxy from available proxy list or
-         a single one selected by country or network location.
+        Setup a randomly chosen public Socks proxy from available proxy list or a single one selected by country or
+         network location.
 
         For a list of supported proxy lists:
 
@@ -56,7 +56,6 @@ class PublicSocksProxyMixin(object):
         :param netloc:  network location of the source for public IP lookup
         """
         proxy = find_public_socks_proxy(country, netloc, self.verbose)
-        # NOTE: this supposes that the selected public proxy works ; retries not
-        #        handled yet
-        self._proxies.update({'socks': proxy})
+        # NOTE: this supposes that the selected public proxy works ; retries not handled yet
+        self._set_option('proxy', 'socks', proxy)
         self._set_session()

@@ -23,9 +23,9 @@ class BulkDownloadMixin(object):
         :param from_file: file with a list of URL's or request paths
         :param dest:      destination folder
         """
-        dest = kwargs.get('dest', ".")
+        dest = self._get_option('downloader', 'destination_path', ".", kwargs)
+        from_file = self._get_option('downloader', 'from_file', None, kwargs)
         urls = list(urls)
-        from_file = kwargs.get('from_file')
         if isfile(from_file):
             with open(from_file) as f:
                 for l in f:
