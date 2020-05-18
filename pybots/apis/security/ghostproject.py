@@ -2,10 +2,10 @@
 """Bot client dedicated to Nuclear Leaks.
 
 """
-import cloudscraper
 from tinyscript.helpers.data.types import *
 
-from ..core.utils.api import *
+from ...core.utils.api import *
+from ...core.utils.cloudflare import get_clearance
 
 
 __all__ = ["GhostProjectAPI"]
@@ -20,17 +20,21 @@ class GhostProjectAPI(API):
     url = "https://ghostproject.fr"
     
     def __init__(self, **kwargs):
+        driver = kwargs.pop('driver', "firefox")
+        timeout = kwargs.pop('clearance_timeout', 20)
+        kwargs['random_uagent'] = False
         super(GhostProjectAPI, self).__init__(None, **kwargs)
+        cookies, uagent = get_clearance(self.url, driver=driver, timeout=timeout)
+        for cookie in cookies:
+            self._session.cookies.set(**cookie)
         s = self._session.headers
+        s['Cache-Control'] = "no-cache"
         s['Content-Type'] = "application/x-www-form-urlencoded; charset=UTF-8"
+        s['Origin'] = self.url
+        s['Pragma'] = "no-cache"
+        s['TE'] = "Trailers"
         s['X-Requested-With'] = "XMLHttpRequest"
-        try:
-            cookies, uagent = cloudscraper.get_tokens(self.url + "/x000x1337.php")
-            self._session.cookies.update(cookies)
-            self._session.headers['User-Agent'] = uagent
-        except Exception as e:
-            if "Could not collect tokens" in str(e):
-                raise APIError("Could not collect cloudflare clearance")
+        s['User-Agent'] = uagent
 
     def __validate(self, **kwargs):
         """

@@ -6,7 +6,7 @@ import hashlib
 import random
 from six import b
 
-from ..core.utils.api import *
+from ...core.utils.api import *
 
 
 __all__ = ["PwnedPasswordsAPI"]

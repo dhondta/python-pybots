@@ -5,7 +5,7 @@
 import re
 from tinyscript.helpers.data.types import *
 
-from ..core.utils.api import *
+from ...core.utils.api import *
 
 
 __all__ = ["CensysAPI"]
@@ -32,6 +32,12 @@ class CensysAPI(API):
         Private generic validation function for API arguments.
         """
         # FIXME: validate 'index'
+        reg = {
+            'fields': r"^[a-z][a-z0-9]*(\.[a-z][a-z0-9]*)*$",
+            'query':  r"^[0-9a-z]+(\.[0-9a-z]+)*\:\s(.+)$",
+            'result': r"^\d{4}(0[0-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])[A-Z]([0-1][0-9]|2[0-3])[0-5][0-9]$",
+            'series': r"^[0-9a-z]+([-_][0-9a-z]+)*$",
+        }
         for k, v in kwargs.items():
             if k == "buckets":
                 positive_int(v, False)
@@ -41,7 +47,7 @@ class CensysAPI(API):
                 domain_name(v)
             elif k == "fields":
                 for f in v:
-                    if not re.match(r"^[a-z][a-z0-9]*(\.[a-z][a-z0-9]*)*$", f):
+                    if not re.match(reg[k], f):
                         raise ValueError("bad field value (should be in dot notation)")
             elif k in ["flatten"]:
                 if not isinstance(v, bool):
@@ -49,14 +55,13 @@ class CensysAPI(API):
             elif k == "page":
                 positive_int(v, False)
             elif k == "query":
-                if not re.match("^[0-9a-z]+(\.[0-9a-z]+)*\:\s(.+)$", v):
+                if not re.match(reg[k], v):
                     raise ValueError("bad query string")
             elif k == "result":
-                if not re.match(r"^\d{4}(0[0-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])[A-Z]([0-1][0-9]|2[0-3])[0-5][0-9]$",
-                                v):
+                if not re.match(reg[k], v):
                     raise ValueError("bad result ID")
             elif k == "series":
-                if not re.match("^[0-9a-z]+([-_][0-9a-z]+)*$", v):
+                if not re.match(reg[k], v):
                     raise ValueError("bad series ID")
     
     @time_throttle(1)
@@ -188,13 +193,13 @@ class CensysAPI(API):
     @cache(300)
     def search_ipv4(self, query, page=1, fields=None, flatten=True):
         self._search("ipv4", query, page, fields, flatten)
-    search_certificates.__doc__ = _search.__doc__.format("ipv4")
+    search_ipv4.__doc__ = _search.__doc__.format("ipv4")
     
     @apicall
     @cache(300)
     def search_websites(self, query, page=1, fields=None, flatten=True):
         self._search("websites", query, page, fields, flatten)
-    search_certificates.__doc__ = _search.__doc__.format("websites")
+    search_websites.__doc__ = _search.__doc__.format("websites")
     
     @apicall
     @cache(300)
@@ -206,10 +211,10 @@ class CensysAPI(API):
     @cache(300)
     def view_ipv4(self, id):
         self._view("ipv4", id)
-    view_certificate.__doc__ = _view.__doc__.format("ipv4")
+    view_ipv4.__doc__ = _view.__doc__.format("ipv4")
     
     @apicall
     @cache(300)
     def view_website(self, id):
         self._view("websites", id)
-    view_certificate.__doc__ = _view.__doc__.format("website")
+    view_website.__doc__ = _view.__doc__.format("website")

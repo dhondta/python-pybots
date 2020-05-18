@@ -5,7 +5,7 @@
 import time
 from tinyscript.helpers.data.types import *
 
-from ..core.utils.api import *
+from ...core.utils.api import *
 
 
 __all__ = ["HaveIBeenPwnedAPI"]
@@ -18,15 +18,13 @@ class HaveIBeenPwnedAPI(API):
     Reference: https://haveibeenpwned.com/API/v3
     Note:      All API methods are rate-limited to 1000 requests/second.
 
-    :param kwargs: JSONBot / API eyword-arguments
+    :param kwargs: JSONBot / API keyword-arguments
     """
     url = "https://haveibeenpwned.com"
     
     def __init__(self, apikey=None, app=None, **kwargs):
         self.__headers = {}
-        self.public = True
-        if apikey:
-            self.public = False
+        self.public = apikey is None
         if app:
             self.__headers['User-Agent'] = app
         super(HaveIBeenPwnedAPI, self).__init__(apikey, **kwargs)
@@ -72,6 +70,7 @@ class HaveIBeenPwnedAPI(API):
     
     # Getting all breaches for an account
     @apicall
+    @private
     @cache(3600)
     def breachedaccount(self, account, truncate_response=True, domain=None, include_unverified=True):
         """
@@ -129,6 +128,7 @@ class HaveIBeenPwnedAPI(API):
     
     # Getting all pastes for an account
     @apicall
+    @private
     @cache(3600)
     def pasteaccount(self, account):
         """

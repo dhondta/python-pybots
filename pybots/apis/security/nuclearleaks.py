@@ -4,7 +4,7 @@
 """
 from datetime import datetime
 
-from ..core.utils.api import *
+from ...core.utils.api import *
 
 
 __all__ = ["NuclearLeaksAPI"]

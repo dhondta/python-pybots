@@ -7,7 +7,7 @@ from six import string_types
 from tinyscript.helpers.data.types.common import positive_int
 from tinyscript.helpers.data.types.network import *
 
-from ..core.utils.api import *
+from ...core.utils.api import *
 
 
 __all__ = ["ShodanAPI", "ShodanExploitsAPI"]
@@ -51,7 +51,10 @@ class BaseAPI(API):
         Private generic validation function for API arguments.
         """
         for k, v in kwargs.items():
-            if k == "domain":
+            if k == "asn":
+                for asn in v.split(","):
+                    as_number(asn)
+            elif k == "domain":
                 domain_name(v)
             elif k == "filters":
                 if not isinstance(v, dict) and list(v.keys()) == ["ip"]:
@@ -71,13 +74,12 @@ class BaseAPI(API):
                 if v not in ["asc", "desc"]:
                     raise ValueError("'order' must be one of: asc|desc")
             elif k in ["page", "size"]:
-                positive_int(v, False)
+                positive_int(v, True)
             elif k == "port":
                 port_number(v)
             elif k == "protocol":
                 if v not in self.shodan.protocols().keys():
-                    raise ValueError("bad protocol, check .protocols() to get "
-                                     "the list of valid ones")
+                    raise ValueError("bad protocol, check .protocols() to get the list of valid ones")
             elif k == "sort":
                 if v not in ["votes", "timestamp"]:
                     raise ValueError("'sort' must be one of: votes|timestamp")
@@ -135,8 +137,7 @@ class ShodanAPI(BaseAPI):
         :param hostnames: comma-separated list of hostnames
         """
         self._validate(hostnames=hostnames)
-        self._request("get", "/dns/resolve",
-                      params={'hostnames': ",".join(hostnames)})
+        self._request("get", "/dns/resolve", params={'hostnames': ",".join(hostnames)})
 
     @apicall
     @cache(300, 3)
@@ -159,8 +160,7 @@ class ShodanAPI(BaseAPI):
         try:
             p, self.public = self.plans[self._json['plan']]
             self._disable_time_throttling = not self.public
-            self.logger.debug("API plan: {} ({})"
-                             .format(p, ["private", "public"][self.public]))
+            self._logger.debug("API plan: {} ({})".format(p, ["private", "public"][self.public]))
         except:
             pass
     
@@ -331,8 +331,7 @@ class ShodanAPI(BaseAPI):
         :param notifier_id: notifier ID
         """
         self._validate(ids=[id, notifier_id])
-        self._request("delete", "/shodan/alert/%s/notifier/%s" % \
-                                (id, notifier_id))
+        self._request("delete", "/shodan/alert/%s/notifier/%s" % (id, notifier_id))
     
     @apicall
     @cache(3600)
@@ -378,8 +377,7 @@ class ShodanAPI(BaseAPI):
         :param service: service specified in the format "ip:port"
         """
         self._validate(id=id, service=service, trigger=trigger)
-        self._request("put", "/shodan/alert/%s/trigger/%s/ignore/%s" % \
-                             (id, trigger, service))
+        self._request("put", "/shodan/alert/%s/trigger/%s/ignore/%s" % (id, trigger, service))
     
     @apicall
     @invalidate("shodan_alert_trigger_ignore")
@@ -393,8 +391,7 @@ class ShodanAPI(BaseAPI):
         :param service: service specified in the format "ip:port"
         """
         self._validate(id=id, service=service, trigger=trigger)
-        self._request("delete", "/shodan/alert/%s/trigger/%s/ignore/%s" % \
-                                (id, trigger, service))
+        self._request("delete", "/shodan/alert/%s/trigger/%s/ignore/%s" % (id, trigger, service))
     
     @apicall
     @private
@@ -428,8 +425,7 @@ class ShodanAPI(BaseAPI):
         :param minify:  True to only return the list of ports and the general host information, no banners
         """
         self._validate(ips=[ip], history=history, minify=minify)
-        self._request("get", "/shodan/host/%s" % ip,
-                      params={'history': history, 'minify': minify})
+        self._request("get", "/shodan/host/%s" % ip, params={'history': history, 'minify': minify})
     
     @apicall
     @cache(300)
@@ -444,7 +440,7 @@ class ShodanAPI(BaseAPI):
         """
         facets = self._facet_str(*facets)
         self._validate(query=query, facets=facets)
-        params = {}
+        params = {'query': query}
         if facets != "":
             params['facets'] = facets
         self._request("get", "/shodan/host/count", params=params)
@@ -462,13 +458,19 @@ class ShodanAPI(BaseAPI):
         :param page:   page number to page through results 100 at a time
         :param minify: whether or not to truncate larger fields
         """
-        page = kwargs.get('page', 1)
-        minify = kwargs.get('minify', False)
-        facets = self._facet_str(*facets)
-        self._validate(query=query, facets=facets, page=page, minify=minify)
-        params = {'query': query, 'page': page, 'minify': minify}
-        if facets != "":
-            params['facets'] = facets
+        self._validate(query=query)
+        params = {'query': query}
+        if self.public:
+            if kwargs.get('page') or kwargs.get('minify') or facets:
+                raise APIError("Please upgrade your API plan to use filters or paging.")
+        else:
+            page = kwargs.get('page', 1)
+            minify = kwargs.get('minify', False)
+            facets = self._facet_str(*facets)
+            self._validate(facets=facets, page=page, minify=minify)
+            params = {'page': page, 'minify': minify}
+            if facets != "":
+                params['facets'] = facets
         self._request("get", "/shodan/host/search", params=params)
     
     @apicall
@@ -496,8 +498,7 @@ class ShodanAPI(BaseAPI):
         :param query: Shodan search query
         """
         self._validate(query=query)
-        self._request("get", "/shodan/host/search/tokens",
-                      params={'query': query})
+        self._request("get", "/shodan/host/search/tokens", params={'query': query})
     
     @apicall
     @cache(86400)
@@ -526,8 +527,7 @@ class ShodanAPI(BaseAPI):
         :param order: whether to sort the list in ascending or descending order (asc|desc)
         """
         self._validate(page=page, order=order, sort=sort)
-        self._request("get", "/shodan/query",
-                      params={'page': page, 'sort': sort, 'order': order})
+        self._request("get", "/shodan/query", params={'page': page, 'sort': sort, 'order': order})
     
     @apicall
     @cache(300)
@@ -539,8 +539,7 @@ class ShodanAPI(BaseAPI):
         :param page:  page number to iterate over results; each page contains 10 items
         """
         self._validate(query=query, page=page)
-        self._request("get", "/shodan/query/search",
-                      params={'query': query, 'page': page})
+        self._request("get", "/shodan/query/search", params={'query': query, 'page': page})
     
     @apicall
     @cache(3600)
@@ -580,10 +579,10 @@ class ShodanAPI(BaseAPI):
                           list of supported protocols)
         """
         self._validate(port=port, protocol=protocol)
-        self._request("post", "/shodan/scan/internet",
-                      data={'port': port, 'protocol': protocol})
+        self._request("post", "/shodan/scan/internet", data={'port': port, 'protocol': protocol})
     
     @apicall
+    @private
     @invalidate("account_profile", "info")
     def shodan_scan_new(self, *ips):
         """
@@ -659,3 +658,22 @@ class ShodanExploitsAPI(BaseAPI):
         if facets != "":
             params['facets'] = facets
         self._request("get", "/search", params=params)
+
+
+class ShodanStreamAPI(BaseAPI):
+    """
+    ShodanExploitsAPI class for communicating with the API of ShodanExploits.
+
+    Reference: https://developer.shodan.io/api/exploits/rest
+
+    :param apikey: API key
+    :param args:   JSONBot / API arguments
+    :param kwargs: JSONBot keyword-arguments
+    """
+    url = "https://stream.shodan.io"
+
+    @private
+    def shodan_banners(self):
+        for line in self._request("get", "/shodan/banners", stream=True):
+            yield line
+
