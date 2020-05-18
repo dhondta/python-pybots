@@ -35,7 +35,7 @@ class PublicHTTPProxyMixin(object):
             proxy = find_public_http_proxy(country, netloc, self.verbose)
         # NOTE: this supposes that the selected public proxy works ; retries note handled yet
         self._old_public_ip = get_my_public_ip()
-        self._set_option('proxy', 'http', proxy)
+        self._set_option('proxies', 'http', proxy)
         self._set_session()
 
 
@@ -57,5 +57,5 @@ class PublicSocksProxyMixin(object):
         """
         proxy = find_public_socks_proxy(country, netloc, self.verbose)
         # NOTE: this supposes that the selected public proxy works ; retries not handled yet
-        self._set_option('proxy', 'socks', proxy)
+        self._set_option('proxies', 'socks', proxy)
         self._set_session()

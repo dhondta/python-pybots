@@ -6,7 +6,6 @@ This generic bot allows to manage a socket session by using simple read/write
 
 """
 import inspect
-import os
 import re
 import socket
 import sys
@@ -64,8 +63,7 @@ class ProxySocket(object):
                 self.bot.close()
                 raise e
         # create a tunnel connection to the target host/port
-        self.socket.send("CONNECT {0}:{1} HTTP/1.1\r\nHost: {0}:{1}\r\n\r"
-                         "\n".format(self.bot.host, self.bot.port));
+        self.socket.send("CONNECT {0}:{1} HTTP/1.1\r\nHost: {0}:{1}\r\n\r\n".format(self.bot.host, self.bot.port))
         # get and parse the response
         resp = self.socket.recv(4096)
         error, resp = resp.split("\n", 1)
@@ -122,11 +120,13 @@ class SocketBot(Template):
             data = prefix + " " + "\n {0}".format(l * " ").join(data.split('\n'))
         return data.strip()
 
-    def _set_proxy(self):
+    def _set_proxy(self, **kwargs):
         """
         Create specific socket object if a proxy is to be used.
+        
+        :param socks: SOCKS proxy (only if this setting is to be overwritten)
         """
-        prx = self._get_option('proxy', 'socks')
+        prx = self._get_option('proxies', 'socks', None, kwargs)
         try:
             phost, pport = prx.split("://")[1].split("/")[0].split(":")
             pport = int(pport)
@@ -289,8 +289,7 @@ class SocketBot(Template):
         """
         if P3 and isinstance(data, bytes):
             data = data.decode('utf-8')
-        self.logger.debug("Writing '{}' to the socket..."
-                          .format(data[:7] + "..." if len(data) > 10 else data))
+        self.logger.debug("Writing '{}' to the socket...".format(data[:7] + "..." if len(data) > 10 else data))
         _ = data
         if P3 and not isinstance(data, bytes):
             data = data.encode('utf-8')
@@ -307,6 +306,6 @@ class SocketBot(Template):
             self.logger.exception(e)
             self.logger.warn("Returned empty buffer")
             return ""
-        if (self.disp if disp is None else disp):
+        if [disp, self.disp][disp is None]:
             print(self.__prefix_data(_, 'w'))
         return _

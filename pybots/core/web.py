@@ -84,7 +84,6 @@ class WebBot(Template):
         self.logger.debug("Setting the cookie...")
         self.__cookie = cookie
         self.session.headers.update({'Cookie': cookie})
-        return self
 
     def _set_session(self):
         """
@@ -102,7 +101,7 @@ class WebBot(Template):
         #  once per session
         if self.__ruagent:
             self.session.headers.update({'User-Agent': generate_user_agent()})
-        self.session.proxies.update(self.config['proxy'])
+        self.session.proxies.update(self.config['proxies'])
 
     def close(self):
         """

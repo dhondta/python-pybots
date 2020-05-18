@@ -11,7 +11,7 @@ except ImportError:
     enabled = False
 
 
-__all__ = ["get_clearance"]
+__all__ = __features__ = ["get_clearance"]
 
 
 SELENIUM_REQUESTS_KEYS = {'expiry': "expires", 'httpOnly': {'rest': {"httpOnly": True}}}

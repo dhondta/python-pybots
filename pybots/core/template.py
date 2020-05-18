@@ -67,10 +67,10 @@ class Template(object):
         if not no_proxy:
             proxies = getproxies()
             for k, v in proxies.items():
-                self._set_option('proxy', k, v)
+                self._set_option('proxies', k, v)
             for kenv in ['HTTP_PROXY', 'HTTPS_PROXY', 'FTP_PROXY']:
                 if kenv in os.environ.keys():
-                    self._set_option('proxy', kenv.split('_')[0].lower(), os.environ[kenv])
+                    self._set_option('proxies', kenv.split('_')[0].lower(), os.environ[kenv])
         self.logger.debug("Base initialization done.")
     
     def __enter__(self):
@@ -156,7 +156,8 @@ class Template(object):
         self.config.setdefault(section, {})
         default = self.config[section].get(option, default)
         self.config[section][option] = v = (options or {}).get(option, default)
-        self.logger.debug("Config[{}][{}] = {}".format(section, option, v))
+        if self.logger:
+            self.logger.debug("Config[{}][{}] = {}".format(section, option, v))
         return v
     
     def _set_logging(self, **kwargs):
