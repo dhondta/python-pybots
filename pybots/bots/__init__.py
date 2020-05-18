@@ -1,7 +1,6 @@
 """Application-specific bots.
 
-This package provides some bot implementations for communicating with various
- applications.
+This package provides some bot implementations for communicating with various applications.
 
 """
 
