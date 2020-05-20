@@ -14,11 +14,6 @@ class HaveIBeenSoldBot(HaveIBeenSoldAPI):
     
     :param kwargs: JSONBot / API keyword-arguments
     """
-    url = "https://haveibeensold.app"
-    
-    def __init__(self, **kwargs):
-        super(HaveIBeenSoldBot, self).__init__(**kwargs)
-    
     def __check(self, email):
         try:
             return len(self.check(email)) > 0
