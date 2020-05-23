@@ -154,3 +154,4 @@ class HaveIBeenPwnedAPI(API):
         self._check_apikey("missing hibp-api-key")
         self.__validate(account=account)
         self._request("get", "/pasteaccount/%s" % account, aheaders={'hibp-api-key': self._api_key})
+
