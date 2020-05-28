@@ -427,6 +427,8 @@ class SearchAPI(API):
         elif self.__backend == "jsonpath":
             return jsonpath.jsonpath(self._json, query) or []
         else:
+            if "(?i)" not in query:
+                query = "(?i)" + query
             r = []
             for record in self._json['data']:
                 for _, v in record.items():
