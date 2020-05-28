@@ -10,7 +10,7 @@ __all__ = ["HaveIBeenSoldBot"]
 
 class HaveIBeenSoldBot(HaveIBeenSoldAPI):
     """
-    HaveIBeenSoldBot class for requesting information using the HaveIBeenSold API.
+    Class for requesting information using the HaveIBeenSold API.
     
     :param kwargs: JSONBot / API keyword-arguments
     """

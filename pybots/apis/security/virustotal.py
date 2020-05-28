@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-"""Client-side API dedicated to VirusTotal API.
+"""API client dedicated to VirusTotal API.
 
 """
 from tinyscript.helpers.data.types import *
@@ -17,7 +17,7 @@ def valid_hash(f):
 
 class VirusTotalAPI(API):
     """
-    VirusTotalBot class for communicating with the API v2 of VirusTotal.
+    Class for communicating with the API v2 of VirusTotal.
     
     Reference: https://developers.virustotal.com/reference
 

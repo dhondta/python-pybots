@@ -1,16 +1,16 @@
 # -*- coding: UTF-8 -*-
-"""Bot using the HaveIBeenPwned for bulk-checking domain breaches.
+"""Bot dedicated to NuclearLeaks.
 
 """
-from ...apis import HaveIBeenPwnedAPI
+from ...apis import NuclearLeaksAPI
 
 
-__all__ = ["HaveIBeenPwnedBot"]
+__all__ = ["NuclearLeaksBot"]
 
 
-class HaveIBeenPwnedBot(HaveIBeenPwnedAPI):
+class NuclearLeaksBot(NuclearLeaksAPI):
     """
-    Class for requesting information using the HaveIBeenPwned? API.
+    Class for requesting information using the NuclearLeaks API.
     
     :param kwargs: JSONBot / API keyword-arguments
     """
@@ -18,7 +18,7 @@ class HaveIBeenPwnedBot(HaveIBeenPwnedAPI):
         self.__breaches = {}
         domain = email.split("@")[-1]
         if domain not in self.__breaches.keys():
-            self.__breaches[domain] = self.breaches(domain)
+            self.__breaches[domain] = self.search(domain)
     
     def breaches_from_file(self, path):
         """
