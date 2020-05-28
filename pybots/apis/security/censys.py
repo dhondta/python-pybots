@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-"""Client-side API dedicated to Censys API.
+"""API client dedicated to Censys.
 
 """
 import re
@@ -13,7 +13,7 @@ __all__ = ["CensysAPI"]
 
 class CensysAPI(API):
     """
-    CensysAPI class for communicating with the API of Censys.
+    Class for communicating with the API of Censys.
     
     Reference: https://censys.io/api
     Note:      All API methods are rate-limited to 1 request/second.

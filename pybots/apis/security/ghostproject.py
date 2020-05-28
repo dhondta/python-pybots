@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-"""Bot client dedicated to Nuclear Leaks.
+"""API client dedicated to GhostProject.
 
 """
 from tinyscript.helpers.data.types import *
@@ -13,7 +13,7 @@ __all__ = ["GhostProjectAPI"]
 
 class GhostProjectAPI(API):
     """
-    GhostProjectAPI class for communicating with the API of GhostProject.
+    Class for communicating with the API of GhostProject.
     
     :param kwargs: JSONBot / API keyword-arguments
     """

@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-"""Client-side API dedicated to HaveIBeenPwned API.
+"""API client dedicated to HaveIBeenPwned?.
 
 """
 import time
@@ -13,7 +13,7 @@ __all__ = ["HaveIBeenPwnedAPI"]
 
 class HaveIBeenPwnedAPI(API):
     """
-    HaveIBeenPwnedAPI class for communicating with the API of HaveIBeenPwned.
+    Class for communicating with the API of HaveIBeenPwned.
     
     Reference: https://haveibeenpwned.com/API/v3
     Note:      All API methods are rate-limited to 1000 requests/second.

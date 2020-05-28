@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-"""Client-side API dedicated to PwnedPasswords API.
+"""API client dedicated to PwnedPasswords.
 
 """
 import hashlib
@@ -14,7 +14,7 @@ __all__ = ["PwnedPasswordsAPI"]
 
 class PwnedPasswordsAPI(API):
     """
-    HaveIBeenPwnedAPI class for communicating with the API of HaveIBeenPwned.
+    Class for communicating with the API of HaveIBeenPwned.
     
     Reference: https://haveibeenpwned.com/API/v3
 

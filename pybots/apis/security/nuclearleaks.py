@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-"""Bot client dedicated to Nuclear Leaks.
+"""API client dedicated to NuclearLeaks.
 
 """
 from datetime import datetime
@@ -12,7 +12,7 @@ __all__ = ["NuclearLeaksAPI"]
 
 class NuclearLeaksAPI(SearchAPI):
     """
-    NuclearLeaksAPI class for communicating with the API of NuclearLeaks.
+    Class for communicating with the API of NuclearLeaks.
     
     :param kwargs: HTTPBot / API keyword-arguments
     """

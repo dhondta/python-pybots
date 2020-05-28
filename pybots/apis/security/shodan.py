@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-"""Client-side API dedicated to Shodan API.
+"""API client dedicated to Shodan.
 
 """
 import re
@@ -15,7 +15,7 @@ __all__ = ["ShodanAPI", "ShodanExploitsAPI"]
 
 class BaseAPI(API):
     """
-    BaseAPI class for communicating with the API of Shodan.
+    Base class for communicating with the API of Shodan.
 
     Note:      All API methods are rate-limited to 1 request/second.
     """
@@ -87,7 +87,7 @@ class BaseAPI(API):
 
 class ShodanAPI(BaseAPI):
     """
-    ShodanAPI class for communicating with the API of Shodan.
+    Class for communicating with the API of Shodan.
     
     Reference: https://developer.shodan.io/api
 
@@ -615,7 +615,7 @@ class ShodanAPI(BaseAPI):
 
 class ShodanExploitsAPI(BaseAPI):
     """
-    ShodanExploitsAPI class for communicating with the API of ShodanExploits.
+    Class for communicating with the API of ShodanExploits.
 
     Reference: https://developer.shodan.io/api/exploits/rest
 
@@ -662,7 +662,7 @@ class ShodanExploitsAPI(BaseAPI):
 
 class ShodanStreamAPI(BaseAPI):
     """
-    ShodanExploitsAPI class for communicating with the API of ShodanExploits.
+    Class for communicating with the API of ShodanStream.
 
     Reference: https://developer.shodan.io/api/exploits/rest
 

@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-"""Client-side API dedicated to HaveIBeenSold API.
+"""API client dedicated to HaveIBeenSold.
 
 """
 from tinyscript.helpers.data.types import *
@@ -12,7 +12,7 @@ __all__ = ["HaveIBeenSoldAPI"]
 
 class HaveIBeenSoldAPI(API):
     """
-    HaveIBeenSoldAPI class for communicating with the API of HaveIBeenSold.
+    Class for communicating with the API of HaveIBeenSold.
     
     :param kwargs: JSONBot / API keyword-arguments
     """

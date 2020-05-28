@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-"""Client-side API dedicated to DeHashed API.
+"""API client dedicated to DeHashed.
 
 """
 from tinyscript.helpers.data.types import *
@@ -12,7 +12,7 @@ __all__ = ["DeHashedAPI"]
 
 class DeHashedAPI(API):
     """
-    DeHashedAPI class for communicating with the API of DeHashed.
+    Class for communicating with the API of DeHashed.
     
     Reference: https://www.dehashed.com/docs
     Note:      All API methods are rate-limited to 5 requests/250ms.
