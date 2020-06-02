@@ -9,6 +9,7 @@ import logging
 import os
 import requests
 import urllib3
+from six import string_types
 from tinyscript.helpers.decorators import *
 from types import MethodType
 from user_agent import generate_user_agent
@@ -168,7 +169,7 @@ class WebBot(Template):
         """
         aheaders = aheaders or {}
         data = data or {}
-        if not isinstance(data, dict):
+        if not isinstance(data, dict) and not isinstance(data, string_types):
             raise ValueError("Bad input data")
         if not isinstance(aheaders, dict):
             raise ValueError("Bad input additional headers")
