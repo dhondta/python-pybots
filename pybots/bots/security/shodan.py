@@ -19,3 +19,4 @@ class ShodanBot(ShodanAPI):
     :param kwargs: JSONBot keyword-arguments
     """
     pass
+

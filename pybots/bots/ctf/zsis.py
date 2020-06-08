@@ -92,3 +92,4 @@ class ZSISBot(HTTPBot):
         self.get()
         self.logger.debug(self.response.text)
         self.inputs = {'challenge': self.response.text}
+

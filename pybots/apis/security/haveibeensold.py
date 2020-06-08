@@ -84,3 +84,4 @@ class HaveIBeenSoldAPI(API):
         """
         self._request(email, "del")
         self._logger.warning("a confirmation link has been sent to this email")
+

@@ -74,3 +74,4 @@ class JSONBot(WebBot):
         """
         self.json = None  # this ensures that the json attribute is set
         self.json = simplejson.loads(self.response.text.strip())
+

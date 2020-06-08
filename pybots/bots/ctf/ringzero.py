@@ -223,3 +223,4 @@ class RingZer0Bot(HTTPBot):
         """
         # get the challenge page and retrieve CSRF token and message
         self.get().__get_info().__get_downloads().__get_csrf().__get_inputs()
+

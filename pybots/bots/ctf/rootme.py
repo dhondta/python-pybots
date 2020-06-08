@@ -62,3 +62,4 @@ class RootMeIRCBot(IRCBot):
         self.msg("candy", "!ep{}".format(self.cid))
         self.read_until("PRIVMSG {} :".format(self.nickname))
         self.inputs = {'message': self.buffer.strip()}
+

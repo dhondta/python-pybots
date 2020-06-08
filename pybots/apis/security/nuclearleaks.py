@@ -62,3 +62,4 @@ class NuclearLeaksAPI(SearchAPI):
         """
         self._request()
         return super(NuclearLeaksAPI, self).search(query)
+

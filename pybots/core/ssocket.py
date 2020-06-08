@@ -309,3 +309,4 @@ class SocketBot(Template):
         if [disp, self.disp][disp is None]:
             print(self.__prefix_data(_, 'w'))
         return _
+

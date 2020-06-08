@@ -224,3 +224,4 @@ class WebBot(Template):
                 return self.request(rqpath, method.upper(), data, aheaders, **k)
         f.__doc__ = doc.format(method.upper())
         return f
+

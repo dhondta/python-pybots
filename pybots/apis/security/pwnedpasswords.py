@@ -56,3 +56,4 @@ class PwnedPasswordsAPI(API):
         for p in passwords:
             r[p] = self.count(p)
         return r
+

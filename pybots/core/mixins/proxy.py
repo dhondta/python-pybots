@@ -59,3 +59,4 @@ class PublicSocksProxyMixin(object):
         # NOTE: this supposes that the selected public proxy works ; retries not handled yet
         self._set_option('proxies', 'socks', proxy)
         self._set_session()
+

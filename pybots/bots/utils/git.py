@@ -229,3 +229,4 @@ class GitRecoveryBot(HTTPBot):
             for fp in self.files:
                 self.__recover_source(self.__get_revision(fp), fp)
             self.logger.info("Checkout:\n" + ensure_str(out))
+

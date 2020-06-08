@@ -227,3 +227,4 @@ class VirusTotalAPI(API):
         params = {'url': url}
         self.__get("post", "url", "scan", params=params,
             aheaders={'Content-Type': "application/x-www-form-urlencoded"})
+

@@ -192,3 +192,4 @@ class Template(object):
         """
         self.config.setdefault(section, {})
         self.config[section][option] = value
+

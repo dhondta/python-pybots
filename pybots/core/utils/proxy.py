@@ -197,3 +197,4 @@ class MyProxySocks4(PublicProxyList):
 class MyProxySocks5(MyProxySocks4):
     url = "https://www.my-proxy.com/free-socks-5-proxy.html"
     version = 5
+

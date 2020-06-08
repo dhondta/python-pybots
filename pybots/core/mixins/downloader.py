@@ -53,3 +53,4 @@ class BulkDownloadMixin(object):
                 filepath = join(dirpath, filename)
                 undef_res_counter += 1
             self.retrieve(url, filepath)
+

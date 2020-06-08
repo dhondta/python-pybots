@@ -53,3 +53,4 @@ def get_my_public_ip(source=None, only_https=False, verbose=False):
                     bot.logger.debug("Bad response")
             elif verbose:
                 bot.logger.debug("Request for own public IP failed")
+

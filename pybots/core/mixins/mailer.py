@@ -59,3 +59,4 @@ class SendMailMixin(object):
         srv = smtplib.SMTP(host, port)
         srv.sendmail(from_mail, to_mail, msg)
         srv.quit()
+

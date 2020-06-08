@@ -148,3 +148,4 @@ class PostBinBot(JSONBot):
     @property
     def binids(self):
         return [b.id for b in self._bins]
+

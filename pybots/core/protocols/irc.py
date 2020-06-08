@@ -87,3 +87,4 @@ class IRCBot(SocketBot):
             self.logger.error(data.strip())
             self.close()
         return data
+

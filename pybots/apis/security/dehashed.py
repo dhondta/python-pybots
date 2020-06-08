@@ -105,3 +105,4 @@ class DeHashedAPI(API):
         if page:
             params = {'page': page}
         self._request(domain, params=params)
+

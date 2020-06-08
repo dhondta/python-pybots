@@ -44,3 +44,4 @@ class CrawlerMixin(object):
             self.crawled_urls.append(url)
             for link in BeautifulSoup(self.response.text).find_all('a'):
                 self.crawl(link.get('href'), *args, **kwargs)
+
