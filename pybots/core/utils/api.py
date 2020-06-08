@@ -75,7 +75,7 @@ def _result(f, self, *args, **kwargs):
         r = s._json
     if isinstance(r, dict):
         err = r.get('error')
-        if err is not None:
+        if err is not None and all(m not in err for m in getattr(s, "no_error", [])):
             code = r.get('status') or r.get('code') or r.get('statusCode') or r.get('status_code')
             raise APIError(err, code)
     return r
@@ -447,3 +447,4 @@ class SearchAPI(API):
         if value == "yaql":
             self.__engine = yaql.factory.YaqlFactory().create()
         self.__backend = value
+

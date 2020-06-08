@@ -18,10 +18,11 @@ class GhostProjectAPI(API):
     :param kwargs: JSONBot / API keyword-arguments
     """
     url = "https://ghostproject.fr"
+    no_error = ["No results found"]
     
     def __init__(self, **kwargs):
         driver = kwargs.pop('driver', "firefox")
-        timeout = kwargs.pop('clearance_timeout', 20)
+        timeout = kwargs.pop('clearance_timeout', 30)
         kwargs['random_uagent'] = False
         super(GhostProjectAPI, self).__init__(None, **kwargs)
         cookies, uagent = get_clearance(self.url, driver=driver, timeout=timeout)
@@ -62,11 +63,16 @@ class GhostProjectAPI(API):
             email, pswd = l.strip().split(":", 1)
             d.setdefault(email, [])
             d[email].append(pswd)
-        return {'time': t, 'error': d['Error'][0].strip()} if 'Error' in d.keys() else {'time': t, 'data': d}
+        if 'Error' in d.keys():
+            err = d['Error'][0].strip()
+            if err == "No results found":
+                return {'time': t, 'data': {}}
+            return {'time': t, 'error': err}
+        return {'time': t, 'data': d}
 
     @apicall
     @cache(3600)
-    def search_account(self, email):
+    def search(self, email):
         """
         Search for leaked passwords for the given account.
         
@@ -74,3 +80,4 @@ class GhostProjectAPI(API):
         """
         self.__validate(email=email)
         return self._request(email)
+

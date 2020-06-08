@@ -17,7 +17,7 @@ __all__ = __features__ = ["get_clearance"]
 SELENIUM_REQUESTS_KEYS = {'expiry': "expires", 'httpOnly': {'rest': {"httpOnly": True}}}
 
 
-def get_clearance(url, driver="firefox", executable_paths=None, timeout=15):
+def get_clearance(url, driver="firefox", executable_paths=None, timeout=30):
     """
     Function getting a URL using Selenium in headless mode (supported for Chrome and Firefox).
     
@@ -65,3 +65,4 @@ def get_clearance(url, driver="firefox", executable_paths=None, timeout=15):
                     del cookie[k1]
         return c, uagent
     raise ImportError("Selenium is not installed ; Cloudflare security clearance scrapping disabled.")
+
