@@ -69,3 +69,4 @@ target/
 .test
 tmp
 TODO
+geckodriver.log
