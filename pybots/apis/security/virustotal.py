@@ -54,7 +54,7 @@ class VirusTotalAPI(API):
                 if v not in self.resource_types.keys():
                     raise ValueError("bad resource type")
 
-    @time_throttle(60, 4)
+    @time_throttle(60, requests=4)
     def _request(self, method, restype, action, extra=None, **kwargs):
         """
         Generic API sending method for appending the API key to the parameters.

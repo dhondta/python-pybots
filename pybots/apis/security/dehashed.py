@@ -40,7 +40,7 @@ class DeHashedAPI(API):
             elif k == "page":
                 positive_int(v, False)
     
-    @time_throttle(.25, 5)
+    @time_throttle(.25, requests=5)
     def _request(self, query, **kwargs):
         """
         Generic post method.

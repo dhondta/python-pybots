@@ -3,6 +3,7 @@
 """Simple utility objects related to API's.
 
 """
+import random
 import re
 import types
 from datetime import datetime, timedelta
@@ -185,19 +186,22 @@ def private(f):
     return _wrapper
 
 
-def time_throttle(seconds, requests=1):
+def time_throttle(seconds_low, seconds_high=None, requests=1):
     """
     API method decorator for setting time throttling on a request method.
     
     NB: this should be put before '@apicall' and '@cache'.
     
-    :param seconds:  time frame in which the the maximum number of requests can be achieved
-    :param requests: maximum number of requests during the time frame
+    :param seconds_low:  low limit for the time frame in which the maximum number of requests can be achieved
+    :param seconds_high: high limit for the time frame
+    :param requests:     maximum number of requests during the time frame
     """
     def _wrapper(f):
         @wraps(f)
         def _subwrapper(self, *args, **kwargs):
             if not getattr(self, "_disable_time_throttling", False):
+                seconds = seconds_low if seconds_high is None or seconds_low <= seconds_high else \
+                          random.uniform(seconds_low, seconds_high)
                 c = self.__class__
                 TIME_THROTTLING.setdefault(c, [])
                 t = TIME_THROTTLING[c]
@@ -336,7 +340,10 @@ class API(with_metaclass(MetaAPI, object)):
     
     @property
     def _json(self):
-        return getattr(self.__bot, "json", None)
+        r = getattr(self.__bot, "json", None)
+        if r is None:
+            raise APIError("No response from {} ; check that the server still responds".format(self.__bot.url))
+        return r
     
     @property
     def _logger(self):
