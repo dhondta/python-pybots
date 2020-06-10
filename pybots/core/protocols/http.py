@@ -65,6 +65,7 @@ class JSONBot(WebBot):
     
     def __init__(self, *args, **kwargs):
         super(JSONBot, self).__init__(*args, **kwargs)
+        self.json = None
         self.session.headers.update({'Content-Type': "application/json"})
 
     @try_and_pass(simplejson.JSONDecodeError)

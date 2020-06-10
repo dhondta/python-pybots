@@ -102,7 +102,7 @@ class WebBot(Template):
         #  once per session
         if self.__ruagent:
             self.session.headers.update({'User-Agent': generate_user_agent()})
-        self.session.proxies.update(self.config['proxies'])
+        self.session.proxies.update(self.config.get('proxies', {}))
 
     def close(self):
         """
@@ -128,7 +128,7 @@ class WebBot(Template):
         # NOTE: _set_cookie is left for backward-compatibility
         if cookie is not None:
             self._set_cookie(cookie)
-
+    
     @try_and_warn("Resource download failed", trace=True)
     def download(self, resource, filename=None):
         """
@@ -167,6 +167,7 @@ class WebBot(Template):
         :param aheaders: additional HTTP headers (dictionary)
         :post:           self.response, self.soup populated
         """
+        self.response = None
         aheaders = aheaders or {}
         data = data or {}
         if not isinstance(data, dict) and not isinstance(data, string_types):
