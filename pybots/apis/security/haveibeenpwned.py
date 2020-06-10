@@ -2,13 +2,13 @@
 """API client dedicated to HaveIBeenPwned?.
 
 """
-import time
+from tinyscript import b, hashlib, random, time
 from tinyscript.helpers.data.types import *
 
 from ...core.utils.api import *
 
 
-__all__ = ["HaveIBeenPwnedAPI"]
+__all__ = ["HaveIBeenPwnedAPI", "PwnedPasswordsAPI"]
 
 
 class HaveIBeenPwnedAPI(API):
@@ -45,7 +45,7 @@ class HaveIBeenPwnedAPI(API):
                     if not isinstance(f, bool):
                         raise ValueError("bad boolean value")
     
-    @time_throttle(1, 1000)
+    @time_throttle(1, requests=1000)
     def _request(self, method, reqpath, **kwargs):
         """
         Generic API sending method for appending the API key to the parameters.
@@ -154,4 +154,52 @@ class HaveIBeenPwnedAPI(API):
         self._check_apikey("missing hibp-api-key")
         self.__validate(account=account)
         self._request("get", "/pasteaccount/%s" % account, aheaders={'hibp-api-key': self._api_key})
+
+
+class PwnedPasswordsAPI(API):
+    """
+    Class for communicating with the API of HaveIBeenPwned.
+    
+    Reference: https://haveibeenpwned.com/API/v3
+    Note:      this Web service implements a k-Anonymity model
+
+    :param kwargs: HTTPBot / API keyword-arguments
+    """
+    url = "https://api.pwnedpasswords.com"
+    
+    def __init__(self, **kwargs):
+        kwargs['kind'] = "http"
+        super(PwnedPasswordsAPI, self).__init__(None, **kwargs)
+    
+    # Searching by range
+    @time_throttle(1, requests=1000)
+    @apicall
+    @cache(3600)
+    def count(self, password):
+        """
+        Search for a password, sending only the 5 first characters of its SHA1 hash to the remote API.
+        
+        :param password: password to be searched for
+        :return:         number of times the password has been encoutered in registered breaches
+        """
+        h = hashlib.sha1(b(password)).hexdigest().upper()
+        self._request("/range/%s" % h[:5])
+        hashes = self._response.text.split("\n")
+        random.shuffle(hashes)
+        for l in hashes:
+            hash_suffix, count = l.split(":")
+            if h[5:] == hash_suffix:
+                return int(count)
+        return 0
+    
+    def counts(self, *passwords):
+        """
+        Search for pwned passwords.
+        
+        :param passwords: passwords to be searched for
+        """
+        r = {}
+        for p in passwords:
+            r[p] = self.count(p)
+        return r
 

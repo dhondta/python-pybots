@@ -1,11 +1,11 @@
 # -*- coding: UTF-8 -*-
-"""Bot using the HaveIBeenPwned for bulk-checking domain breaches.
+"""Bot using HaveIBeenPwned for bulk-checking domain breaches and pwned passwords.
 
 """
-from ...apis import HaveIBeenPwnedAPI
+from ...apis import HaveIBeenPwnedAPI, PwnedPasswordsAPI
 
 
-__all__ = ["HaveIBeenPwnedBot"]
+__all__ = ["HaveIBeenPwnedBot", "PwnedPasswordsBot"]
 
 
 class HaveIBeenPwnedBot(HaveIBeenPwnedAPI):
@@ -42,4 +42,40 @@ class HaveIBeenPwnedBot(HaveIBeenPwnedAPI):
         for item in items:
             self.__check(item)
         return self.__breaches
+
+
+class PwnedPasswordsBot(PwnedPasswordsAPI):
+    """
+    Class for requesting information using the PwnedPasswords API (part of HaveIBeenPwned).
+    
+    :param kwargs: JSONBot / API keyword-arguments
+    """
+    def check_from_file(self, passwords_path):
+        """
+        Check a list of passwords from a given file.
+        
+        :param passwords_path: path to the file with the list of passwords
+        :return:               list of all pwned passwords
+        """
+        pwned = []
+        with open(passwords_path) as f:
+            for p in f:
+                password = p.strip()
+                if self.count(password) > 0:
+                    pwned.append(password)
+        return pwned
+    
+    def check_from_list(self, *passwords):
+        """
+        Check a list of passwords from the given arguments.
+        
+        :param passwords: list of passwords
+        :return:          list of all pwned passwords
+        """
+        pwned = []
+        for p in passwords:
+            password = p.strip()
+            if self.count(password) > 0:
+                pwned.append(password)
+        return pwned
 
