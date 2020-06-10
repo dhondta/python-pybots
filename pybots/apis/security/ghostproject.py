@@ -22,7 +22,7 @@ class GhostProjectAPI(API):
     
     def __init__(self, **kwargs):
         driver = kwargs.pop('driver', "firefox")
-        timeout = kwargs.pop('clearance_timeout', 30)
+        timeout = kwargs.pop('clearance_timeout', 60)
         kwargs['random_uagent'] = False
         super(GhostProjectAPI, self).__init__(None, **kwargs)
         cookies, uagent = get_clearance(self.url, driver=driver, timeout=timeout)
@@ -47,6 +47,7 @@ class GhostProjectAPI(API):
             if k == "email":
                 email_address(v)
     
+    @time_throttle(2.5, 5)
     def _request(self, query):
         """
         Generic post method.
@@ -57,7 +58,10 @@ class GhostProjectAPI(API):
         if self._response.status_code != 200:
             raise APIError(self._response.reason)
         lines = self._response.text.strip("\r\n\"\\n").split("\\n")
-        t = float(lines[0].split("Time: ")[1].split("<")[0])
+        try:
+            t = float(lines[0].split("Time: ")[1].split("<")[0])
+        except IndexError:
+            return {'error': "\n".join(lines)}
         d = {}
         for l in lines[1:]:
             email, pswd = l.strip().split(":", 1)
