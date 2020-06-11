@@ -59,9 +59,9 @@ class ProxySocket(object):
                 self.bot.socket = s = socket.socket_orig(family, stype, proto)
                 s.connect(addr)
                 break
-            except socket.error as e:
+            except socket.error:
                 self.bot.close()
-                raise e
+                raise
         # create a tunnel connection to the target host/port
         self.socket.send("CONNECT {0}:{1} HTTP/1.1\r\nHost: {0}:{1}\r\n\r\n".format(self.bot.host, self.bot.port))
         # get and parse the response
