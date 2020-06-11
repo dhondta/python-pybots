@@ -61,5 +61,5 @@ class NuclearLeaksAPI(SearchAPI):
         :param query: anything to be searched for in the list
         """
         self._request()
-        return super(NuclearLeaksAPI, self).search(query)
+        return super(NuclearLeaksAPI, self)._search(query)
 

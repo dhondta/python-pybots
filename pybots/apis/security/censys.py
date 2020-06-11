@@ -31,13 +31,14 @@ class CensysAPI(API):
         """
         Private generic validation function for API arguments.
         """
-        # FIXME: validate 'index'
         reg = {
-            'fields': r"^[a-z][a-z0-9]*(\.[a-z][a-z0-9]*)*$",
+            'fields': r"^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$",
             'query':  r"^[0-9a-z]+(\.[0-9a-z]+)*\:\s(.+)$",
             'result': r"^\d{4}(0[0-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])[A-Z]([0-1][0-9]|2[0-3])[0-5][0-9]$",
             'series': r"^[0-9a-z]+([-_][0-9a-z]+)*$",
         }
+        if index not in ["ipv4", "websites", "certificates"]:
+            raise ValueError("bad index")
         for k, v in kwargs.items():
             if k == "buckets":
                 positive_int(v, False)
@@ -46,7 +47,7 @@ class CensysAPI(API):
             elif k == "domain":
                 domain_name(v)
             elif k == "fields":
-                for f in v:
+                for f in (v or []):
                     if not re.match(reg[k], f):
                         raise ValueError("bad field value (should be in dot notation)")
             elif k in ["flatten"]:
@@ -73,7 +74,7 @@ class CensysAPI(API):
         :param reqpath: request path
         :param kwargs:  requests.[...](...) parameters
         """
-        kwargs['auth'] = self._apikey
+        kwargs['auth'] = self._api_key
         super(CensysAPI, self)._request("/api/v1" + reqpath, method, **kwargs)
     
     # Create Report endpoint: https://censys.io/api/v1/docs/report
@@ -91,7 +92,7 @@ class CensysAPI(API):
         data = {'query': query, 'buckets': buckets}
         if field:
             data['field'] = field
-        self._request("post", "/report/%s" % index, data=data)
+        self._request("post", "/report/%s" % index, json=data)
     
     # Search endpoint: https://censys.io/api/v1/docs/search
     def _search(self, index, query, page=1, fields=None, flatten=True):
@@ -109,7 +110,7 @@ class CensysAPI(API):
         data = {'query': query, 'page': page, 'flatten': flatten}
         if fields:
             data['fields'] = fields
-        self._request("post", "/search/%s" % index, data=data)
+        self._request("post", "/search/%s" % index, json=data)
     
     # View Document endpoint: https://censys.io/api/v1/docs/view
     def _view(self, index, id):

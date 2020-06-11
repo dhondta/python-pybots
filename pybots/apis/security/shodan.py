@@ -50,6 +50,7 @@ class BaseAPI(API):
         """
         Private generic validation function for API arguments.
         """
+        # FIXME: validate 'query'
         for k, v in kwargs.items():
             if k == "asn":
                 for asn in v.split(","):
