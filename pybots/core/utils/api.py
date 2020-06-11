@@ -8,7 +8,7 @@ import re
 import types
 from datetime import datetime, timedelta
 from functools import wraps
-from inspect import getmembers
+from inspect import getmembers, unwrap
 from six import with_metaclass
 from time import sleep, time
 try:
@@ -40,17 +40,6 @@ __all__ = __features__ = ["apicall", "cache", "invalidate", "private", "time_thr
                           "SearchAPI"]
 
 TIME_THROTTLING = {}
-
-
-def _decorated(f):
-    """
-    Small utility function to retrieve the reference to a decorated function.
-    
-    :param f: any decorator level of the target function
-    """
-    while hasattr(f, "__wrapped__"):
-        f = f.__wrapped__
-    return f
 
 
 def _id(something):
@@ -89,7 +78,7 @@ def apicall(f):
     @wraps(f)
     def _wrapper(self, *args, **kwargs):
         return f(getattr(self, "_parent", self), *args, **kwargs)
-    _decorated(f).__apicall__ = True
+    unwrap(f).__apicall__ = True
     return _wrapper
 
 
@@ -160,13 +149,21 @@ def invalidate(*other_f):
             try:
                 return inner_f(s, *args, **kwargs)
             finally:
-                f = _decorated(inner_f)
+                f = unwrap(inner_f)
                 if getattr(f, "_api_cache_hit", False):
                     delattr(f, "_api_cache_hit")
                 else:
                     c = s._api_cache
                     for f in other_f:
-                        fid = _id(s.__class__._MetaAPI__api_registry[f])
+                        # the current class may be inherited from an API class, which can be itself inherited ; so,
+                        #  recurse on class' base to find the API registry where f's reference is located
+                        fid, cls = None, s.__class__
+                        while hasattr(cls, "_MetaAPI__api_registry"):
+                            try:
+                                fid = _id(s.__class__._MetaAPI__api_registry[f])
+                                break
+                            except KeyError:
+                                cls = cls.__bases__[0]
                         if c.get(fid) is not None:
                             c[fid] = {}
                             s._logger.debug("Invalidated cache entry for '%s'" % f)
@@ -228,7 +225,7 @@ class MetaAPI(type):
             return subcls
         subcls.__api_registry = {}
         for k, f in getmembers(subcls):
-            g = _decorated(f)
+            g = unwrap(f)
             if not hasattr(g, "__apicall__"):
                 continue
             n = f.__name__
@@ -248,7 +245,7 @@ class MetaAPI(type):
                         fc = APIObject()
                         fc.__doc__ = f.__doc__
                         setattr(o, token, fc)
-                    fc._APIObject__get = types.MethodType(f, fc)
+                    fc._APIObject__get = f # types.MethodType(f, fc)
         subcls._disable_cache = False
         subcls._disable_time_throttling = False
         return subcls
@@ -270,9 +267,8 @@ class API(with_metaclass(MetaAPI, object)):
         self._disable_cache = disable_cache
         self._disable_time_throttling = disable_time_throttling
         self._kind = kind
-        # transform every apicall-decorated method to API objects ; this allows
-        #  to decompose methods into a hierarchy of bound objects, e.g.
-        #  bot.search_host_info => bot.search.host.info
+        # transform every apicall-decorated method to API objects ; this allows to decompose methods into a hierarchy of
+        #  bound objects, e.g. bot.search_host_info => bot.search.host.info
         for k, v in getmembers(self):
             if isinstance(v, APIObject):
                 v._parent = self
@@ -310,7 +306,7 @@ class API(with_metaclass(MetaAPI, object)):
                     err = r.get('error')
                     if err is not None:
                         raise APIError(err)
-                _decorated(f)._api_cache_hit = True
+                unwrap(f)._api_cache_hit = True
                 return r
     
     def _request(self, *args, **kwargs):
@@ -385,7 +381,7 @@ class APIObject(object):
     
     def __call__(self, *args, **kwargs):
         if hasattr(self, "_APIObject__get"):
-            return self.__get(*args, **kwargs)
+            return self.__get(self.__parent, *args, **kwargs)
     
     def __getattr__(self, name):
         a = self.__dict__.get(name)
@@ -424,8 +420,8 @@ class SearchAPI(API):
                  search_backend=None, **kwargs):
         self.__backend = search_backend
         super(SearchAPI, self).__init__(key, url, kind, disable_cache, disable_time_throttling, **kwargs)
-
-    def search(self, query):
+    
+    def _search(self, query):
         query = str(query)
         if self.__backend == "jmespath":
             return jmespath.search(query, self._json)
@@ -442,11 +438,11 @@ class SearchAPI(API):
                     if re.search(query, str(v)):
                         r.append(record)
             return r
-
+    
     @property
     def backend(self):
         return self.__backend
-
+    
     @backend.setter
     def backend(self, value):
         if value and value not in SEARCH_BACKENDS:
