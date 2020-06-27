@@ -4,9 +4,11 @@ site_author: dhondta
 docs_dir: docs
 pages:
   - Introduction: index.md
-  - Features: features.md
-  - Using Bots: usage.md
-  - Creating Bots: create.md
+  - Generalities: generalities.md
+  - "Core bots": core.md
+  - "Available API's": apis.md
+  - "Available bots": bots.md
+  - "Creating Bots": create.md
   - Examples:
     - 'Hackvent 2017': examples/hackvent-2017.md
     - 'RingZer0': examples/ringzer0.md

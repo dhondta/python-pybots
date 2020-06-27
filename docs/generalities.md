@@ -1,22 +1,41 @@
-## Available Bots
+## Overview
 
-From the most to the least generic, the currently available bots are:
+Each bot class is implemented as a context manager and has a basic configured logger attached. It can thus be instantiated in a clear and straightforward way. Here is an example:
 
-!!! summary "General-purpose"
-    * Socket communication
-    * Web communication
-  
-  
-!!! summary "Specific-purpose"
-    * Netcat-like
-    * IRC
-    * HTTP
-    * JSON
+``` python
+from pybots import TCPBot
 
+class MyBot(TCPBot):
+    def precompute(self):
+        self.lookup_table = ...
 
-!!! summary "CTF-related"
-    * RingZer0
-    * Root-Me
+    def preamble(self):
+        self.read_until('>')
+
+with MyBot("remote_host", 1234) as bot:
+    bot.write("Hello!")
+    data = bot.read_until("hash: ")
+    hash = data.split("hash: ")[-1]
+    hash = bot.lookup_table[hash]
+    bot.write(hash)
+```
+
+Note that, if a bot is used behind a proxy, it will use system's proxy settings. This behavior can be bypassed by using `no_proxy=True` while instantiating the bot.
+
+``` python
+with MyBot("LAN_host", 1234, no_proxy=True) as bot:
+    # ...
+```
+
+-----
+
+## Getting help
+
+Each module is documented. Python's built-in `help` function can thus be used to get help from an interactive console.
+
+![](imgs/help-pybots.png)
+
+![](imgs/help-httpbot.png)
 
 -----
 
@@ -88,3 +107,4 @@ with MyBot(...) as bot:
 
 !!! note "Default behavior"
     Fail-close (the bot crashes if the preamble fails and displays the exception with its traceback)
+
