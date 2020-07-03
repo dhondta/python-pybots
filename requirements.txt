@@ -4,3 +4,5 @@ requests
 simplejson
 tinyscript>=1.22.4
 user_agent
+
+pillow>=7.0.1 # not directly required, pinned by Snyk to avoid a vulnerability
