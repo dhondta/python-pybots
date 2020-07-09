@@ -23,7 +23,7 @@ class TCPBot(SocketBot):
 
     Example usage:
 
-      from pybots.tcp import TCPBot
+      from pybots import TCPBot
 
       class MyTCPBot(TCPBot):
           def preamble(self):
