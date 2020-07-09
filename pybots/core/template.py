@@ -114,6 +114,27 @@ class Template(object):
             pass
         self._exited = True
     
+    def __getitem__(self, key):
+        """
+        Get a section or an option value of the configuration dictionary using the `object['key']` syntax.
+
+        :param key: configuration section or 2-tuple with the configuration section and the option name
+        """
+        return self._get_option(*key) if isinstance(key, tuple) else self.config.get(key, {})
+    
+    def __setitem__(self, key, value):
+        """
+        Set an option value of the configuration dictionary using the `object['key']` syntax.
+
+        :param key:   2-tuple with the configuration section and the option name
+        :param value: option value
+        """
+        try:
+            section, option = key
+            self._set_option(section, option, value)
+        except ValueError:
+            self.logger.error("Bad config key ; should be a 2-tuple with the configuration section and option names")
+    
     @try_or_die("Something failed during postamble.")
     def __postamble(self):
         if hasattr(self, "postamble"):
