@@ -13,12 +13,9 @@ from six import string_types
 from tinyscript.helpers.decorators import *
 from types import MethodType
 from user_agent import generate_user_agent
-try:  # Python3
-    from urllib.parse import urljoin, urlparse
-except ImportError:  # Python2
-    from urlparse import urljoin, urlparse
 
 from .template import Template
+from .utils.common import urljoin, urlparse
 
 # disable annoying requests warnings
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
