@@ -4,6 +4,7 @@
 This mixin allows to add a sendmail functionality to a Bot, available through a 'send_mail()' method.
 
 """
+from tinyscript.helpers.decorators import *
 from tinyscript.helpers.notify import send_mail
 
 
