@@ -8,22 +8,14 @@
 
 # PyBots
 
-This library aims to quickly write client bots for communicating with remote hosts in various ways.
-
-It currently features the following bots:
-- Protocol-bound: TCPBot, HTTPBot, JSONBot, IRCBot, EPassport
-- Application-specific:
-  - CTF: RingZer0Bot, RootMeIRCBot, ZSISBot
-  - Security: ShodanBot, VirusTotalBot
-  - Miscellaneous: GitRecoveryBot
+This library aims to quickly write client bots for communicating with remote hosts in a standardized way using context managers. It implements a few bots for some common protocols (HTTP, JSON, IRC, ...) and for communicating with specific applications (Shodan, Censys, HaveIBeenPwned?, RootMe, RingZer0, ...).
   
 
-## Installation
+## Setup
 
+```sh
+pip install pybots
 ```
-sudo pip install pybots
-```
-
 
 ## Usage
 
@@ -44,17 +36,15 @@ with TCPBot("LAN_host", 1234, no_proxy=True) as bot:
     # ...
 ```
 
+## Examples
 
-## CTF Examples
+Real-Life Projects:
+
+* [Bots Scheduler](https://github.com/dhondta/bots-scheduler) (uses [`ShodanBot`](https://github.com/dhondta/python-pybots/blob/master/pybots/bots/security/shodan.py), [`HaveIBeenPwnedBot`](https://github.com/dhondta/python-pybots/blob/master/pybots/bots/security/haveibeenpwned.py), [`GhostProjectBot`](https://github.com/dhondta/python-pybots/blob/master/pybots/bots/security/ghostproject.py) and a few others)
+
+CTF:
 
 * [Hacky Easter 2017 (22 & 24)](doc/examples/hacky-easter-2017.md)
 * [Hackvent 2017 (Day 06 & 10)](doc/examples/hackvent-2017.md)
 * [RingZer0 / Coding (13 & 17)](doc/examples/ringzer0.md)
 * [Root-Me / Programming](doc/examples/rootme.md)
-
-
-## Contribution
-
-For contributions or suggestions, please [open an Issue](https://github.com/dhondta/python-pybots/issues/new) and clearly explain, using an example or a use case if appropriate. 
-
-If you want to get new bots added, please submit a Pull Request.
