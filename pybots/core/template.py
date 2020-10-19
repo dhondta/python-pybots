@@ -10,7 +10,9 @@ import logging
 import os
 import sys
 from io import StringIO
+from tinyscript.helpers.attack import *
 from tinyscript.helpers.decorators import *
+from types import MethodType
 try:  # Python3
     from urllib.request import getproxies
 except ImportError:  # Python2
@@ -71,6 +73,10 @@ class Template(object):
             for kenv in ['HTTP_PROXY', 'HTTPS_PROXY', 'FTP_PROXY']:
                 if kenv in os.environ.keys():
                     self._set_option('proxies', kenv.split('_')[0].lower(), os.environ[kenv])
+        # add auth test features if .auth(...) is declared
+        if getattr(self, "auth", False):
+            for m in ["bruteforce", "bruteforce_mask", "bruteforce_pin", "bruteforce_re", "dictionary"]:
+                setattr(self, m, MethodType(Template._attack(m), self))
         self.logger.debug("Base initialization done.")
     
     def __enter__(self):
@@ -213,4 +219,37 @@ class Template(object):
         """
         self.config.setdefault(section, {})
         self.config[section][option] = value
+    
+    @staticmethod
+    def _attack(method):
+        """
+        Template method for binding authentication attack methods to the bot.
+
+        :param method: attack method to be bound
+        """
+        doc = """ Alias for attack(method="{0}"). """
+        def f(self, *args, **kwargs):
+            # collect keyword-arguments according to the attack method function ; use the other ones for the auth method
+            kw = {}
+            for name in (["alphabet", "minlen", "repeat"] if method == "bruteforce" else \
+                         ["charsets"] if method == "bruteforce_mask" else \
+                         ["length"] if method == "bruteforce_pin" else \
+                         ["filter", "rules"] if method == "dictionary" else []):
+                if name in kwargs.keys():
+                    kw[name] = kwargs.pop(name)
+            # now set the username if any then start password generation
+            passwords = []
+            username = kwargs.pop('username', None)
+            a = (username, ) if username else ()
+            stop = kwargs.pop(kwargs, True)
+            for password in globals()[method](*args, **kw):
+                if self.auth(*(a + (password, )), **kwargs):
+                    getattr(self.logger, "success", self.logger.info) \
+                        ("Password found for user %s: %s" % (username, password) if username else \
+                         "Password found: %s" % password)
+                    if stop:
+                        return password
+                    passwords.append(password)
+            return passwords
+        return f
 
