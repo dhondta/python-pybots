@@ -22,7 +22,7 @@ class PublicHTTPProxyMixin(object):
         Setup a randomly chosen public HTTP proxy from available proxy list or a single one selected by country or
          network location.
 
-        For a list of supported proxy lists:
+        For getting a list of sources for proxies:
 
           >>> from pybots.utils.proxy import get_public_http_proxies_sources
           >>> get_public_http_proxies_sources()
@@ -47,7 +47,7 @@ class PublicSocksProxyMixin(object):
         Setup a randomly chosen public Socks proxy from available proxy list or a single one selected by country or
          network location.
 
-        For a list of supported proxy lists:
+        For getting a list of sources for proxies:
 
           >>> from pybots.utils.proxy import get_public_socks_proxies_sources
           >>> get_public_socks_proxies_sources()

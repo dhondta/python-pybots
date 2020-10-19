@@ -160,9 +160,9 @@ class SocketBot(Template):
         """
         self.logger.debug("Connecting to the remote host...")
         restart = False
-        if host is not None:  # new host was input through connect()
+        if host:  # new host was input through connect()
             self.host, restart = host, True
-        if port is not None:  # new port was input through connect()
+        if port:  # new port was input through connect()
             self.port, restart = port, True
         if self.host and self.port:
             if restart:  # close and dispose the old socket
@@ -172,6 +172,7 @@ class SocketBot(Template):
             for family, stype, proto, _, addr in i:
                 self.socket = socket.socket(family, stype, proto)
                 self.socket.connect(addr)
+                self.logger.debug("Connected to {}:{}".format(*addr))
                 break
             if self.socket is None:
                 raise socket.error("Socket could not be established")
@@ -203,7 +204,7 @@ class SocketBot(Template):
             self.close()
         if (self.disp if disp is None else disp) and len(data.strip()) > 0:
             print(self.__prefix_data(data, 'r'))
-        return data
+        return data.rstrip("\r\n")
  
     def read_until(self, pattern, disp=None, limit=10):
         """
@@ -260,36 +261,33 @@ class SocketBot(Template):
         r = isinstance(args[0], int) if len(args) > 0 else 'pattern' not in kwargs.keys()
         return [self.read_until, self.read][r](*args, **kwargs)
 
-    def send(self, *args, **kwargs):
-        """
-        Alias for write.
-        """
-        return self.write(*args, **kwargs)
- 
-    def send_receive(self, data='', pattern='\n', eol='\n', disp=None):
+    def send_receive(self, data='', pattern='\n', eol='\n', disp=None, sanitize=lambda x: x):
         """
         Write input data to the socket and directly read until a given pattern.
 
-        :param data:    input data to be sent
-        :param pattern: input pattern until which the data must be read
-        :param eol:     end of line characters
-        :param disp:    display the sent data
+        :param data:     input data to be sent
+        :param pattern:  input pattern until which the data must be read
+        :param eol:      end of line characters
+        :param disp:     display the sent data
+        :param sanitize: sanitization function, e.g. for avoiding leaking a password in the debug information
         """
-        self.write(data, eol, disp)
+        self.write(data, eol, disp, sanitize)
         return self.read_until(pattern, disp)
 
     @try_or_die("Write failed")
-    def write(self, data='', eol='\n', disp=None):
+    def write(self, data='', eol='\n', disp=None, sanitize=lambda x: x):
         """
         Write input data to the socket.
 
-        :param data: input data to be sent
-        :param eol:  end of line characters
-        :param disp: display the sent data
+        :param data:     input data to be sent
+        :param eol:      end of line characters
+        :param disp:     display the sent data
+        :param sanitize: sanitization function, e.g. for avoiding leaking a password in the debug information
         """
         if P3 and isinstance(data, bytes):
             data = data.decode('utf-8')
-        self.logger.debug("Writing '{}' to the socket...".format(data[:7] + "..." if len(data) > 10 else data))
+        d = sanitize(data)
+        self.logger.debug("Writing '{}' to the socket...".format(d[:7] + "..." if len(d) > 10 else d))
         _ = data
         if P3 and not isinstance(data, bytes):
             data = data.encode('utf-8')
@@ -309,4 +307,5 @@ class SocketBot(Template):
         if [disp, self.disp][disp is None]:
             print(self.__prefix_data(_, 'w'))
         return _
+    send = write
 

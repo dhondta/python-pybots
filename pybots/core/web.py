@@ -54,7 +54,7 @@ class WebBot(Template):
         self._set_session()
         self.logger.debug("Binding HTTP methods...")
         for m in ["delete", "get", "head", "options", "post", "put"]:
-            setattr(self, m, MethodType(WebBot.template(m), self))
+            setattr(self, m, MethodType(WebBot._template(m), self))
 
     def __print_request(self):
         """
@@ -204,7 +204,7 @@ class WebBot(Template):
         return self
 
     @staticmethod
-    def template(method):
+    def _template(method):
         """
         Template method for binding HTTP request methods to the WebBot.
 
