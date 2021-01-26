@@ -6,7 +6,7 @@
 [![Python Versions](https://img.shields.io/pypi/pyversions/pybots.svg)](https://pypi.python.org/pypi/pybots/)
 [![License](https://img.shields.io/pypi/l/pybots.svg)](https://pypi.python.org/pypi/pybots/)
 
-# PyBots
+## Introduction
 
 This library aims to quickly write client bots for communicating with remote hosts in a standardized way using context managers. It implements a few bots for some common protocols (HTTP, JSON, IRC, ...) and for communicating with specific applications (Shodan, Censys, HaveIBeenPwned?, RootMe, RingZer0, ...).
   
@@ -40,7 +40,7 @@ with TCPBot("LAN_host", 1234, no_proxy=True) as bot:
 
 Real-Life Projects:
 
-* [Bots Scheduler](https://github.com/dhondta/bots-scheduler) (uses [`ShodanBot`](https://github.com/dhondta/python-pybots/blob/master/pybots/bots/security/shodan.py), [`HaveIBeenPwnedBot`](https://github.com/dhondta/python-pybots/blob/master/pybots/bots/security/haveibeenpwned.py), [`GhostProjectBot`](https://github.com/dhondta/python-pybots/blob/master/pybots/bots/security/ghostproject.py) and a few others)
+* [Bots Scheduler](https://github.com/dhondta/bots-scheduler/) (uses [`ShodanBot`](https://github.com/dhondta/python-pybots/blob/master/pybots/bots/security/shodan.py), [`HaveIBeenPwnedBot`](https://github.com/dhondta/python-pybots/blob/master/pybots/bots/security/haveibeenpwned.py), [`GhostProjectBot`](https://github.com/dhondta/python-pybots/blob/master/pybots/bots/security/ghostproject.py) and a few others)
 
 CTF:
 
