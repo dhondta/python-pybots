@@ -37,7 +37,7 @@ except ImportError:
 
 
 __all__ = __features__ = ["apicall", "cache", "invalidate", "private", "time_throttle", "API", "APIError", "APIObject",
-                          "SearchAPI"]
+                          "NoResultError", "SearchAPI"]
 
 TIME_THROTTLING = {}
 
@@ -403,6 +403,11 @@ class APIObject(object):
         for a in self.__dict__.values():
             if isinstance(a, APIObject):
                 a._parent = parent
+
+
+class NoResultError(Exception):
+    def __init__(self, message="No result for the input request"):
+        super(NoResultError, self).__init__(message)
 
 
 class SearchAPI(API):
