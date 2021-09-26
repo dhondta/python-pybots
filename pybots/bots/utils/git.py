@@ -50,12 +50,12 @@ KNOWN_FILES = [
     "hooks/pre-rebase",
     "info/exclude",
     "logs/HEAD",
-    "logs/refs/heads/master",
+    "logs/refs/heads/{{branch}}",
     "logs/refs/remotes/origin/HEAD",
-    "logs/refs/remotes/origin/master",
-    "refs/heads/master",
+    "logs/refs/remotes/origin/{{branch}}",
+    "refs/heads/{{branch}}",
     "refs/remotes/origin/HEAD",
-    "refs/remotes/origin/master",
+    "refs/remotes/origin/{{branch}}",
 ]
 
 
@@ -87,13 +87,34 @@ class GitRecoveryBot(HTTPBot):
             f = os.path.join(".git", f)
             if not os.path.exists(f):
                 os.makedirs(f)
-        # retrieve existing .git files and commits
-        self.__fetch_files()
-        self.__fetch_commits()
+    
+    def __checkout_branch(self, branch):
+        """
+        Checkout the given branch.
+        
+        :param branch: branch name
+        """
+        cmd = "git checkout {}".format(branch)
+        self.logger.debug("Trying '{}'".format(cmd))
+        out, err = execute(cmd)
+        if b("error:") in err or b("fatal:") in err:
+            self.__extract_commits(out, err)
+            self.__last_cmd = cmd
+            self.__checkout_branch(branch)
+        else:
+            for l in out.split(b('\n')):
+                if len(l) > 0 and not l.startswith(b("Already on")):
+                    fp = ensure_str(l).split('\t')[-1]
+                    if fp not in self.files:
+                        self.files.append(fp)
+            for fp in self.files:
+                self.__recover_source(self.__get_revision(fp), fp)
+            self.logger.info("Checkout:\n" + ensure_str(out))
+
     
     def __extract_commits(self, *outputs):
         """
-        Method for extracting commits from a given output.
+        Extract commits from a given output.
 
         :param outputs: output texts, e.g. the content of .git/logs/HEAD
         :return:        list of found hashes
@@ -108,7 +129,7 @@ class GitRecoveryBot(HTTPBot):
     
     def __fetch_file(self, fp, commit=False, skip=True):
         """
-        Method for fetching .git files.
+        Fetch .git files.
 
         :param fp:     file path (without prepended ".git")
         :param commit: whether the file is a commit or not
@@ -149,9 +170,9 @@ class GitRecoveryBot(HTTPBot):
         elif self.response.status_code == 403:
             self.logger.warning(fp)
     
-    def __fetch_commits(self):
+    def __fetch_commits(self, branch):
         """
-        Method for fetching commits from known files.
+        Fetching commits from known files.
         """
         try:
             with open(".git/logs/HEAD") as f:
@@ -159,16 +180,17 @@ class GitRecoveryBot(HTTPBot):
         except IOError:
             self.logger.warning("Could not extract commits from logs/HEAD")
         try:
-            with open(".git/refs/heads/master") as f:
+            with open(".git/refs/heads/%s" % branch) as f:
                 self.__fetch_file(f.read().strip(), True)
         except IOError:
-            self.logger.warning("Could not extract commits from refs/heads/master")
+            self.logger.warning("Could not extract commits from refs/heads/%s" % branch)
     
-    def __fetch_files(self):
+    def __fetch_files(self, branch):
         """
-        Bulk method for fetching known files.
+        Fetch known files.
         """
         for fp in KNOWN_FILES:
+            fp = fp.replace("{{branch}}", branch)
             if not os.path.exists(os.path.join(".git/", fp)):
                 self.__fetch_file(fp)
     
@@ -206,7 +228,7 @@ class GitRecoveryBot(HTTPBot):
         else:
             self.logger.info("Successfully recovered {}".format(fp))
 
-    def checkout(self, branch="master"):
+    def checkout(self, branch="main"):
         """
         Git respository file enumeration function.
 
@@ -214,19 +236,9 @@ class GitRecoveryBot(HTTPBot):
         """
         if not self.__git_installed:
             return
-        cmd = "git checkout {}".format(branch)
-        self.logger.debug("Trying '{}'".format(cmd))
-        out, err = execute(cmd)
-        if b("error:") in err or b("fatal:") in err:
-            self.__extract_commits(out, err)
-            self.checkout(branch)
-        else:
-            for l in out.split(b('\n')):
-                if len(l) > 0 and not l.startswith(b("Already on")):
-                    fp = ensure_str(l).split('\t')[-1]
-                    if fp not in self.files:
-                        self.files.append(fp)
-            for fp in self.files:
-                self.__recover_source(self.__get_revision(fp), fp)
-            self.logger.info("Checkout:\n" + ensure_str(out))
+        # retrieve existing .git files and commits
+        self.__fetch_files(branch)
+        self.__fetch_commits(branch)
+        # now try to checkout and recursively download files
+        self.__checkout_branch(branch)
 
