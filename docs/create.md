@@ -192,19 +192,19 @@ The following steps show how to create the `RootMeIRCBot` class:
         ::python
         class RootMeIRCBot(IRCBot):
             ...
-                def postamble(self):
-                    self.msg("candy", "!ep{} -rep {}".format(self.cid, self.answer))
-                    self.read_until("You dit it! You can validate the challenge"
-                                    " with the password")
-                    self.flag = self.buffer.strip()
-                    self.logger.info(self.flag)
+            def postamble(self):
+                self.msg("candy", "!ep{} -rep {}".format(self.cid, self.answer))
+                self.read_until("You dit it! You can validate the challenge"
+                                " with the password")
+                self.flag = self.buffer.strip()
+                self.logger.info(self.flag)
 
-                def preamble(self):
-                    pattern = "MODE {} +x".format(self.nickname)
-                    if pattern not in self.buffer:
-                        self.read_until(pattern)
-                    self.msg("candy", "!ep{}".format(self.cid))
-                    self.read_until("PRIVMSG {} :".format(self.nickname))
-                    self.inputs = {'message': self.buffer.strip()}
+            def preamble(self):
+                pattern = "MODE {} +x".format(self.nickname)
+                if pattern not in self.buffer:
+                    self.read_until(pattern)
+                self.msg("candy", "!ep{}".format(self.cid))
+                self.read_until("PRIVMSG {} :".format(self.nickname))
+                self.inputs = {'message': self.buffer.strip()}
 
 4. Finally, the bot should be documented appropriately.

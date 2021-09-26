@@ -28,7 +28,7 @@ This bot realizes, using the `HTTPBot` class, the following steps for communicat
 While entering bot's context:
 
 - Set the given cookie for further communications
-- Get the challenge page based on the input `cid` (Challent ID)
+- Get the challenge page based on the input `cid` (Challenge ID)
 - Parse the challenge page for the CSRF token
 - Parse the challenge page for challenge inputs (attached in the `inputs` attribute as a dictionary)
 - Execute bot's logics defined by the user (the `answer` attribute must be set at the end of the computation
