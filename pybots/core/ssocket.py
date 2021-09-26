@@ -241,7 +241,6 @@ class SocketBot(Template):
                     return ""
             pattern = pattern.search(self.buffer).group()
         else:
-            print(pattern)
             self.logger.error("Incorrect pattern")
             return
         try:

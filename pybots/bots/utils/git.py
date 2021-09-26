@@ -141,13 +141,13 @@ class GitRecoveryBot(HTTPBot):
             sha1 = fp
             fp = "objects/{}/{}".format(fp[:2], fp[2:])
         dest = os.path.join(".git/", fp)
+        if skip and os.path.exists(dest):
+            self.logger.debug("{} skipped".format(fp))
+            return
         if commit:
             self.logger.debug("Fetching commit {}".format(sha1))
         else:
             self.logger.debug("Fetching file {}".format(fp))
-        if skip and os.path.exists(dest):
-            self.logger.debug("{} skipped".format(fp))
-            return
         # check if the file exists with a HEAD request
         reqp = self._parsed.path + "/.git/" + fp
         self.head(reqp)
@@ -227,14 +227,23 @@ class GitRecoveryBot(HTTPBot):
             self.__recover_source(sha1, fp)
         else:
             self.logger.info("Successfully recovered {}".format(fp))
-
+    
+    def __valid_branch(self, branch):
+        """
+        Validate if a given branch name exists.
+        
+        :param branch: branch name
+        """
+        self.head(self._parsed.path + "/.git/refs/heads/" + branch)
+        return self.response.status_code == 200
+    
     def checkout(self, branch="main"):
         """
         Git respository file enumeration function.
 
         :param branch: repository branch to be enumerated
         """
-        if not self.__git_installed:
+        if not self.__git_installed or not self.__valid_branch(branch):
             return
         # retrieve existing .git files and commits
         self.__fetch_files(branch)
