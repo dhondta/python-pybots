@@ -4,7 +4,7 @@
 """
 from tinyscript.helpers.data.types import *
 
-from ...core.utils.api import *
+from ....core.utils.api import *
 
 
 __all__ = ["HaveIBeenSoldAPI"]

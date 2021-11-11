@@ -7,7 +7,7 @@ from six import string_types
 from tinyscript.helpers.data.types.common import positive_int
 from tinyscript.helpers.data.types.network import *
 
-from ...core.utils.api import *
+from ....core.utils.api import *
 
 
 __all__ = ["ShodanAPI", "ShodanExploitsAPI"]

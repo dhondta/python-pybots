@@ -4,8 +4,8 @@
 """
 from tinyscript.helpers.data.types import *
 
-from ...core.utils.api import *
-from ...core.utils.cloudflare import get_clearance
+from ....core.utils.api import *
+from ....core.utils.cloudflare import get_clearance
 
 
 __all__ = ["GhostProjectAPI"]
@@ -21,6 +21,7 @@ class GhostProjectAPI(API):
     no_error = ["No results found"]
     
     def __init__(self, **kwargs):
+        raise NotImplementedError("GhostProject has become paid ; this API still needs a refresh.")
         driver = kwargs.pop('driver', "firefox")
         timeout = kwargs.pop('clearance_timeout', 60)
         kwargs['random_uagent'] = False

@@ -36,8 +36,8 @@ except ImportError:
     pass
 
 
-__all__ = __features__ = ["apicall", "cache", "invalidate", "private", "time_throttle", "API", "APIError", "APIObject",
-                          "NoResultError", "SearchAPI"]
+__all__ = __features__ = ["apicall", "cache", "invalidate", "private", "re", "time_throttle", "API", "APIError",
+                          "APIObject", "NoResultError", "SearchAPI"]
 
 TIME_THROTTLING = {}
 
@@ -365,6 +365,13 @@ class API(with_metaclass(MetaAPI, object)):
         for k, v in kwargs.items():
             id_a += (_id("{}={}".format(k, _id(v))), )
         return id_f, _id(id_a)
+    
+    @staticmethod
+    def _sanitize(key, value):
+        v = re.sub(r"\s+", " ", value.strip())
+        if re.match(r"\s*([–-]|(blank|none|null)|\((blank|none|null)\)|n/?a)\s*$", v, re.I):
+            v = ""
+        return key.rstrip(": ").lower().replace(" ", "-"), v
 
 
 class APIError(Exception):

@@ -4,7 +4,7 @@
 """
 from datetime import datetime
 
-from ...core.utils.api import *
+from ....core.utils.api import *
 
 
 __all__ = ["NuclearLeaksAPI"]
@@ -12,7 +12,7 @@ __all__ = ["NuclearLeaksAPI"]
 
 class NuclearLeaksAPI(SearchAPI):
     """
-    Class for communicating with the API of NuclearLeaks.
+    Class for communicating with the website of NuclearLeaks.
     
     :param kwargs: HTTPBot / API keyword-arguments
     """
@@ -22,14 +22,6 @@ class NuclearLeaksAPI(SearchAPI):
         kwargs['kind'] = "http"
         super(NuclearLeaksAPI, self).__init__(None, **kwargs)
         self._request()
-
-    def __validate(self, **kwargs):
-        """
-        Private generic validation function for API arguments.
-        """
-        for k, v in kwargs.items():
-            if v is None:
-                continue
     
     @cache(86400)
     def _request(self):
@@ -41,7 +33,7 @@ class NuclearLeaksAPI(SearchAPI):
             raise APIError("could not retrieve the list of Nuclear Leaks")
         table = self._soup.find('table', id="breaches-table")
         self.headers = [th.text.lower().replace(" ", "_") for th in table.find('thead').findAll('th')]
-        self._API__bot.json = {'data': []}
+        self._API__bot.json = {'data': []}  # fake the result of a JSON bot
         for tr in table.find('tbody').findAll('tr'):
             row = {}
             for i, td in enumerate(tr.findAll('td')):

@@ -5,7 +5,7 @@
 from tinyscript import b, hashlib, random, time
 from tinyscript.helpers.data.types import *
 
-from ...core.utils.api import *
+from ....core.utils.api import *
 
 
 __all__ = ["HaveIBeenPwnedAPI", "PwnedPasswordsAPI"]
