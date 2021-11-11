@@ -11,6 +11,7 @@ from functools import wraps
 from inspect import getmembers, unwrap
 from six import with_metaclass
 from time import sleep, time
+from tinyscript import codecs
 try:
     from inspect import getfullargspec as getargspec
 except ImportError:
@@ -36,10 +37,14 @@ except ImportError:
     pass
 
 
-__all__ = __features__ = ["apicall", "cache", "invalidate", "private", "re", "time_throttle", "API", "APIError",
-                          "APIObject", "NoResultError", "SearchAPI"]
+__all__ = __features__ = ["apicall", "cache", "htmlentity", "invalidate", "private", "re", "time_throttle", "urlencode",
+                          "API", "APIError", "APIObject", "NoResultError", "SearchAPI"]
 
 TIME_THROTTLING = {}
+
+
+urlencode = lambda s: codecs.encode(s, "url")
+htmlentity = lambda s: codecs.encode(s, "html")
 
 
 def _id(something):
