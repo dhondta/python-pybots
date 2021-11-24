@@ -1,3 +1,4 @@
+<p align="center"><img src="https://github.com/dhondta/python-pybots/raw/master/docs/imgs/logo.png"></p>
 <h1 align="center">PyBots <a href="https://twitter.com/intent/tweet?text=PyBots%20-%20Devkit%20for%20quickly%20creating%20client%20bots%20for%20remote%20communications.%0D%0APython%20library%20for%20writing%20client%20bots%20relying%20on%20common%20protocols%20(HTTP,%20JSON,%20IRC,%20...).%0D%0Ahttps%3a%2f%2fgithub%2ecom%2fdhondta%2fpython-pybots%0D%0A&hashtags=python,programming,devkit,bot,client,cli,http,tcp,ctftools"><img src="https://img.shields.io/badge/Tweet--lightgrey?logo=twitter&style=social" alt="Tweet" height="20"/></a></h1>
 <h3 align="center">Create your robot clients with Python.</h3>
 
