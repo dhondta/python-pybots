@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=66.0", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+
+[tool.setuptools.dynamic]
+version = {attr = "pybots.__info__.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"*" = ["*.txt"]
+
+[project]
+name = "pybots"
+authors = [
+  {name="Alexandre D'Hondt", email="alexandre.dhondt@gmail.com"},
+]
+description = "Devkit for quickly creating client robots for remote communications"
+license = {file = "LICENSE"}
+keywords = ["python", "development", "programming", "framework", "cli", "devkit", "robots"]
+requires-python = ">=3.7,<4"
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+  "bs4",
+  "pycountry",
+  "requests",
+  "simplejson",
+  "tinyscript>=1.26.0",
+  "user_agent",
+]
+dynamic = ["version"]
+
+[project.readme]
+file = "README.md"
+content-type = "text/markdown"
+
+[project.urls]
+documentation = "https://python-pybots.readthedocs.io/en/latest/?badge=latest"
+homepage = "https://github.com/dhondta/python-pybots"
+issues = "https://github.com/dhondta/python-pybots/issues"
+repository = "https://github.com/dhondta/python-pybots"
