@@ -1,0 +1,49 @@
+site_author: dhondta
+site_name: "PyBots - Devkit for quickly creating client bots for remote communications"
+repo_url: https://github.com/dhondta/python-pybots
+copyright: Copyright &copy; 2018-2023 Alexandre D'Hondt
+docs_dir: pages
+nav:
+  - Introduction: index.md
+  - Generalities: generalities.md
+  - "Core bots": core.md
+  - "Available API's": apis.md
+  - "Available bots": bots.md
+  - "Creating Bots": create.md
+  - Examples:
+    - 'Hackvent 2017': examples/hackvent-2017.md
+    - 'RingZer0': examples/ringzer0.md
+    - 'Root-Me': examples/rootme.md
+extra:
+  generator: false
+  social:
+    - icon: fontawesome/solid/paper-plane
+      link: mailto:alexandre.dhondt@gmail.com
+      name: Contact Alex
+    - icon: fontawesome/brands/github
+      link: https://github.com/dhondta
+      name: Alex on GitHub
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/alexandre-d-2ab2aa14/
+      name: Alex on LinkedIn
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/alex_dhondt
+      name: Alex on Twitter
+theme:
+  name: material
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/brightness-7 
+        name: Switch to dark mode
+    - scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  logo: img/logo.png
+  favicon: img/icon.png
+use_directory_urls: false
+markdown_extensions:
+  - toc:
+      permalink: true
+  - admonition
