@@ -1,13 +1,12 @@
-<p align="center"><img src="https://github.com/dhondta/python-pybots/raw/master/docs/imgs/logo.png"></p>
+<p align="center"><img src="https://github.com/dhondta/python-pybots/raw/main/docs/pages/imgs/logo.png"></p>
 <h1 align="center">PyBots <a href="https://twitter.com/intent/tweet?text=PyBots%20-%20Devkit%20for%20quickly%20creating%20client%20bots%20for%20remote%20communications.%0D%0APython%20library%20for%20writing%20client%20bots%20relying%20on%20common%20protocols%20(HTTP,%20JSON,%20IRC,%20...).%0D%0Ahttps%3a%2f%2fgithub%2ecom%2fdhondta%2fpython-pybots%0D%0A&hashtags=python,programming,devkit,bot,client,cli,http,tcp,ctftools"><img src="https://img.shields.io/badge/Tweet--lightgrey?logo=twitter&style=social" alt="Tweet" height="20"/></a></h1>
 <h3 align="center">Create your robot clients with Python.</h3>
 
 [![PyPi](https://img.shields.io/pypi/v/pybots.svg)](https://pypi.python.org/pypi/pybots/)
 [![Read The Docs](https://readthedocs.org/projects/python-pybots/badge/?version=latest)](http://python-pybots.readthedocs.io/en/latest/?badge=latest)
-[![Build Status](https://travis-ci.org/dhondta/python-pybots.svg?branch=master)](https://travis-ci.org/dhondta/python-pybots)
-[![Requirements Status](https://requires.io/github/dhondta/python-pybots/requirements.svg?branch=master)](https://requires.io/github/dhondta/python-pybots/requirements/?branch=master)
-[![Known Vulnerabilities](https://snyk.io/test/github/dhondta/python-pybots/badge.svg?targetFile=requirements.txt)](https://snyk.io/test/github/dhondta/python-pybots?targetFile=requirements.txt)
+[![Build Status](https://github.com/dhondta/python-pybots/actions/workflows/python-package.yml/badge.svg)](https://github.com/dhondta/python-pybots/actions/workflows/python-package.yml)
 [![Python Versions](https://img.shields.io/pypi/pyversions/pybots.svg)](https://pypi.python.org/pypi/pybots/)
+[![Known Vulnerabilities](https://snyk.io/test/github/dhondta/python-pybots/badge.svg?targetFile=requirements.txt)](https://snyk.io/test/github/dhondta/python-pybots?targetFile=requirements.txt)
 [![License](https://img.shields.io/pypi/l/pybots.svg)](https://pypi.python.org/pypi/pybots/)
 
 This library aims to quickly write client bots for communicating with remote hosts in a standardized way using context managers. It implements a few bots for some common protocols (HTTP, JSON, IRC, ...) and for communicating with specific applications (Shodan, Censys, HaveIBeenPwned?, RootMe, RingZer0, ...).
@@ -35,11 +34,44 @@ with TCPBot("LAN_host", 1234, no_proxy=True) as bot:
     # ...
 ```
 
+## :ghost: Supported Bots
+
+### CTF Platforms
+
+Each of these bots is aimed to parse inputs from a challenge and to send the answer computed in the context of the bot to the target website for retrieving the flag.
+
+**Name** |  **Description**
+:----------:|---------------------------------------------------------------
+RingZer0 | Web bot for all kinds of challenges
+RootMe | IRC bot for programming challenges
+ZSIS | Web bot for progrmming challenges
+
+
+### Security Services
+
+These bots are built upon an API layer that defines corresponding interfaces to the online services' functionalities as described in their documentation. The bots implement common operations that may involve multiple calls to the online services' API.
+
+**Name** |  **Description**
+:----------:|---------------------------------------------------------------
+Censys | JSON bot that checks for IP's and domains
+Ghost Project | Web bot that checks for emails
+HaveIBeenPwned? | JSON bot that checks for emails and passwords
+HaveIBeenSold? | JSON bot that checks for emails
+Nuclear Leaks | Web bot that checks for emails and domains
+Shodan | JSON bot that checks for IP's
+
+### Utility Services
+
+**Name** |  **Description**
+:----------:|---------------------------------------------------------------
+Git | Web bot that can retrieve a Git repository
+PostBin | Web bot that can perform Bin operations
+
 ## :mag: Examples
 
 ### Real-Life Projects
 
-* [Bots Scheduler](https://github.com/dhondta/bots-scheduler/) (uses [`ShodanBot`](https://github.com/dhondta/python-pybots/blob/master/pybots/bots/security/shodan.py), [`HaveIBeenPwnedBot`](https://github.com/dhondta/python-pybots/blob/master/pybots/bots/security/haveibeenpwned.py), [`GhostProjectBot`](https://github.com/dhondta/python-pybots/blob/master/pybots/bots/security/ghostproject.py) and a few others)
+* [Bots Scheduler](https://github.com/dhondta/bots-scheduler/) (uses [`ShodanBot`](https://github.com/dhondta/python-pybots/blob/main/src/pybots/bots/security/shodan.py), [`HaveIBeenPwnedBot`](https://github.com/dhondta/python-pybots/blob/main/src/pybots/bots/security/haveibeenpwned.py), [`GhostProjectBot`](https://github.com/dhondta/python-pybots/blob/main/src/pybots/bots/security/ghostproject.py) and a few others)
 
 ### CTF
 
