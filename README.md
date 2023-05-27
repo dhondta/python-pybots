@@ -36,6 +36,18 @@ with TCPBot("LAN_host", 1234, no_proxy=True) as bot:
 
 ## :ghost: Supported Bots
 
+### Generic Purpose
+
+All the following bots use the same interface providing uniformized logging.
+
+**Name** |  **Description**
+:----------:|---------------------------------------------------------------
+HTTP | For browsing and parsing a Web page with BeautifulSoup
+IRC | For connecting to an IRC server on a given channel with a given nickname
+JSON | For dealing with a JSON API
+TCP | For opening a TCP socket
+
+
 ### CTF Platforms
 
 Each of these bots is aimed to parse inputs from a challenge and to send the answer computed in the context of the bot to the target website for retrieving the flag.
