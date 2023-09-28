@@ -39,7 +39,7 @@ While exiting the context:
 - Parse the response for getting the flag
 - Submit the flag for earning the points
 
-``` python
+```python
 with RingZer0Bot(1, "session_cookie") as bot:
     # this binds relevant inputs for challenge #1
     # process bot.inputs
@@ -65,7 +65,7 @@ While leaving the context:
 - Send a server-formatted private message to Candy bot with the challenge answer
 - Read Candy bot's response for getting the flag and display it
 
-``` python
+```python
 with RootMeIRCBot(1, "my_rootme_username") as bot:
     # this binds relevant inputs for challenge #1 in bot.inputs['message']
     # process bot.inputs['message']

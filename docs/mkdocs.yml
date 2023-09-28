@@ -46,6 +46,10 @@ theme:
   favicon: img/icon.png
 use_directory_urls: false
 markdown_extensions:
+  - admonition
+  - codehilite:
+      linenums: true
+  - pymdownx.details
+  - pymdownx.superfences
   - toc:
       permalink: true
-  - admonition

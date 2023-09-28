@@ -4,7 +4,7 @@ The PyBots library aims to quickly write client bots for communicating with remo
 
 The idea is to make creating client bots as easy as this (e.g. with debugging):
 
-``` python hl_lines="3 4 5"
+```python hl_lines="3 4 5"
 from pybots import SampleBot
 
 with SampleBot(ip_address, port, verbose=True) as bot:

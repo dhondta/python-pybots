@@ -2,7 +2,7 @@
 
 Each bot class is implemented as a context manager and has a basic configured logger attached. It can thus be instantiated in a clear and straightforward way. Here is an example:
 
-``` python
+```python
 from pybots import TCPBot
 
 class MyBot(TCPBot):
@@ -22,7 +22,7 @@ with MyBot("remote_host", 1234) as bot:
 
 Note that, if a bot is used behind a proxy, it will use system's proxy settings. This behavior can be bypassed by using `no_proxy=True` while instantiating the bot.
 
-``` python
+```python
 with MyBot("LAN_host", 1234, no_proxy=True) as bot:
     # ...
 ```
@@ -45,14 +45,14 @@ Each bot comes with the following features (in order of precedence), inherited f
 
 - **Logging**: A public method named `configure` sets the logging level and attaches a logger to the bot. Logging can thus be reconfigured in the context of the bot. The verbose mode is a boolean and configures the bot for debugging if the value is false.
 
-``` python hl_lines="2"
+```python hl_lines="2"
 """ verbose mode example """
 with Bot(..., verbose=True) as bot:
     # debug messages will be displayed
     # if verbose=False, logging is configured to INFO
 ```
 
-``` python hl_lines="3"
+```python hl_lines="3"
 """ logging reconfiguration example """
 with Bot(...) as bot:
     bot.configure(new_log_message_format, new_date_format)
@@ -64,7 +64,7 @@ with Bot(...) as bot:
 
 - **System proxy settings**: When the bot starts, it gets the system proxy settings to work with (`no_proxy=False` by default). This behavior can be overridden by setting `no_proxy=False`.
 
-``` python hl_lines="2"
+```python hl_lines="2"
 """ no proxy example """
 with Bot(..., no_proxy=True) as bot:
     # the bot ignores the proxy settings
@@ -72,7 +72,7 @@ with Bot(..., no_proxy=True) as bot:
 
 - **Pre/Post-computation**: By default, when a bot is initialized, it tries to execute a public method named `precompute` if it exists. This allows to perform computations BEFORE the context of the bot is entered. Similarly, when a bot comes to the end of its execution, it tries to execute a public method named `postcompute` if it exists. This allows to perform computations AFTER bot's communication has ended, just before exiting the context.
 
-``` python hl_lines="3 4 6 7 8"
+```python hl_lines="3 4 6 7 8"
 """ precomputation example """
 class MyBot(Bot):
     def postcompute(self):
@@ -92,7 +92,7 @@ with MyBot(...) as bot:
 
 - **Pre/Post-amble**: By default, when bot's context is entered, it tries to execute a public method named `preamble` if it exists. This allows to play a preamble with the remote host to keep bot's context code clean. Similarly, when a bot comes to the end of its context, it tries to execute a public method named `postamble` if it exists. This allows to perform actions before bot's communication has ended, thus before exiting the context.
 
-``` python hl_lines="3 4 6 7"
+```python hl_lines="3 4 6 7"
 """ preamble example """
 class MyBot(Bot):
     def postamble(self):

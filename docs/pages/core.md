@@ -64,14 +64,14 @@ This bot implements a Netcat-like bot that handles a single connection with a re
 
 Here is an example:
 
-``` python
+```python
 with TCPBot(ip_address, port) as nc:
     nc.write("Hello !")
 ```
 
 Another example, redefining the preamble, writing with a different EOL character:
 
-``` python
+```python
 class MyBot(TCPBot):
     def preamble(self):
         self.read_until(">")
@@ -84,7 +84,7 @@ with MyBot(ip_address, port) as nc:
 
 This bot aims to manage conversations on an IRC server using a `msg` method. It connects and sends user's data (by default, the nickname is `ircbot` and the full name is `IRC Bot`). It then executes the user-defined preamble and finally tries to connect to the input channel.
 
-``` python
+```python
 class MyIRCBot(IRCBot):
     def preamble(self):
         self.msg("hellosrv", "HELLO")
@@ -97,7 +97,7 @@ with MyIRCBot(ip_address, port, channel="#a_channel") as irc:
 
 This bot is an inherited class of the WebBot in that it adds a parsing of the current response using [`BeautifulSoup`](https://www.crummy.com/software/BeautifulSoup/bs4/doc/), stored in a new `soup` attribute.
 
-``` python
+```python
 with HTTPBot(url) as bot:
     bot.get("/")
     print(bot.soup.prettify())
@@ -107,7 +107,7 @@ with HTTPBot(url) as bot:
 
 This bot is an inherited class of the WebBot in that it adds a parsing of the current response using the `json` built-in module, stored in a new `json` attribute. Also, while initializing, it automatically adds the right `Content-Type` HTTP header so that the bot communicates with JSON objects.
 
-``` python
+```python
 with JSONBot(url) as bot:
     bot.get("/")
     print(bot.json)

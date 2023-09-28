@@ -2,5 +2,5 @@ bs4
 pycountry
 requests
 simplejson
-tinyscript>=1.24.10
+tinyscript>=1.28.0
 user_agent
