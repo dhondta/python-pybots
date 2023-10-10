@@ -41,7 +41,7 @@ dependencies = [
   "pycountry",
   "requests",
   "simplejson",
-  "tinyscript>=1.26.0",
+  "tinyscript>=1.28.6",
   "user_agent",
 ]
 dynamic = ["version"]

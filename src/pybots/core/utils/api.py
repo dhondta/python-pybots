@@ -11,7 +11,7 @@ from functools import wraps
 from inspect import getmembers, unwrap
 from six import with_metaclass
 from time import sleep, time
-from tinyscript import codecs
+from tinyscript import codext
 try:
     from inspect import getfullargspec as getargspec
 except ImportError:
@@ -43,8 +43,8 @@ __all__ = __features__ = ["apicall", "cache", "htmlentity", "invalidate", "priva
 TIME_THROTTLING = {}
 
 
-urlencode = lambda s: codecs.encode(s, "url")
-htmlentity = lambda s: codecs.encode(s, "html")
+urlencode = lambda s: codext.encode(s, "url")
+htmlentity = lambda s: codext.encode(s, "html")
 
 
 def _id(something):
