@@ -87,10 +87,9 @@ PostBin | Web bot that can perform Bin operations
 
 ### CTF
 
-* [Hacky Easter 2017 (22 & 24)](doc/examples/hacky-easter-2017.md)
-* [Hackvent 2017 (Day 06 & 10)](doc/examples/hackvent-2017.md)
-* [RingZer0 / Coding (13 & 17)](doc/examples/ringzer0.md)
-* [Root-Me / Programming](doc/examples/rootme.md)
+* [Hackvent 2017 (Day 06 & 10)](https://github.com/dhondta/python-pybots/blob/main/docs/pages/examples/hackvent-2017.md)
+* [RingZer0 / Coding (13 & 17)](https://github.com/dhondta/python-pybots/blob/main/docs/pages/examples/ringzer0.md)
+* [Root-Me / Programming](https://github.com/dhondta/python-pybots/blob/main/docs/pages/examples/rootme.md)
 
 
 ## :clap:  Supporters

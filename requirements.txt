@@ -1,6 +1,8 @@
-bs4
-pycountry
-requests
-simplejson
-tinyscript>=1.28.6
-user_agent
+beautifulsoup4>=4.12.3
+pycountry>=24.6.1
+requests>=2.32.2     # SNYK-PYTHON-REQUESTS-6928867
+setuptools>=70.0.0   # SNYK-PYTHON-SETUPTOOLS-7448482
+simplejson>=3.19.3
+tinyscript>=1.30.16
+urllib3>=2.2.2       # SNYK-PYTHON-URLLIB3-7267250
+user_agent>=0.1.10

@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=66.0", "setuptools-scm"]
+requires = ["setuptools>=70.0", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
@@ -22,27 +22,28 @@ authors = [
 description = "Devkit for quickly creating client robots for remote communications"
 license = {file = "LICENSE"}
 keywords = ["python", "development", "programming", "framework", "cli", "devkit", "robots"]
-requires-python = ">=3.7,<4"
+requires-python = ">=3.8,<4"
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Environment :: Console",
   "Intended Audience :: Developers",
   "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.7",
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
   "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-  "bs4",
-  "pycountry",
-  "requests",
-  "simplejson",
-  "tinyscript>=1.28.6",
-  "user_agent",
+  "beautifulsoup4>=4.12.3",
+  "pycountry>=24.6.1",
+  "requests>=2.32.2",  # SNYK-PYTHON-REQUESTS-6928867
+  "simplejson>=3.19.3",
+  "tinyscript>=1.30.16",
+  "urllib3>=2.2.2",    # SNYK-PYTHON-URLLIB3-7267250
+  "user_agent>=0.1.10",
 ]
 dynamic = ["version"]
 
